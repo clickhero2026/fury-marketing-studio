@@ -47,6 +47,22 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        meta: {
+          blue: "hsl(var(--meta-blue))",
+          "blue-light": "hsl(var(--meta-blue-light))",
+          green: "hsl(var(--meta-green))",
+          "green-light": "hsl(var(--meta-green-light))",
+          orange: "hsl(var(--meta-orange))",
+          "orange-light": "hsl(var(--meta-orange-light))",
+          red: "hsl(var(--meta-red))",
+          "red-light": "hsl(var(--meta-red-light))",
+        },
+        chat: {
+          user: "hsl(var(--chat-user))",
+          "user-foreground": "hsl(var(--chat-user-foreground))",
+          ai: "hsl(var(--chat-ai))",
+          "ai-foreground": "hsl(var(--chat-ai-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
