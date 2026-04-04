@@ -1,5 +1,7 @@
 import { MessageSquare, BarChart3, ImagePlus, TrendingUp, Settings, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 type View = "chat" | "dashboard" | "creatives" | "analysis";
 
@@ -12,57 +14,66 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "chat", label: "Assistente IA", icon: MessageSquare },
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "creatives", label: "Criativos", icon: ImagePlus },
-  { id: "analysis", label: "Análise", icon: TrendingUp },
+  { id: "analysis", label: "Analise", icon: TrendingUp },
 ];
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   return (
-    <aside className="w-64 sidebar-gradient flex flex-col h-screen border-r border-sidebar-border">
-      <div className="p-5 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg chat-gradient flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-sidebar-accent-foreground">Meta Ads</h1>
-            <p className="text-xs text-sidebar-foreground">Manager AI</p>
-          </div>
-        </div>
+    <aside className="w-[260px] sidebar-gradient flex flex-col h-screen border-r border-sidebar-border">
+      {/* Logo */}
+      <div className="px-5 pt-5 pb-3">
+        <img
+          src="/logo-dark.png"
+          alt="ClickHero"
+          className="h-7 w-auto"
+        />
       </div>
 
+      {/* Organization Switcher */}
+      <div className="px-4 pb-3 border-b border-sidebar-border">
+        <OrganizationSwitcher />
+      </div>
+
+      {/* New Chat Button */}
       <div className="p-3">
         <button
           onClick={() => onViewChange("chat")}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-sidebar-primary text-sidebar-primary-foreground hover:opacity-90 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium brand-gradient text-white hover:opacity-90 transition-all active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           Nova conversa
         </button>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 space-y-0.5">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all",
               currentView === item.id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
             )}
           >
-            <item.icon className="w-4 h-4" />
+            <item.icon className={cn(
+              "w-[18px] h-[18px] transition-colors",
+              currentView === item.id ? "text-primary" : ""
+            )} />
             {item.label}
           </button>
         ))}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors">
-          <Settings className="w-4 h-4" />
-          Configurações
+      {/* Footer */}
+      <div className="p-3 border-t border-sidebar-border space-y-0.5">
+        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all">
+          <Settings className="w-[18px] h-[18px]" />
+          Configuracoes
         </button>
+        <UserMenu />
       </div>
     </aside>
   );

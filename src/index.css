@@ -1,63 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* ClickHero Brand Palette
+       Preto: #0c0d0a  |  Branco: #ecedef  |  Laranja: #cf6f03
+    */
+
+    /* Backgrounds & Surfaces */
+    --background: 60 4% 97%;
+    --foreground: 72 16% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 72 16% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover-foreground: 72 16% 4%;
 
-    --primary: 214 89% 52%;
+    /* Primary = Laranja ClickHero #cf6f03 */
+    --primary: 32 96% 41%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220 25% 20%;
+    /* Secondary = Cinza neutro suave */
+    --secondary: 220 6% 94%;
+    --secondary-foreground: 72 16% 20%;
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 10% 46%;
+    /* Muted = Cinza para textos secundarios */
+    --muted: 220 6% 96%;
+    --muted-foreground: 220 5% 46%;
 
-    --accent: 214 89% 95%;
-    --accent-foreground: 214 89% 40%;
+    /* Accent = Laranja suave */
+    --accent: 32 96% 96%;
+    --accent-foreground: 32 96% 30%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 214 89% 52%;
+    --border: 220 6% 90%;
+    --input: 220 6% 90%;
+    --ring: 32 96% 41%;
 
     --radius: 0.75rem;
 
-    --meta-blue: 214 89% 52%;
-    --meta-blue-light: 214 89% 96%;
-    --meta-green: 142 71% 45%;
-    --meta-green-light: 142 71% 95%;
-    --meta-orange: 25 95% 53%;
-    --meta-orange-light: 25 95% 95%;
-    --meta-red: 0 84% 60%;
-    --meta-red-light: 0 84% 96%;
+    /* Semantic Colors (KPIs) */
+    --success: 152 60% 42%;
+    --success-light: 152 60% 96%;
+    --warning: 32 96% 41%;
+    --warning-light: 32 96% 96%;
+    --danger: 0 72% 51%;
+    --danger-light: 0 72% 96%;
+    --info: 220 14% 50%;
+    --info-light: 220 14% 96%;
 
-    --chat-user: 214 89% 52%;
+    /* Chat */
+    --chat-user: 32 96% 41%;
     --chat-user-foreground: 0 0% 100%;
-    --chat-ai: 220 14% 95%;
-    --chat-ai-foreground: 220 25% 15%;
+    --chat-ai: 220 6% 96%;
+    --chat-ai-foreground: 72 16% 10%;
 
-    --sidebar-background: 220 25% 8%;
-    --sidebar-foreground: 220 10% 75%;
-    --sidebar-primary: 214 89% 52%;
+    /* Sidebar = Preto ClickHero #0c0d0a */
+    --sidebar-background: 72 16% 3%;
+    --sidebar-foreground: 60 4% 65%;
+    --sidebar-primary: 32 96% 41%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 14%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 20% 16%;
-    --sidebar-ring: 214 89% 52%;
+    --sidebar-accent: 72 10% 10%;
+    --sidebar-accent-foreground: 60 4% 93%;
+    --sidebar-border: 72 10% 12%;
+    --sidebar-ring: 32 96% 41%;
   }
 }
 
@@ -67,34 +79,69 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Apple-style selection */
+  ::selection {
+    background: hsl(32 96% 41% / 0.15);
   }
 }
 
 @layer utilities {
+  /* Premium glass card */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-sm;
+    @apply bg-card border border-border/60 shadow-sm;
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.5),
+      0 1px 3px 0 rgb(0 0 0 / 0.04),
+      0 1px 2px -1px rgb(0 0 0 / 0.04);
   }
 
+  .glass-card:hover {
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.6),
+      0 4px 6px -1px rgb(0 0 0 / 0.06),
+      0 2px 4px -2px rgb(0 0 0 / 0.04);
+  }
+
+  /* Brand gradient (laranja) */
+  .brand-gradient {
+    background: linear-gradient(135deg, #cf6f03 0%, #e8850a 50%, #cf6f03 100%);
+  }
+
+  /* Chat gradient */
   .chat-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(214 89% 42%) 100%);
+    background: linear-gradient(135deg, #cf6f03 0%, #b56203 100%);
   }
 
-  .stat-glow {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.15);
-  }
-
+  /* Sidebar gradient */
   .sidebar-gradient {
-    background: linear-gradient(180deg, hsl(220 25% 8%) 0%, hsl(220 25% 6%) 100%);
+    background: linear-gradient(180deg, #0c0d0a 0%, #0a0b08 100%);
   }
 
+  /* Stat card subtle glow */
+  .stat-glow {
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.5),
+      0 1px 3px 0 rgb(0 0 0 / 0.04);
+  }
+
+  /* Animations */
   .fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Apple-style focus ring */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }
 
@@ -104,15 +151,15 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.5; }
 }
 
 .animate-pulse-soft {
-  animation: pulse-soft 1.5s ease-in-out infinite;
+  animation: pulse-soft 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

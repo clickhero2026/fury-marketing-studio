@@ -47,15 +47,22 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        meta: {
-          blue: "hsl(var(--meta-blue))",
-          "blue-light": "hsl(var(--meta-blue-light))",
-          green: "hsl(var(--meta-green))",
-          "green-light": "hsl(var(--meta-green-light))",
-          orange: "hsl(var(--meta-orange))",
-          "orange-light": "hsl(var(--meta-orange-light))",
-          red: "hsl(var(--meta-red))",
-          "red-light": "hsl(var(--meta-red-light))",
+        /* ClickHero semantic colors */
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          light: "hsl(var(--success-light))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          light: "hsl(var(--warning-light))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          light: "hsl(var(--danger-light))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          light: "hsl(var(--info-light))",
         },
         chat: {
           user: "hsl(var(--chat-user))",
@@ -81,20 +88,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
