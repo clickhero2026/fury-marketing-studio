@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm install:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npx skills:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git fetch:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git rm:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)",
+      "Bash(claude:*)",
+      "Read(//e/clickhero-newapp/**)"
+    ]
+  }
+}
