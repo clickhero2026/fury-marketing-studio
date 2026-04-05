@@ -647,6 +647,7 @@ export type Database = {
           max_users: number | null
           metadata: Json | null
           name: string
+          organization_id: string | null
           primary_color: string | null
           settings: Json | null
           slug: string
@@ -676,6 +677,7 @@ export type Database = {
           max_users?: number | null
           metadata?: Json | null
           name: string
+          organization_id?: string | null
           primary_color?: string | null
           settings?: Json | null
           slug: string
@@ -705,6 +707,7 @@ export type Database = {
           max_users?: number | null
           metadata?: Json | null
           name?: string
+          organization_id?: string | null
           primary_color?: string | null
           settings?: Json | null
           slug?: string
@@ -719,7 +722,15 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_criteria: {
         Row: {
@@ -2062,6 +2073,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_company_id: { Args: never; Returns: string }
       current_user_organization_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
     }

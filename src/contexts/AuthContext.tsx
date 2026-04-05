@@ -108,9 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Load company linked to this organization (bridge)
         if (currentOrg) {
-          const { data: companyData } = await supabase
+          const { data: companyData } = await (supabase
             .from('companies')
-            .select('id, name, slug, status, organization_id, subscription_plan, created_at, updated_at')
+            .select('*') as any)
             .eq('organization_id', currentOrgId)
             .maybeSingle();
           setCompany((companyData as Company) ?? null);
