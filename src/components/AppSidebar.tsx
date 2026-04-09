@@ -1,5 +1,6 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, Settings, Plus } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, TrendingUp, Settings, Plus, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 
@@ -18,6 +19,8 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
 ];
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
+  const navigate = useNavigate();
+
   return (
     <aside className="w-[260px] sidebar-gradient flex flex-col h-screen border-r border-sidebar-border">
       {/* Logo */}
@@ -69,6 +72,13 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border space-y-0.5">
+        <button
+          onClick={() => navigate('/integrations')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all"
+        >
+          <Plug className="w-[18px] h-[18px]" />
+          Integracoes
+        </button>
         <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all">
           <Settings className="w-[18px] h-[18px]" />
           Configuracoes

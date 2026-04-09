@@ -1,111 +1,38 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Sparkles } from "lucide-react";
+import { Send, Paperclip, Sparkles, Square, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import { useChat } from "@/hooks/use-chat";
 
 const suggestions = [
-  "Qual o desempenho das minhas campanhas hoje?",
-  "Analise o CPA da campanha de conversao",
-  "Compare os criativos da ultima semana",
-  "Sugira otimizacoes para reduzir CPC",
+  "Qual o desempenho das minhas campanhas nos ultimos 7 dias?",
+  "Qual campanha tem o melhor ROAS?",
+  "Compare esta semana com a anterior",
+  "Me de sugestoes para reduzir CPC",
 ];
 
-const mockResponses: Record<string, string> = {
-  default: `Ola! Sou seu assistente de **Meta Ads**. Posso ajudar com:
-
-- **Relatorios** de campanhas em tempo real
-- **Analise** de metricas (CPA, ROAS, CTR)
-- **Upload** e gestao de criativos
-- **Otimizacoes** baseadas em dados
-
-Como posso ajudar hoje?`,
-  desempenho: `**Resumo do Desempenho — Hoje**
-
-| Metrica | Valor | Variacao |
-|---------|-------|----------|
-| Impressoes | 45.2K | +12% |
-| Cliques | 1.8K | +8% |
-| CTR | 3.98% | +0.3% |
-| CPC | R$ 1.42 | -5% |
-| Conversoes | 127 | +15% |
-| ROAS | 4.2x | +0.3x |
-
-As campanhas estao performando **acima da media**. O criativo "Banner Promo V3" e o destaque com CTR de 5.2%.`,
-  cpa: `**Analise de CPA — Campanha de Conversao**
-
-O CPA atual e **R$ 28.50**, uma reducao de **12%** em relacao a semana anterior.
-
-**Top 3 Ad Sets por CPA:**
-1. Lookalike 1% — R$ 22.30
-2. Interesse Amplo — R$ 26.80
-3. Retargeting 7d — R$ 31.20
-
-**Recomendacao:** Aumente o budget do Lookalike 1% em 20% para escalar com eficiencia.`,
-};
-
 const ChatView = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: mockResponses.default,
-      timestamp: new Date(),
-    },
-  ]);
+  const {
+    messages,
+    isStreaming,
+    status,
+    sendMessage,
+    stopStreaming,
+    newConversation,
+  } = useChat();
+
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const getResponse = (text: string): string => {
-    const lower = text.toLowerCase();
-    if (lower.includes("desempenho") || lower.includes("performance")) return mockResponses.desempenho;
-    if (lower.includes("cpa") || lower.includes("conversao")) return mockResponses.cpa;
-    return `Entendi sua solicitacao sobre "${text}". Em breve, com a integracao da API de agentes, poderei trazer dados em tempo real da Meta. Por enquanto, posso mostrar analises do **Dashboard** ou ajudar com **upload de criativos**.`;
-  };
+  }, [messages, status]);
 
   const handleSend = () => {
-    if (!input.trim()) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    if (!input.trim() || isStreaming) return;
+    sendMessage(input);
     setInput("");
-    setIsTyping(true);
-
-    typingTimeoutRef.current = setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: getResponse(userMsg.content),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-      typingTimeoutRef.current = null;
-    }, 1200);
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -115,18 +42,166 @@ const ChatView = () => {
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    if (isStreaming) return;
+    sendMessage(suggestion);
+  };
+
+  // Simple markdown-ish rendering: bold, tables, lists
+  const renderContent = (content: string) => {
+    if (!content) return null;
+
+    const lines = content.split('\n');
+    const elements: React.ReactNode[] = [];
+    let tableRows: string[][] = [];
+    let inTable = false;
+
+    const processInline = (text: string): React.ReactNode => {
+      // Bold
+      const parts = text.split(/\*\*(.*?)\*\*/g);
+      return parts.map((part, i) =>
+        i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
+      );
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Table row
+      if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+        const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
+        // Skip separator rows (|---|---|)
+        if (cells.every(c => /^[-:]+$/.test(c))) {
+          continue;
+        }
+        tableRows.push(cells);
+        inTable = true;
+        continue;
+      }
+
+      // End of table
+      if (inTable && tableRows.length > 0) {
+        const headers = tableRows[0];
+        const rows = tableRows.slice(1);
+        elements.push(
+          <div key={`table-${i}`} className="overflow-x-auto my-2">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-white/10">
+                  {headers.map((h, hi) => (
+                    <th key={hi} className="text-left px-2 py-1.5 text-white/50 font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, ri) => (
+                  <tr key={ri} className="border-b border-white/[0.04]">
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="px-2 py-1.5 text-white/70">{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        tableRows = [];
+        inTable = false;
+      }
+
+      // Headers
+      if (line.startsWith('## ')) {
+        elements.push(<h3 key={i} className="text-sm font-semibold text-white/90 mt-3 mb-1">{line.slice(3)}</h3>);
+        continue;
+      }
+
+      // List items
+      if (line.match(/^[-*] /)) {
+        elements.push(
+          <div key={i} className="flex gap-2 ml-1">
+            <span className="text-primary mt-0.5">•</span>
+            <span>{processInline(line.slice(2))}</span>
+          </div>
+        );
+        continue;
+      }
+
+      // Numbered list
+      if (line.match(/^\d+\. /)) {
+        const match = line.match(/^(\d+)\. (.*)$/);
+        if (match) {
+          elements.push(
+            <div key={i} className="flex gap-2 ml-1">
+              <span className="text-primary/70 font-mono text-xs mt-0.5">{match[1]}.</span>
+              <span>{processInline(match[2])}</span>
+            </div>
+          );
+          continue;
+        }
+      }
+
+      // Empty line
+      if (!line.trim()) {
+        elements.push(<div key={i} className="h-1.5" />);
+        continue;
+      }
+
+      // Regular text
+      elements.push(<p key={i}>{processInline(line)}</p>);
+    }
+
+    // Flush remaining table
+    if (inTable && tableRows.length > 0) {
+      const headers = tableRows[0];
+      const rows = tableRows.slice(1);
+      elements.push(
+        <div key="table-end" className="overflow-x-auto my-2">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                {headers.map((h, hi) => (
+                  <th key={hi} className="text-left px-2 py-1.5 text-white/50 font-medium">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri} className="border-b border-white/[0.04]">
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-2 py-1.5 text-white/70">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    return elements;
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-8 space-y-4">
-        {/* Suggestions (only on initial state) */}
-        {messages.length === 1 && (
-          <div className="max-w-2xl mx-auto mb-8 fade-in">
+        {/* Welcome + Suggestions (only when no messages) */}
+        {messages.length === 0 && (
+          <div className="max-w-2xl mx-auto fade-in">
+            <div className="text-center mb-8">
+              <div className="w-12 h-12 rounded-2xl brand-gradient flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-white/90 mb-1">ClickHero AI</h2>
+              <p className="text-sm text-white/40">
+                Seu assistente de Meta Ads com dados reais das suas campanhas
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2.5">
               {suggestions.map((s) => (
                 <button
                   key={s}
-                  onClick={() => setInput(s)}
+                  onClick={() => handleSuggestionClick(s)}
                   className="text-left p-3.5 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-accent/50 text-[13px] text-muted-foreground transition-all"
                 >
                   {s}
@@ -147,27 +222,34 @@ const ChatView = () => {
           >
             <div
               className={cn(
-                "px-4 py-3 rounded-2xl text-[13px] leading-relaxed whitespace-pre-wrap",
+                "px-4 py-3 rounded-2xl text-[13px] leading-relaxed",
                 msg.role === "user"
-                  ? "chat-gradient text-white rounded-br-md max-w-[80%]"
-                  : "bg-chat-ai text-chat-ai-foreground rounded-bl-md"
+                  ? "chat-gradient text-white rounded-br-md max-w-[80%] whitespace-pre-wrap"
+                  : "bg-chat-ai text-chat-ai-foreground rounded-bl-md space-y-0.5"
               )}
             >
-              {msg.content}
+              {msg.role === 'assistant' ? renderContent(msg.content) : msg.content}
+              {msg.isStreaming && !msg.content && (
+                <div className="inline-flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.3s]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.6s]" />
+                </div>
+              )}
             </div>
           </div>
         ))}
 
-        {/* Typing indicator */}
-        {isTyping && (
+        {/* Status indicator (e.g., "Buscando dados...") */}
+        {status && (
           <div className="max-w-2xl mx-auto">
-            <div className="bg-chat-ai text-chat-ai-foreground px-4 py-3 rounded-2xl rounded-bl-md inline-flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.3s]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.6s]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-xs text-primary/70">
+              <Search className="w-3 h-3 animate-pulse" />
+              {status}
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -186,24 +268,44 @@ const ChatView = () => {
               placeholder="Pergunte sobre suas campanhas..."
               rows={1}
               className="flex-1 resize-none bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none py-2 max-h-32"
+              disabled={isStreaming}
             />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              className={cn(
-                "p-2 rounded-xl transition-all",
-                input.trim()
-                  ? "brand-gradient text-white shadow-sm"
-                  : "text-muted-foreground/40"
-              )}
-            >
-              <Send className="w-[18px] h-[18px]" />
-            </button>
+            {isStreaming ? (
+              <button
+                onClick={stopStreaming}
+                className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+              >
+                <Square className="w-[18px] h-[18px]" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className={cn(
+                  "p-2 rounded-xl transition-all",
+                  input.trim()
+                    ? "brand-gradient text-white shadow-sm"
+                    : "text-muted-foreground/40"
+                )}
+              >
+                <Send className="w-[18px] h-[18px]" />
+              </button>
+            )}
           </div>
-          <p className="text-[11px] text-muted-foreground/50 text-center mt-2.5 flex items-center justify-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            Powered by AI
-          </p>
+          <div className="flex items-center justify-between mt-2.5">
+            {messages.length > 0 && (
+              <button
+                onClick={newConversation}
+                className="text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              >
+                Nova conversa
+              </button>
+            )}
+            <p className="text-[11px] text-muted-foreground/50 flex items-center gap-1 ml-auto">
+              <Sparkles className="w-3 h-3" />
+              GPT-4o + dados reais Meta Ads
+            </p>
+          </div>
         </div>
       </div>
     </div>
