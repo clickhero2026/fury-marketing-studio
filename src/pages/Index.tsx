@@ -4,14 +4,16 @@ import ChatView from "@/components/ChatView";
 import DashboardView from "@/components/DashboardView";
 import CreativesView from "@/components/CreativesView";
 import AnalysisView from "@/components/AnalysisView";
+import ComplianceView from "@/components/compliance/ComplianceView";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance";
 
 const viewTitles: Record<View, string> = {
   chat: "Assistente IA",
   dashboard: "Dashboard",
   creatives: "Criativos",
   analysis: "Analise",
+  compliance: "Compliance",
 };
 
 const Index = () => {
@@ -31,6 +33,7 @@ const Index = () => {
           {currentView === "dashboard" && <DashboardView />}
           {currentView === "creatives" && <CreativesView />}
           {currentView === "analysis" && <AnalysisView />}
+          {currentView === "compliance" && <ComplianceView />}
         </div>
       </main>
     </div>

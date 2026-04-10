@@ -143,3 +143,39 @@
 
 **meta-save-assets:** auto-trigger de meta-sync agora usa `EdgeRuntime.waitUntil()` para garantir execucao apos Response retornar (evita worker terminada cancelando o fetch background)
 
+
+
+## smart-takedown-compliance (2026-04-10)
+
+### Tabelas
+- `compliance_rules` — blacklist de termos por tenant (RLS, seed 12 termos Meta padrao)
+- `compliance_scores` — score 0-100 por criativo (copy_score, image_score, final_score, health_status)
+- `compliance_violations` — violacoes individuais (type, severity, evidence, points_deducted)
+- `compliance_actions` — log de takedowns (auto_paused, appealed, reactivated)
+- `compliance_scan_logs` — log de scans (mesmo padrao meta_scan_logs)
+- `companies.auto_takedown_enabled` + `takedown_threshold` — config por empresa
+
+### Edge Functions
+- `compliance-scan` — motor de compliance: analise copy (Claude Sonnet) + analise visual/OCR (Claude Vision), score ponderado 60/40, auto-takedown via Meta Graph API, rate limit 10/hora, dual auth
+
+### RPC
+- `get_vault_secret(name)` — busca secrets do Vault (SECURITY DEFINER)
+
+### Cron
+- `compliance-scan-tick` — `0 */6 * * *` — dispara compliance-scan para cada company com integracao ativa
+
+### Hooks
+- `useComplianceScores()` — lista com join creatives
+- `useComplianceViolations(scoreId)` — violacoes de 1 anuncio
+- `useComplianceRules()` — CRUD blacklist
+- `useComplianceScan()` — trigger manual
+- `useComplianceStats()` — KPIs agregados
+
+### Componentes
+- `ComplianceView` — view principal (nova tab "Compliance" na sidebar)
+- `ComplianceDashboard` — KPI cards (total, healthy%, warning%, critical%, pausados)
+- `ComplianceTable` — tabela de anuncios com score badge
+- `ComplianceDetail` — sheet com violacoes detalhadas
+- `ComplianceSettings` — toggle auto-takedown + threshold slider
+- `BlacklistManager` — CRUD de termos proibidos (user + meta_default)
+
