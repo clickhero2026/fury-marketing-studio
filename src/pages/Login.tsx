@@ -31,7 +31,7 @@ const Login = () => {
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await signIn(values);
+      const { error } = await signIn({ email: values.email, password: values.password });
       if (error) {
         toast({ title: 'Erro ao entrar', description: error, variant: 'destructive' });
         return;
