@@ -6,9 +6,14 @@ import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
  */
 
 // Helper: calcular datas baseado em date_range
+// Usa timezone America/Sao_Paulo por padrao (mercado-alvo pt-BR)
+// campaign_metrics armazena 'data' como date-only (sem timezone)
 function getDateRange(range: string): { start: string; end: string } {
-  const now = new Date();
-  const end = now.toISOString().split('T')[0];
+  // Agora no timezone pt-BR (evita off-by-one em UTC vs BRT)
+  const tzFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const nowLocalStr = tzFormat.format(new Date()); // YYYY-MM-DD
+  const now = new Date(nowLocalStr + 'T12:00:00Z'); // noon UTC, safe pra math de dias
+  const end = nowLocalStr;
   let start: Date;
 
   switch (range) {
@@ -117,13 +122,17 @@ export async function getCampaignDetails(
   companyId: string,
   args: { campaign_name: string; date_range?: string }
 ): Promise<string> {
+  // Input validation: evita DOS com wildcards grandes + escape % _ (specials do LIKE)
+  const rawName = (args.campaign_name ?? '').slice(0, 100);
+  const escapedName = rawName.replace(/[\\%_]/g, '\\$&');
+  if (escapedName.length === 0) return 'Nome da campanha obrigatorio.';
   const { start, end } = getDateRange(args.date_range ?? 'last_7_days');
 
   const { data, error } = await supabase
     .from('campaign_metrics')
-    .select('*')
+    .select('data, campanha, grupo_anuncios, anuncios, impressoes, cliques, cpc, cpm, investimento, conversas_iniciadas, custo_conversa, website_purchase_roas, quality_ranking, engagement_rate_ranking')
     .eq('company_id', companyId)
-    .ilike('campanha', `%${args.campaign_name}%`)
+    .ilike('campanha', `%${escapedName}%`)
     .gte('data', start)
     .lte('data', end)
     .order('data', { ascending: false });
@@ -351,4 +360,171 @@ export async function getAccountInfo(
   }
 
   return md;
+}
+
+// ========== FURY TOOLS ==========
+
+export async function getFuryActions(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { status?: string; limit?: number }
+): Promise<string> {
+  const limit = Math.min(args.limit ?? 10, 50);
+  let query = supabase
+    .from('fury_actions')
+    .select('campaign_name, rule_key, rule_display_name, action_type, status, metric_name, metric_value, threshold_value, revert_before, created_at')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (args.status && args.status !== 'all') query = query.eq('status', args.status);
+
+  const { data, error } = await query;
+  if (error || !data || data.length === 0) return 'Nenhuma acao do FURY encontrada.';
+
+  let md = `## Acoes do FURY\n\n| Data | Campanha | Regra | Acao | Status | Metrica | Valor | Threshold |\n|------|----------|-------|------|--------|---------|-------|----------|\n`;
+  for (const a of data) {
+    const date = new Date(a.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    md += `| ${date} | ${(a.campaign_name ?? '—').substring(0, 25)} | ${a.rule_display_name ?? a.rule_key} | ${a.action_type} | ${a.status} | ${a.metric_name ?? '—'} | ${a.metric_value ?? '—'} | ${a.threshold_value ?? '—'} |\n`;
+  }
+  return md;
+}
+
+export async function getFuryEvaluations(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { health_filter?: string; limit?: number }
+): Promise<string> {
+  const limit = Math.min(args.limit ?? 10, 50);
+  let query = supabase
+    .from('fury_evaluations')
+    .select('campaign_name, avg_ctr, avg_cpc, avg_frequency, total_spend, daily_cpa, trend_direction, rules_triggered, overall_health, evaluated_at')
+    .eq('company_id', companyId)
+    .order('evaluated_at', { ascending: false })
+    .limit(limit);
+  if (args.health_filter && args.health_filter !== 'all') query = query.eq('overall_health', args.health_filter);
+
+  const { data, error } = await query;
+  if (error || !data || data.length === 0) return 'Nenhuma avaliacao FURY encontrada.';
+
+  let md = `## Avaliacoes FURY\n\n| Campanha | Saude | CTR | CPC | CPA | Freq | Spend 7d | Tendencia | Regras |\n|----------|-------|-----|-----|-----|------|----------|-----------|--------|\n`;
+  for (const e of data) {
+    const rules = (e.rules_triggered as string[] ?? []).join(', ') || '—';
+    md += `| ${(e.campaign_name ?? '—').substring(0, 25)} | ${e.overall_health} | ${Number(e.avg_ctr).toFixed(2)}% | R$${Number(e.avg_cpc).toFixed(2)} | R$${Number(e.daily_cpa).toFixed(2)} | ${Number(e.avg_frequency).toFixed(1)} | R$${Number(e.total_spend).toFixed(2)} | ${e.trend_direction} | ${rules} |\n`;
+  }
+  return md;
+}
+
+export async function getComplianceStatus(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { health_filter?: string; include_violations?: boolean; limit?: number }
+): Promise<string> {
+  const limit = Math.min(args.limit ?? 10, 50);
+  let query = supabase
+    .from('compliance_scores')
+    .select('id, creative_id, external_ad_id, copy_score, image_score, final_score, health_status')
+    .eq('company_id', companyId)
+    .order('scanned_at', { ascending: false })
+    .limit(limit);
+  if (args.health_filter && args.health_filter !== 'all') query = query.eq('health_status', args.health_filter);
+
+  const { data: scores, error } = await query;
+  if (error || !scores || scores.length === 0) return 'Nenhum anuncio analisado pelo compliance.';
+
+  const cIds = [...new Set(scores.map((s) => s.creative_id).filter(Boolean))];
+  const { data: creatives } = await supabase.from('creatives').select('id, name, headline').in('id', cIds);
+  const nameMap = new Map((creatives ?? []).map((c: { id: string; name: string | null; headline: string | null }) => [c.id, c.name ?? c.headline ?? '—']));
+
+  let md = `## Compliance (${scores.length} anuncios)\n\n| Anuncio | Score | Copy | Visual | Status |\n|---------|-------|------|--------|--------|\n`;
+  for (const s of scores) {
+    md += `| ${(nameMap.get(s.creative_id) ?? s.external_ad_id ?? '—').substring(0, 30)} | **${s.final_score}**/100 | ${s.copy_score ?? '—'} | ${s.image_score ?? '—'} | ${s.health_status} |\n`;
+  }
+
+  if (args.include_violations) {
+    const problemIds = scores.filter((s) => s.health_status !== 'healthy').slice(0, 5).map((s) => s.id);
+    if (problemIds.length > 0) {
+      const { data: viols } = await supabase.from('compliance_violations').select('severity, description, evidence').in('score_id', problemIds).limit(20);
+      if (viols && viols.length > 0) {
+        md += `\n### Violacoes\n`;
+        for (const v of viols) md += `- **[${(v.severity as string).toUpperCase()}]** ${v.description}${v.evidence ? ` — _"${v.evidence}"_` : ''}\n`;
+      }
+    }
+  }
+  return md;
+}
+
+// ========== ACTION TOOLS ==========
+
+const GRAPH_VERSION_ACTIONS = 'v22.0';
+
+export async function pauseCampaignAction(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { campaign_name: string }
+): Promise<string> {
+  const { data: campaigns } = await supabase
+    .from('campaigns').select('id, external_id, name, status')
+    .eq('company_id', companyId).ilike('name', `%${args.campaign_name}%`);
+
+  if (!campaigns || campaigns.length === 0) return `Nenhuma campanha encontrada com nome "${args.campaign_name}".`;
+  if (campaigns.length > 1) return `Encontrei ${campaigns.length} campanhas. Seja mais especifico:\n${campaigns.map((c) => `- ${c.name} (${c.status})`).join('\n')}`;
+
+  const campaign = campaigns[0];
+  if (campaign.status === 'PAUSED') return `"${campaign.name}" ja esta pausada.`;
+  if (!campaign.external_id) return `"${campaign.name}" sem ID externo Meta.`;
+
+  const { data: integration } = await supabase.from('integrations').select('access_token').eq('company_id', companyId).eq('platform', 'meta').single();
+  if (!integration?.access_token) return 'Token Meta nao encontrado.';
+  const { data: decrypted } = await supabase.rpc('decrypt_meta_token', { encrypted_token: integration.access_token });
+  if (!decrypted) return 'Falha ao descriptografar token.';
+
+  const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION_ACTIONS}/${campaign.external_id}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: `Bearer ${decrypted}` },
+    body: 'status=PAUSED',
+  });
+  const body = await res.json();
+  if (!res.ok) return `Erro Meta API: ${JSON.stringify(body.error ?? body).substring(0, 200)}`;
+
+  await supabase.from('fury_actions').insert({
+    company_id: companyId, campaign_id: campaign.id, campaign_external_id: campaign.external_id,
+    campaign_name: campaign.name, rule_key: 'manual_chat', rule_display_name: 'Comando via Chat',
+    action_type: 'pause', status: 'executed', performed_by: 'user_chat', meta_api_response: body,
+    revert_before: new Date(Date.now() + 30 * 60_000).toISOString(),
+  });
+  return `Campanha "${campaign.name}" **pausada** com sucesso. Reversivel por 30 min na aba FURY.`;
+}
+
+export async function reactivateCampaignAction(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { campaign_name: string }
+): Promise<string> {
+  const { data: campaigns } = await supabase
+    .from('campaigns').select('id, external_id, name, status')
+    .eq('company_id', companyId).ilike('name', `%${args.campaign_name}%`);
+
+  if (!campaigns || campaigns.length === 0) return `Nenhuma campanha encontrada com nome "${args.campaign_name}".`;
+  if (campaigns.length > 1) return `Encontrei ${campaigns.length} campanhas. Seja mais especifico:\n${campaigns.map((c) => `- ${c.name} (${c.status})`).join('\n')}`;
+
+  const campaign = campaigns[0];
+  if (!campaign.external_id) return `"${campaign.name}" sem ID externo Meta.`;
+
+  const { data: integration } = await supabase.from('integrations').select('access_token').eq('company_id', companyId).eq('platform', 'meta').single();
+  if (!integration?.access_token) return 'Token Meta nao encontrado.';
+  const { data: decrypted } = await supabase.rpc('decrypt_meta_token', { encrypted_token: integration.access_token });
+  if (!decrypted) return 'Falha ao descriptografar token.';
+
+  const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION_ACTIONS}/${campaign.external_id}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: `Bearer ${decrypted}` },
+    body: 'status=ACTIVE',
+  });
+  const body = await res.json();
+  if (!res.ok) return `Erro Meta API: ${JSON.stringify(body.error ?? body).substring(0, 200)}`;
+
+  await supabase.from('fury_actions').insert({
+    company_id: companyId, campaign_id: campaign.id, campaign_external_id: campaign.external_id,
+    campaign_name: campaign.name, rule_key: 'manual_chat', rule_display_name: 'Comando via Chat',
+    action_type: 'revert', status: 'executed', performed_by: 'user_chat', meta_api_response: body,
+  });
+  return `Campanha "${campaign.name}" **reativada** com sucesso!`;
 }

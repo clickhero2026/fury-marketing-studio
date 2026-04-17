@@ -52,10 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user's profile, orgs, and current org data
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // Fetch profile
+      // Fetch profile (colunas explicitas — evita vazar novas colunas sensiveis)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, display_name, avatar_url, current_organization_id, created_at, updated_at')
         .eq('id', userId)
         .single();
 

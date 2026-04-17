@@ -95,6 +95,8 @@ export function useMetaConnect() {
 
       // Listen for postMessage from callback (faster than polling)
       const messageHandler = (event: MessageEvent) => {
+        // SECURITY: so aceita messages da mesma origem — previne spoofing de iframes externos
+        if (event.origin !== window.location.origin) return;
         if (event.data?.type === 'meta-oauth-success') {
           clearInterval(pollInterval);
           window.removeEventListener('message', messageHandler);

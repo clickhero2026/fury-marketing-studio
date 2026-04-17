@@ -10,6 +10,11 @@ import {
   getTopPerformers,
   getDailyMetrics,
   getAccountInfo,
+  getFuryActions,
+  getFuryEvaluations,
+  getComplianceStatus,
+  pauseCampaignAction,
+  reactivateCampaignAction,
 } from '../_shared/data-fetchers.ts';
 
 const MAX_HISTORY_MESSAGES = 20;
@@ -379,6 +384,16 @@ async function executeTool(
         return await getDailyMetrics(supabase, companyId, args as { campaign_name?: string; days?: number });
       case 'get_account_info':
         return await getAccountInfo(supabase, companyId);
+      case 'get_fury_actions':
+        return await getFuryActions(supabase, companyId, args as { status?: string; limit?: number });
+      case 'get_fury_evaluations':
+        return await getFuryEvaluations(supabase, companyId, args as { health_filter?: string; limit?: number });
+      case 'get_compliance_status':
+        return await getComplianceStatus(supabase, companyId, args as { health_filter?: string; include_violations?: boolean; limit?: number });
+      case 'pause_campaign':
+        return await pauseCampaignAction(supabase, companyId, args as { campaign_name: string });
+      case 'reactivate_campaign':
+        return await reactivateCampaignAction(supabase, companyId, args as { campaign_name: string });
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }

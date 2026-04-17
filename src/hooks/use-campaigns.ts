@@ -51,7 +51,9 @@ export function useCampaigns() {
       if (error) throw error;
       return (data ?? []) as CampaignRow[];
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchInterval: 300_000, // 5 min — Dash do Dono real-time
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -68,7 +70,9 @@ export function useCampaignMetrics(days = 30) {
       if (error) throw error;
       return (data ?? []) as MetricRow[];
     },
-    staleTime: 30_000,
+    staleTime: 120_000, // metrics mudam lento, evita re-fetch desnecessario
+    refetchInterval: 300_000,
+    refetchOnWindowFocus: false,
   });
 }
 

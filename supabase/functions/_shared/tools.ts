@@ -153,4 +153,107 @@ export const CHAT_TOOLS = [
       },
     },
   },
+  // ---- FURY tools ----
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_fury_actions',
+      description:
+        'Busca acoes recentes do algoritmo FURY (pausas automaticas, alertas, sugestoes). Use quando o usuario pergunta "o que o FURY fez?", "tem alguma acao pendente?", "quais campanhas foram pausadas?".',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['pending', 'executed', 'reverted', 'all'],
+            description: 'Filtrar por status da acao (default all)',
+          },
+          limit: { type: 'number', description: 'Quantidade (default 10, max 50)' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_fury_evaluations',
+      description:
+        'Busca avaliacoes de performance das campanhas feitas pelo FURY (metricas 7d, tendencia, health status). Use quando o usuario pergunta "como estao minhas campanhas?", "qual campanha precisa de atencao?", "tendencias".',
+      parameters: {
+        type: 'object',
+        properties: {
+          health_filter: {
+            type: 'string',
+            enum: ['healthy', 'attention', 'critical', 'all'],
+            description: 'Filtrar por saude (default all)',
+          },
+          limit: { type: 'number', description: 'Quantidade (default 10)' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_compliance_status',
+      description:
+        'Busca status de compliance dos anuncios (scores, violacoes, takedowns). Use quando o usuario pergunta "tem algum anuncio com problema?", "compliance", "violacoes", "anuncios pausados por compliance".',
+      parameters: {
+        type: 'object',
+        properties: {
+          health_filter: {
+            type: 'string',
+            enum: ['healthy', 'warning', 'critical', 'all'],
+            description: 'Filtrar por health status (default all)',
+          },
+          include_violations: {
+            type: 'boolean',
+            description: 'Incluir detalhes das violacoes (default false)',
+          },
+          limit: { type: 'number', description: 'Quantidade (default 10)' },
+        },
+      },
+    },
+  },
+  // ---- ACTION tools (execute changes) ----
+  {
+    type: 'function' as const,
+    function: {
+      name: 'pause_campaign',
+      description:
+        'Pausa uma campanha ou adset na Meta Ads API. Use quando o usuario pede explicitamente "pausa a campanha X", "desliga essa campanha", "para de rodar X".',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaign_name: {
+            type: 'string',
+            description: 'Nome (parcial) da campanha para pausar',
+          },
+          confirm: {
+            type: 'boolean',
+            description: 'Sempre pedir confirmacao do usuario antes (default true)',
+          },
+        },
+        required: ['campaign_name'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'reactivate_campaign',
+      description:
+        'Reativa uma campanha pausada na Meta Ads API. Use quando o usuario pede "reativa", "liga de novo", "volta a campanha X".',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaign_name: {
+            type: 'string',
+            description: 'Nome (parcial) da campanha para reativar',
+          },
+        },
+        required: ['campaign_name'],
+      },
+    },
+  },
 ];

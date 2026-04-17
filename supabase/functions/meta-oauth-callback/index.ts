@@ -20,7 +20,16 @@ const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:8080';
 
 // Returns HTML that posts message to opener (popup parent) and closes
+// SECURITY: targetOrigin e o APP_URL configurado (NAO '*'), previne vazamento de token
 function popupResponse(payload: Record<string, unknown>): Response {
+  // Extrai origin do APP_URL (ex: https://app.clickhero.com.br → mesma origem)
+  let appOrigin: string;
+  try {
+    appOrigin = new URL(APP_URL).origin;
+  } catch {
+    appOrigin = 'http://localhost:8080';
+  }
+
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>ClickHero</title></head>
@@ -32,9 +41,12 @@ function popupResponse(payload: Record<string, unknown>): Response {
     (function() {
       try {
         if (window.opener) {
-          window.opener.postMessage(${JSON.stringify(payload)}, '*');
+          // SECURITY: target origin restrito (APP_URL). NAO usa window.opener.location (bloqueado cross-origin)
+          window.opener.postMessage(${JSON.stringify(payload)}, ${JSON.stringify(appOrigin)});
         }
-      } catch(e) {}
+      } catch(e) {
+        console.error('[meta-oauth-callback] postMessage failed:', e);
+      }
       setTimeout(function(){ window.close(); }, 500);
     })();
   </script>
@@ -154,6 +166,14 @@ Deno.serve(async (req) => {
     const accountsData = await accountsResp.json();
 
     const adAccounts = accountsData.data ?? [];
+
+    if (adAccounts.length === 0) {
+      console.error('Meta retornou 0 ad accounts — usuario nao tem contas ou permissao ads_management');
+      return popupResponse({
+        type: 'meta-oauth-error',
+        error: 'Nenhuma conta de anuncios encontrada. Confirme que voce tem acesso a pelo menos 1 Ad Account na Meta e que autorizou as permissoes necessarias.',
+      });
+    }
 
     // --- Step 5: Fetch businesses ---
     const businessResp = await fetch(

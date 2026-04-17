@@ -18,15 +18,30 @@ const ChatView = () => {
     sendMessage,
     stopStreaming,
     newConversation,
+    loadProactiveInsights,
   } = useChat();
 
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const proactiveLoaded = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
+
+  // B4: Carrega insights proativos uma vez por sessao do browser (sobrevive remount do ChatView)
+  useEffect(() => {
+    const SESSION_KEY = 'fury_proactive_loaded';
+    if (proactiveLoaded.current) return;
+    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+      proactiveLoaded.current = true;
+      return;
+    }
+    proactiveLoaded.current = true;
+    sessionStorage.setItem(SESSION_KEY, '1');
+    loadProactiveInsights();
+  }, [loadProactiveInsights]);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming) return;
@@ -211,8 +226,8 @@ const ChatView = () => {
           </div>
         )}
 
-        {/* Message bubbles */}
-        {messages.map((msg) => (
+        {/* Message bubbles — oculta mensagens [SISTEMA] do usuario */}
+        {messages.filter((m) => !(m.role === 'user' && m.content.startsWith('[SISTEMA]'))).map((msg) => (
           <div
             key={msg.id}
             className={cn(

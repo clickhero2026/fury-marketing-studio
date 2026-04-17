@@ -339,8 +339,19 @@ async function syncAccount(
 
       const roas = ins.website_purchase_roas?.[0]?.value;
 
+      // Dedup: remove metric antigo da mesma combinacao dia+campanha+adset+ad antes de inserir
+      const metricDate = ins.date_start ?? new Date().toISOString().split('T')[0];
+      let delQ = supabase.from('campaign_metrics')
+        .delete()
+        .eq('company_id', companyId)
+        .eq('data', metricDate);
+      delQ = ins.campaign_name ? delQ.eq('campanha', ins.campaign_name) : delQ.is('campanha', null);
+      delQ = ins.adset_name ? delQ.eq('grupo_anuncios', ins.adset_name) : delQ.is('grupo_anuncios', null);
+      delQ = ins.ad_name ? delQ.eq('anuncios', ins.ad_name) : delQ.is('anuncios', null);
+      await delQ;
+
       await supabase.from('campaign_metrics').insert({
-        data: ins.date_start ?? new Date().toISOString().split('T')[0],
+        data: metricDate,
         nome_conta: accountName,
         campanha: ins.campaign_name ?? null,
         grupo_anuncios: ins.adset_name ?? null,

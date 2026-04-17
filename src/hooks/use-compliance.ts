@@ -131,7 +131,7 @@ export function useComplianceRules() {
       const { data, error } = await supabase
         .from('compliance_rules' as never)
         .select('id, rule_type, value, severity, source, is_active')
-        .eq('rule_type', 'blacklist_term')
+        .in('rule_type', ['blacklist_term', 'required_term'])
         .order('severity', { ascending: false });
       if (error) throw error;
       return (data ?? []) as ComplianceRule[];
@@ -140,11 +140,11 @@ export function useComplianceRules() {
   });
 
   const addRule = useMutation({
-    mutationFn: async (rule: { value: string; severity: 'info' | 'warning' | 'critical' }) => {
+    mutationFn: async (rule: { value: string; severity: 'info' | 'warning' | 'critical'; ruleType?: string }) => {
       const { error } = await supabase
         .from('compliance_rules' as never)
         .insert({
-          rule_type: 'blacklist_term',
+          rule_type: rule.ruleType ?? 'blacklist_term',
           value: rule.value.toLowerCase().trim(),
           severity: rule.severity,
           source: 'user',
@@ -249,4 +249,152 @@ export function useComplianceStats() {
     },
     staleTime: 30_000,
   });
+}
+
+// ============================================================
+// useTakedownHistory — log de compliance_actions paginado
+// ============================================================
+
+export interface TakedownAction {
+  id: string;
+  action_type: string;
+  external_ad_id: string | null;
+  reason: string | null;
+  performed_by: string;
+  created_at: string;
+  creative_name?: string;
+  creative_image_url?: string;
+  score_final?: number;
+}
+
+export function useTakedownHistory() {
+  return useQuery<TakedownAction[]>({
+    queryKey: ['takedown-history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('compliance_actions' as never)
+        .select('id, action_type, external_ad_id, reason, performed_by, created_at, creative_id, score_id')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+
+      const actions = (data ?? []) as Array<TakedownAction & { creative_id?: string; score_id?: string }>;
+
+      // Enrich with creative names + scores
+      const creativeIds = [...new Set(actions.map((a) => a.creative_id).filter(Boolean))];
+      const scoreIds = [...new Set(actions.map((a) => a.score_id).filter(Boolean))];
+
+      const [creativesRes, scoresRes] = await Promise.all([
+        creativeIds.length > 0
+          ? supabase.from('creatives').select('id, name, image_url').in('id', creativeIds)
+          : { data: [] },
+        scoreIds.length > 0
+          ? supabase.from('compliance_scores' as never).select('id, final_score').in('id', scoreIds)
+          : { data: [] },
+      ]);
+
+      const creativeMap = new Map((creativesRes.data ?? []).map((c: { id: string; name: string; image_url: string }) => [c.id, c]));
+      const scoreMap = new Map(((scoresRes.data ?? []) as Array<{ id: string; final_score: number }>).map((s) => [s.id, s]));
+
+      return actions.map((a) => {
+        const c = creativeMap.get(a.creative_id ?? '');
+        const s = scoreMap.get(a.score_id ?? '');
+        return {
+          id: a.id,
+          action_type: a.action_type,
+          external_ad_id: a.external_ad_id,
+          reason: a.reason,
+          performed_by: a.performed_by,
+          created_at: a.created_at,
+          creative_name: (c as { name?: string })?.name ?? undefined,
+          creative_image_url: (c as { image_url?: string })?.image_url ?? undefined,
+          score_final: s?.final_score,
+        };
+      });
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ============================================================
+// useReactivateAd — POST /{ad_id}?status=ACTIVE via meta-sync
+// ============================================================
+
+export function useReactivateAd() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ adId, creativeId }: { adId: string; creativeId?: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Nao autenticado');
+
+      // Reactivate via direct function invoke
+      const { data, error } = await supabase.functions.invoke('compliance-scan', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { reactivate_ad_id: adId, creative_id: creativeId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['takedown-history'] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-stats'] });
+      toast({ title: 'Anuncio reativado', description: 'Status alterado para ACTIVE na Meta.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao reativar', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ============================================================
+// useBrandGuide — brand_colors + brand_logo_url CRUD
+// ============================================================
+
+export interface BrandGuide {
+  brand_colors: string[];
+  brand_logo_url: string | null;
+}
+
+export function useBrandGuide() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const query = useQuery<BrandGuide>({
+    queryKey: ['brand-guide'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('brand_colors, brand_logo_url')
+        .single();
+      if (error) throw error;
+      return {
+        brand_colors: (data?.brand_colors as string[] | null) ?? [],
+        brand_logo_url: (data?.brand_logo_url as string | null) ?? null,
+      };
+    },
+  });
+
+  const update = useMutation({
+    mutationFn: async (guide: Partial<BrandGuide>) => {
+      // RLS garante que so a company do user autenticado e visivel
+      const { data: co } = await supabase.from('companies').select('id').single();
+      if (!co?.id) throw new Error('Empresa nao encontrada');
+      const { error } = await supabase
+        .from('companies')
+        .update(guide as never)
+        .eq('id', co.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brand-guide'] });
+      toast({ title: 'Brand Guide salvo' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  return { brandGuide: query.data, isLoading: query.isLoading, updateBrandGuide: update };
 }

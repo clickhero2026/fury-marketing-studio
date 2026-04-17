@@ -65,6 +65,90 @@ interface Creative {
 }
 
 // ============================================================
+// Webhook + Email helpers
+// ============================================================
+
+async function dispatchWebhook(
+  webhookUrl: string,
+  payload: Record<string, unknown>,
+): Promise<boolean> {
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[compliance] Webhook dispatch failed:', err);
+    return false;
+  }
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildEmailHtml(data: {
+  adName: string;
+  adId: string;
+  score: number;
+  imageUrl?: string;
+  violations: Array<{ severity: string; description: string }>;
+  action: string;
+}): string {
+  const sevColors: Record<string, string> = { critical: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+  const violationsList = data.violations
+    .map((v) => `<li style="margin:4px 0"><span style="color:${sevColors[v.severity] ?? '#888'};font-weight:bold">[${escapeHtml(v.severity).toUpperCase()}]</span> ${escapeHtml(v.description)}</li>`)
+    .join('');
+
+  return `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#111;color:#eee;padding:24px;border-radius:12px">
+  <h2 style="color:#ef4444;margin:0 0 16px">Anuncio Pausado Automaticamente</h2>
+  ${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:16px" />` : ''}
+  <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+    <tr><td style="padding:6px 0;color:#888">Anuncio</td><td style="padding:6px 0;font-weight:bold">${escapeHtml(data.adName)}</td></tr>
+    <tr><td style="padding:6px 0;color:#888">ID Meta</td><td style="padding:6px 0;font-family:monospace">${escapeHtml(data.adId)}</td></tr>
+    <tr><td style="padding:6px 0;color:#888">Score</td><td style="padding:6px 0"><strong style="color:#ef4444;font-size:18px">${data.score}/100</strong></td></tr>
+    <tr><td style="padding:6px 0;color:#888">Acao</td><td style="padding:6px 0">${escapeHtml(data.action)}</td></tr>
+  </table>
+  <h3 style="color:#f59e0b;margin:0 0 8px">Violacoes Detectadas</h3>
+  <ul style="padding-left:20px;margin:0 0 16px">${violationsList}</ul>
+  <a href="https://app.clickhero.com.br/compliance" style="display:inline-block;padding:10px 20px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Ver no Dashboard</a>
+  <p style="margin:16px 0 0;color:#666;font-size:12px">ClickHero — Smart Takedown + Compliance</p>
+</div>`;
+}
+
+async function sendAlertEmail(
+  resendKey: string,
+  to: string,
+  subject: string,
+  html: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from: 'ClickHero <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        html,
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[compliance] Email send failed:', err);
+    return false;
+  }
+}
+
+// ============================================================
 // Claude API helper
 // ============================================================
 
@@ -117,6 +201,7 @@ async function analyzeCopy(
   apiKey: string,
   creative: Creative,
   blacklistTerms: string[],
+  requiredTerms: string[],
 ): Promise<CopyAnalysis> {
   const copy = [
     creative.headline ? `Headline: ${creative.headline}` : '',
@@ -125,7 +210,13 @@ async function analyzeCopy(
   ].filter(Boolean).join('\n');
 
   if (!copy.trim()) {
-    return { score: 100, violations: [] };
+    // Se nao tem copy mas tem termos obrigatorios, todos estao ausentes
+    const violations: ViolationRaw[] = requiredTerms.map((t) => ({
+      type: 'missing_required_term', severity: 'warning' as const,
+      description: `Termo obrigatorio ausente: "${t}"`, evidence: '',
+    }));
+    const score = Math.max(0, 100 - violations.length * 20);
+    return { score, violations };
   }
 
   const systemPrompt = `Voce e um especialista em compliance de anuncios Meta Ads.
@@ -137,7 +228,8 @@ Regras de pontuacao:
 - Cada info deduz 5 pontos
 - Score comeca em 100, minimo 0
 - Sem violacoes = score 100
-- Considere: linguagem enganosa, promessas impossiveis, termos proibidos Meta, urgencia falsa, claims sem evidencia`;
+- Considere: linguagem enganosa, promessas impossiveis, termos proibidos Meta, urgencia falsa, claims sem evidencia
+- Termos OBRIGATORIOS que devem aparecer no copy — se ausente, criar violacao missing_required_term`;
 
   const userText = `COPY DO ANUNCIO:
 ${copy}
@@ -145,8 +237,11 @@ ${copy}
 TERMOS PROIBIDOS DO TENANT:
 ${blacklistTerms.length > 0 ? blacklistTerms.join(', ') : '(nenhum configurado)'}
 
+TERMOS OBRIGATORIOS (devem aparecer no copy):
+${requiredTerms.length > 0 ? requiredTerms.join(', ') : '(nenhum configurado)'}
+
 Retorne este JSON exato:
-{"score": <0-100>, "violations": [{"type": "blacklist_term|misleading_language|unfulfillable_promise|meta_policy_violation", "severity": "info|warning|critical", "description": "<descricao>", "evidence": "<trecho>"}]}`;
+{"score": <0-100>, "violations": [{"type": "blacklist_term|misleading_language|unfulfillable_promise|meta_policy_violation|missing_required_term", "severity": "info|warning|critical", "description": "<descricao>", "evidence": "<trecho>"}]}`;
 
   const raw = await callClaude(apiKey, systemPrompt, [{ type: 'text', text: userText }]);
   const parsed = parseJsonResponse<CopyAnalysis>(raw);
@@ -172,7 +267,13 @@ async function fetchImageAsBase64(url: string): Promise<{ base64: string; mediaT
 
     const contentType = res.headers.get('content-type') ?? 'image/jpeg';
     const buf = await res.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    // Chunk-safe base64 — spread operator crashes on buffers > ~100KB
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    }
+    const base64 = btoa(binary);
 
     const mediaType = contentType.includes('png') ? 'image/png'
       : contentType.includes('webp') ? 'image/webp'
@@ -189,6 +290,8 @@ async function analyzeImage(
   apiKey: string,
   imageUrl: string,
   blacklistTerms: string[],
+  brandColors: string[],
+  brandLogoUrl: string | null,
 ): Promise<ImageAnalysis | null> {
   const img = await fetchImageAsBase64(imageUrl);
   if (!img) return null;
@@ -202,25 +305,49 @@ Regras de pontuacao:
 - Cada info deduz 5 pontos
 - Score comeca em 100, minimo 0`;
 
+  const colorSection = brandColors.length > 0
+    ? `\nCORES DA MARCA (hex): ${brandColors.join(', ')}\nVerifique se o criativo usa predominantemente essas cores. Se usar cores muito diferentes, crie violacao brand_mismatch severity warning.`
+    : '';
+
+  const logoSection = brandLogoUrl
+    ? `\nLOGO DA MARCA: A primeira imagem e o logo da marca. Verifique se o logo (ou versao similar) aparece no criativo (segunda imagem). Se ausente, crie violacao brand_mismatch severity warning com description "Logo da marca ausente no criativo".`
+    : '';
+
   const userText = `TERMOS PROIBIDOS:
 ${blacklistTerms.length > 0 ? blacklistTerms.join(', ') : '(nenhum)'}
+${colorSection}${logoSection}
 
 Tarefas:
 1. Extraia TODO texto visivel na imagem (OCR)
 2. Verifique se algum termo proibido aparece
 3. Detecte claims visuais problematicos (antes/depois, numeros sem fonte)
 4. Avalie elementos enganosos
+${brandColors.length > 0 ? '5. Avalie aderencia as cores da marca' : ''}
+${brandLogoUrl ? '6. Verifique presenca do logo da marca' : ''}
 
 Retorne este JSON exato:
 {"ocr_text": "<texto extraido>", "score": <0-100>, "violations": [{"type": "ocr_text_violation|visual_claim|brand_mismatch", "severity": "info|warning|critical", "description": "<descricao>", "evidence": "<texto ou elemento>"}]}`;
 
-  const raw = await callClaude(apiKey, systemPrompt, [
-    {
-      type: 'image',
-      source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
-    },
-    { type: 'text', text: userText },
-  ]);
+  // Build content array — logo first (if available), then creative
+  const contentParts: Array<{ type: string; [key: string]: unknown }> = [];
+
+  if (brandLogoUrl) {
+    const logoImg = await fetchImageAsBase64(brandLogoUrl);
+    if (logoImg) {
+      contentParts.push({
+        type: 'image',
+        source: { type: 'base64', media_type: logoImg.mediaType, data: logoImg.base64 },
+      });
+    }
+  }
+
+  contentParts.push({
+    type: 'image',
+    source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+  });
+  contentParts.push({ type: 'text', text: userText });
+
+  const raw = await callClaude(apiKey, systemPrompt, contentParts);
 
   const parsed = parseJsonResponse<ImageAnalysis>(raw);
   if (!parsed || typeof parsed.score !== 'number') return null;
@@ -314,6 +441,18 @@ async function executeTakedown(
 // Main scan orchestrator
 // ============================================================
 
+interface BrandConfig {
+  brandColors: string[];
+  brandLogoUrl: string | null;
+  takedownSeverityFilter: 'any' | 'critical';
+}
+
+interface NotifConfig {
+  webhookUrl: string | null;
+  email: string | null;
+  resendKey: string | null;
+}
+
 async function scanCreative(
   supabase: SupabaseClient,
   apiKey: string,
@@ -321,18 +460,21 @@ async function scanCreative(
   companyId: string,
   creative: Creative,
   blacklistTerms: string[],
+  requiredTerms: string[],
   autoTakedown: boolean,
   takedownThreshold: number,
+  brand: BrandConfig,
+  notif: NotifConfig,
   stats: ScanStats,
 ): Promise<void> {
   try {
-    // 1. Analyze copy
-    const copyResult = await analyzeCopy(apiKey, creative, blacklistTerms);
+    // 1. Analyze copy (with required terms)
+    const copyResult = await analyzeCopy(apiKey, creative, blacklistTerms, requiredTerms);
 
-    // 2. Analyze image (if available and is image type)
+    // 2. Analyze image (with brand colors + logo)
     let imageResult: ImageAnalysis | null = null;
     if (creative.image_url && creative.type !== 'VIDEO') {
-      imageResult = await analyzeImage(apiKey, creative.image_url, blacklistTerms);
+      imageResult = await analyzeImage(apiKey, creative.image_url, blacklistTerms, brand.brandColors, brand.brandLogoUrl);
     }
 
     // 3. Calculate final score
@@ -373,12 +515,18 @@ async function scanCreative(
 
     if (allViolations.length > 0) {
       const POINTS: Record<string, number> = { critical: 40, warning: 20, info: 5 };
+      const VALID_TYPES = new Set([
+        'blacklist_term', 'misleading_language', 'unfulfillable_promise',
+        'meta_policy_violation', 'visual_claim', 'brand_mismatch',
+        'ocr_text_violation', 'missing_required_term',
+      ]);
+      const VALID_SEVERITIES = new Set(['info', 'warning', 'critical']);
       const violationRows = allViolations.map((v) => ({
         company_id: companyId,
         score_id: scoreRow.id,
         creative_id: creative.id,
-        violation_type: v.type || 'meta_policy_violation',
-        severity: v.severity || 'info',
+        violation_type: VALID_TYPES.has(v.type) ? v.type : 'meta_policy_violation',
+        severity: VALID_SEVERITIES.has(v.severity) ? v.severity : 'info',
         description: (v.description || '').slice(0, 500),
         evidence: (v.evidence || '').slice(0, 300),
         points_deducted: POINTS[v.severity] ?? 5,
@@ -393,11 +541,52 @@ async function scanCreative(
     else if (healthStatus === 'warning') stats.ads_warning++;
     else stats.ads_healthy++;
 
-    // 7. Auto-takedown if enabled and critical
+    // 7. Auto-takedown if enabled and score below threshold
     if (autoTakedown && metaToken && finalScore < takedownThreshold) {
-      const reason = `Score ${finalScore}/100 (threshold ${takedownThreshold}). ${allViolations.filter((v) => v.severity === 'critical').length} violacao(oes) critica(s).`;
-      const paused = await executeTakedown(supabase, metaToken, companyId, creative, scoreRow.id, reason);
-      if (paused) stats.ads_paused++;
+      // Filtro por severidade: se 'critical', so pausa quando ha violacao critical
+      const criticalCount = allViolations.filter((v) => v.severity === 'critical').length;
+      const shouldTakedown = brand.takedownSeverityFilter === 'any' || criticalCount > 0;
+
+      if (shouldTakedown) {
+        const reason = `Score ${finalScore}/100 (threshold ${takedownThreshold}). ${criticalCount} violacao(oes) critica(s).`;
+        const paused = await executeTakedown(supabase, metaToken, companyId, creative, scoreRow.id, reason);
+        if (paused) {
+          stats.ads_paused++;
+
+          // --- Notifications (fire-and-forget, nao bloqueia scan) ---
+          const violationSummary = allViolations.map((v) => ({
+            type: v.type, severity: v.severity, description: v.description,
+          }));
+
+          // Webhook
+          if (notif.webhookUrl) {
+            dispatchWebhook(notif.webhookUrl, {
+              event: 'compliance.takedown',
+              timestamp: new Date().toISOString(),
+              ad_id: creative.external_id,
+              ad_name: creative.name ?? creative.headline ?? 'Anuncio',
+              score: finalScore,
+              violations: violationSummary,
+              action: 'auto_paused',
+              company_id: companyId,
+            });
+          }
+
+          // Email
+          if (notif.email && notif.resendKey) {
+            const adName = creative.name ?? creative.headline ?? 'Anuncio sem nome';
+            const html = buildEmailHtml({
+              adName,
+              adId: creative.external_id ?? '',
+              score: finalScore,
+              imageUrl: creative.image_url ?? undefined,
+              violations: violationSummary,
+              action: 'Pausado automaticamente',
+            });
+            sendAlertEmail(notif.resendKey, notif.email, `[ClickHero] Anuncio pausado: ${adName}`, html);
+          }
+        }
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -423,7 +612,10 @@ Deno.serve(async (req) => {
 
   // ---- Auth: dual JWT | x-cron-secret ----
   let companyId: string;
-  let body: { company_id?: string } = {};
+  let body: {
+    company_id?: string; reactivate_ad_id?: string; creative_id?: string;
+    fast_mode?: boolean; test_webhook?: boolean; test_email?: boolean;
+  } = {};
   try { body = await req.json(); } catch { body = {}; }
 
   const cronSecret = req.headers.get('x-cron-secret');
@@ -474,19 +666,41 @@ Deno.serve(async (req) => {
     companyId = company.id;
   }
 
-  // ---- Get ANTHROPIC_API_KEY from Vault ----
-  let apiKey: string;
-  const { data: anthropicKey, error: keyErr } = await supabaseAdmin.rpc('get_vault_secret', { secret_name: 'ANTHROPIC_API_KEY' });
-  if (keyErr || !anthropicKey) {
-    const envKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!envKey) {
-      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
+  // ---- Reactivate ad (special mode) ----
+  if (body.reactivate_ad_id) {
+    const { data: integration } = await supabaseAdmin
+      .from('integrations').select('access_token').eq('company_id', companyId).eq('platform', 'meta').single();
+    if (!integration?.access_token) {
+      return new Response(JSON.stringify({ error: 'Integracao Meta nao encontrada' }), {
+        status: 404, headers: { ...cors, 'Content-Type': 'application/json' },
+      });
+    }
+    const { data: decrypted } = await supabaseAdmin.rpc('decrypt_meta_token', { encrypted_token: integration.access_token });
+    if (!decrypted) {
+      return new Response(JSON.stringify({ error: 'Falha ao descriptografar token' }), {
         status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
-    apiKey = envKey;
-  } else {
-    apiKey = anthropicKey as string;
+    const res = await fetch(`${GRAPH_BASE}/${body.reactivate_ad_id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: `Bearer ${decrypted}` },
+      body: 'status=ACTIVE',
+    });
+    const metaResp = await res.json();
+    if (res.ok) {
+      await supabaseAdmin.from('compliance_actions').insert({
+        company_id: companyId,
+        creative_id: body.creative_id ?? null,
+        action_type: 'reactivated',
+        external_ad_id: body.reactivate_ad_id,
+        reason: 'Reativado manualmente pelo usuario',
+        meta_api_response: metaResp,
+        performed_by: 'user',
+      });
+    }
+    return new Response(JSON.stringify({ success: res.ok, meta_response: metaResp }), {
+      status: res.ok ? 200 : 502, headers: { ...cors, 'Content-Type': 'application/json' },
+    });
   }
 
   // ---- Get Meta token (for takedowns) ----
@@ -505,27 +719,95 @@ Deno.serve(async (req) => {
     if (decrypted) metaToken = decrypted as string;
   }
 
-  // ---- Get company settings ----
+  // ---- Get company settings (brand guide + takedown + notifications — single query) ----
   const { data: companySettings } = await supabaseAdmin
     .from('companies')
-    .select('auto_takedown_enabled, takedown_threshold')
+    .select('auto_takedown_enabled, takedown_threshold, takedown_severity_filter, brand_colors, brand_logo_url, notification_webhook_url, notification_email')
     .eq('id', companyId)
     .single();
 
   const autoTakedown = companySettings?.auto_takedown_enabled ?? false;
   const takedownThreshold = companySettings?.takedown_threshold ?? 50;
+  const brand: BrandConfig = {
+    brandColors: (companySettings?.brand_colors as string[] | null) ?? [],
+    brandLogoUrl: (companySettings?.brand_logo_url as string | null) ?? null,
+    takedownSeverityFilter: ((companySettings?.takedown_severity_filter as string) === 'any' ? 'any' : 'critical'),
+  };
 
-  // ---- Get blacklist terms ----
+  // ---- Get compliance rules (blacklist + required) ----
   const { data: rules } = await supabaseAdmin
     .from('compliance_rules')
-    .select('value')
+    .select('value, rule_type')
     .eq('company_id', companyId)
-    .eq('rule_type', 'blacklist_term')
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .in('rule_type', ['blacklist_term', 'required_term']);
 
-  const blacklistTerms = (rules ?? []).map((r) => r.value);
+  const blacklistTerms = (rules ?? []).filter((r) => r.rule_type === 'blacklist_term').map((r) => r.value);
+  const requiredTerms = (rules ?? []).filter((r) => r.rule_type === 'required_term').map((r) => r.value);
 
-  // ---- Fetch creatives not scanned in 24h ----
+  // ---- Notification config ----
+  let resendKey: string | null = null;
+  if (companySettings?.notification_email) {
+    const envResend = Deno.env.get('RESEND_API_KEY');
+    if (envResend) {
+      resendKey = envResend;
+    } else {
+      const { data: vaultResend } = await supabaseAdmin.rpc('get_vault_secret', { secret_name: 'RESEND_API_KEY' });
+      if (vaultResend) resendKey = vaultResend as string;
+    }
+  }
+
+  const notif: NotifConfig = {
+    webhookUrl: (companySettings?.notification_webhook_url as string | null) ?? null,
+    email: (companySettings?.notification_email as string | null) ?? null,
+    resendKey,
+  };
+
+  // ---- Test handlers (webhook/email) ----
+  if (body.test_webhook && notif.webhookUrl) {
+    const ok = await dispatchWebhook(notif.webhookUrl, {
+      event: 'compliance.test', timestamp: new Date().toISOString(),
+      message: 'Teste de webhook do ClickHero Compliance', company_id: companyId,
+    });
+    return new Response(JSON.stringify({ success: ok, type: 'webhook_test' }), {
+      status: 200, headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  }
+  if (body.test_email && notif.email && notif.resendKey) {
+    const html = buildEmailHtml({
+      adName: 'Anuncio de Teste',
+      adId: '123456789',
+      score: 25,
+      violations: [
+        { severity: 'critical', description: 'Teste: termo proibido detectado' },
+        { severity: 'warning', description: 'Teste: linguagem exagerada' },
+      ],
+      action: 'Simulacao de pausa automatica',
+    });
+    const ok = await sendAlertEmail(notif.resendKey, notif.email, '[ClickHero] Teste de alerta', html);
+    return new Response(JSON.stringify({ success: ok, type: 'email_test' }), {
+      status: 200, headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // ---- Get ANTHROPIC_API_KEY (only needed for actual scans, not test handlers) ----
+  let apiKey: string;
+  const { data: anthropicKey, error: keyErr } = await supabaseAdmin.rpc('get_vault_secret', { secret_name: 'ANTHROPIC_API_KEY' });
+  if (keyErr || !anthropicKey) {
+    const envKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!envKey) {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
+        status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
+      });
+    }
+    apiKey = envKey;
+  } else {
+    apiKey = anthropicKey as string;
+  }
+
+  // ---- Fetch creatives ----
+  const isFastMode = !!body.fast_mode;
+  const maxAds = isFastMode ? 10 : MAX_ADS_PER_RUN;
   const oneDayAgo = new Date(Date.now() - 24 * 3600_000).toISOString();
 
   const { data: creatives } = await supabaseAdmin
@@ -534,7 +816,7 @@ Deno.serve(async (req) => {
     .eq('company_id', companyId)
     .eq('platform', 'meta')
     .order('created_at', { ascending: true })
-    .limit(MAX_ADS_PER_RUN);
+    .limit(maxAds);
 
   if (!creatives || creatives.length === 0) {
     return new Response(JSON.stringify({ status: 'success', message: 'Nenhum criativo para analisar', stats: { ads_analyzed: 0 } }), {
@@ -542,18 +824,28 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Filter out recently scanned
-  const { data: recentScores } = await supabaseAdmin
-    .from('compliance_scores')
-    .select('creative_id')
-    .eq('company_id', companyId)
-    .gte('scanned_at', oneDayAgo);
-
-  const recentIds = new Set((recentScores ?? []).map((s) => s.creative_id));
-  const toScan = creatives.filter((c) => !recentIds.has(c.id));
+  // Filter: fast_mode = only unscanned; normal = not scanned in 24h
+  let toScan: typeof creatives;
+  if (isFastMode) {
+    const { data: allScored } = await supabaseAdmin
+      .from('compliance_scores')
+      .select('creative_id')
+      .eq('company_id', companyId);
+    const scoredIds = new Set((allScored ?? []).map((s) => s.creative_id));
+    toScan = creatives.filter((c) => !scoredIds.has(c.id));
+  } else {
+    const { data: recentScores } = await supabaseAdmin
+      .from('compliance_scores')
+      .select('creative_id')
+      .eq('company_id', companyId)
+      .gte('scanned_at', oneDayAgo);
+    const recentIds = new Set((recentScores ?? []).map((s) => s.creative_id));
+    toScan = creatives.filter((c) => !recentIds.has(c.id));
+  }
 
   if (toScan.length === 0) {
-    return new Response(JSON.stringify({ status: 'success', message: 'Todos criativos ja analisados nas ultimas 24h', stats: { ads_analyzed: 0 } }), {
+    const msg = isFastMode ? 'Nenhum criativo novo para analisar' : 'Todos criativos ja analisados nas ultimas 24h';
+    return new Response(JSON.stringify({ status: 'success', message: msg, stats: { ads_analyzed: 0 } }), {
       status: 200, headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
@@ -578,13 +870,13 @@ Deno.serve(async (req) => {
     return out;
   };
 
-  for (const batch of chunks(toScan.slice(0, MAX_ADS_PER_RUN), BATCH_SIZE)) {
+  for (const batch of chunks(toScan.slice(0, maxAds), BATCH_SIZE)) {
     // Sequential within batch to respect Anthropic rate limit
     for (const creative of batch) {
       await scanCreative(
         supabaseAdmin, apiKey, metaToken, companyId,
-        creative as Creative, blacklistTerms,
-        autoTakedown, takedownThreshold, stats,
+        creative as Creative, blacklistTerms, requiredTerms,
+        autoTakedown, takedownThreshold, brand, notif, stats,
       );
     }
   }

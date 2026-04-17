@@ -1,10 +1,10 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Settings, Plus, Plug } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget";
 
 interface AppSidebarProps {
   currentView: View;
@@ -17,6 +17,9 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "creatives", label: "Criativos", icon: ImagePlus },
   { id: "analysis", label: "Analise", icon: TrendingUp },
   { id: "compliance", label: "Compliance", icon: ShieldCheck },
+  { id: "fury", label: "FURY", icon: Zap },
+  { id: "publisher", label: "Publicar", icon: Rocket },
+  { id: "budget", label: "Orcamento Smart", icon: Wallet },
 ];
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {

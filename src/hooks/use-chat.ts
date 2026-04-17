@@ -158,6 +158,12 @@ export function useChat() {
     setStatus(null);
   }, []);
 
+  // B4: Insights proativos — envia mensagem automatica ao criar nova conversa
+  const loadProactiveInsights = useCallback(() => {
+    if (messages.length > 0 || isStreaming) return;
+    sendMessage('[SISTEMA] Resuma brevemente: acoes FURY pendentes, campanhas criticas, e alertas de compliance. Se tudo estiver ok, cumprimente e pergunte como posso ajudar.');
+  }, [messages.length, isStreaming, sendMessage]);
+
   return {
     messages,
     isStreaming,
@@ -166,5 +172,6 @@ export function useChat() {
     sendMessage,
     stopStreaming,
     newConversation,
+    loadProactiveInsights,
   };
 }

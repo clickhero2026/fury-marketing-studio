@@ -6,6 +6,7 @@ import { useComplianceScan } from '@/hooks/use-compliance';
 import { ComplianceDashboard } from './ComplianceDashboard';
 import { ComplianceTable } from './ComplianceTable';
 import { ComplianceSettings } from './ComplianceSettings';
+import { TakedownHistory } from './TakedownHistory';
 
 export default function ComplianceView() {
   const { scan, isScanning } = useComplianceScan();
@@ -37,6 +38,7 @@ export default function ComplianceView() {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="anuncios">Anuncios</TabsTrigger>
             <TabsTrigger value="configuracoes">Configuracoes</TabsTrigger>
+            <TabsTrigger value="historico">Historico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-4">
@@ -49,6 +51,10 @@ export default function ComplianceView() {
 
           <TabsContent value="configuracoes" className="mt-4">
             <ComplianceSettings />
+          </TabsContent>
+
+          <TabsContent value="historico" className="mt-4">
+            <TakedownHistory />
           </TabsContent>
         </Tabs>
       </div>

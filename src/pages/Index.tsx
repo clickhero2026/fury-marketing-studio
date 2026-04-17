@@ -5,8 +5,11 @@ import DashboardView from "@/components/DashboardView";
 import CreativesView from "@/components/CreativesView";
 import AnalysisView from "@/components/AnalysisView";
 import ComplianceView from "@/components/compliance/ComplianceView";
+import FuryView from "@/components/fury/FuryView";
+import CampaignPublisherView from "@/components/publisher/CampaignPublisherView";
+import BudgetSmartView from "@/components/budget/BudgetSmartView";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget";
 
 const viewTitles: Record<View, string> = {
   chat: "Assistente IA",
@@ -14,6 +17,9 @@ const viewTitles: Record<View, string> = {
   creatives: "Criativos",
   analysis: "Analise",
   compliance: "Compliance",
+  fury: "FURY",
+  publisher: "Publicar Campanha",
+  budget: "Orcamento Smart",
 };
 
 const Index = () => {
@@ -34,6 +40,9 @@ const Index = () => {
           {currentView === "creatives" && <CreativesView />}
           {currentView === "analysis" && <AnalysisView />}
           {currentView === "compliance" && <ComplianceView />}
+          {currentView === "fury" && <FuryView />}
+          {currentView === "publisher" && <CampaignPublisherView />}
+          {currentView === "budget" && <BudgetSmartView />}
         </div>
       </main>
     </div>
