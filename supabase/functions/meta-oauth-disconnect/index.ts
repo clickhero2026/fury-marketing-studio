@@ -104,32 +104,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Delete cascata manual — TODAS as tabelas que podem ter integration_id FK
-    // Defensive: loga erro mas nao bloqueia (permite parcial cleanup)
-    const cleanupTables = [
-      'meta_ad_accounts',
-      'meta_pages',
-      'meta_business_managers',
-      'meta_api_rate_limit',
-      'meta_scan_logs',
-      'campaigns',
-      'adsets',
-      'creatives',
-    ];
-    const cleanupErrors: Array<{ table: string; error: string }> = [];
-
-    for (const table of cleanupTables) {
-      const { error: delErr } = await supabaseAdmin
-        .from(table)
-        .delete()
-        .eq('integration_id', integration.id);
-      if (delErr && delErr.code !== '42703' /* column doesn't exist — ignore */) {
-        console.error(`[disconnect] Failed to clean ${table}:`, delErr);
-        cleanupErrors.push({ table, error: delErr.message });
-      }
-    }
-
-    // Finalmente deletar integration
+    // DELETE em integrations — cascata automatica via FKs ON DELETE CASCADE
+    // para: meta_ad_accounts, meta_pages, meta_business_managers, meta_api_rate_limit,
+    // meta_scan_logs, campaigns, adsets, creatives, fury_*, compliance_*
     const { error: deleteError } = await supabaseAdmin
       .from('integrations')
       .delete()
@@ -143,7 +120,6 @@ Deno.serve(async (req) => {
           details: deleteError.details ?? null,
           hint: deleteError.hint ?? null,
           code: deleteError.code ?? null,
-          cleanup_errors: cleanupErrors,
         }),
         { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
