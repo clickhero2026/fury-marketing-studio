@@ -104,7 +104,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Delete integration from our database
+    // Delete tudo em ordem correta (FKs apontam pra integrations)
+    // 1. Dependentes diretos da integration
+    await supabaseAdmin.from('meta_ad_accounts').delete().eq('integration_id', integration.id);
+    await supabaseAdmin.from('meta_pages').delete().eq('integration_id', integration.id);
+    await supabaseAdmin.from('meta_business_managers').delete().eq('integration_id', integration.id);
+
+    // 2. Dados do company relacionados (nao tem FK direta mas user espera reset completo)
+    await supabaseAdmin.from('meta_api_rate_limit').delete().eq('integration_id', integration.id);
+    await supabaseAdmin.from('meta_scan_logs').delete().eq('integration_id', integration.id);
+
+    // 3. Finalmente deletar integration
     const { error: deleteError } = await supabaseAdmin
       .from('integrations')
       .delete()
@@ -113,12 +123,12 @@ Deno.serve(async (req) => {
     if (deleteError) {
       console.error('Failed to delete integration:', deleteError);
       return new Response(
-        JSON.stringify({ error: 'Falha ao remover integração' }),
+        JSON.stringify({ error: `Falha ao remover integracao: ${deleteError.message}` }),
         { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Clean up any oauth_sessions for this user
+    // 4. Cleanup oauth_sessions
     await supabaseAdmin
       .from('oauth_sessions')
       .delete()
