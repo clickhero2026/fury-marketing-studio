@@ -73,7 +73,7 @@ export function DashKpiGrid({ currentMetrics, previousMetrics, loading }: Props)
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
       {cards.map((c) => (
         <KpiCard
           key={c.title}

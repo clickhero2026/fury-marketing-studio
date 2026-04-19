@@ -81,7 +81,7 @@ const DashboardView = () => {
   const error = metricsQ.isError;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 overflow-y-auto h-full">
+    <div className="p-4 md:p-6 xl:p-8 space-y-4 md:space-y-6 overflow-y-auto h-full">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -130,13 +130,13 @@ const DashboardView = () => {
         />
       )}
 
-      {/* Charts + Timeline (2 col desktop, 1 col mobile) */}
+      {/* Charts + Timeline — stack em telas medias, lado a lado em xl (≥1280px) */}
       {!error && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div className="xl:col-span-2">
             <DashCharts metrics={currentMetrics} loading={loading} />
           </div>
-          <div className="lg:col-span-1 min-h-[600px]">
+          <div className="xl:col-span-1 min-h-[400px] xl:min-h-[600px]">
             <DashFuryTimeline />
           </div>
         </div>
