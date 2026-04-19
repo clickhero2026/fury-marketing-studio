@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MetaAccountSelector } from '@/components/meta/MetaAccountSelector';
+import { MetaAssetPickerModal } from '@/components/meta/MetaAssetPickerModal';
+import { MetaAssetPicker } from '@/components/meta/MetaAssetPicker';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -325,21 +326,20 @@ const Integrations = () => {
           </CardContent>
         </Card>
 
-        {/* Asset Selector — shown after connect or when managing */}
-        {showSelector && (
-          <Card className="bg-[#161714]/80 border-white/[0.06] backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="text-base text-white/90">Selecionar Ativos</CardTitle>
-              <CardDescription className="text-white/40">
-                Escolha quais contas de anuncio e paginas deseja gerenciar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MetaAccountSelector onComplete={() => setShowSelector(false)} />
-            </CardContent>
-          </Card>
-        )}
       </div>
+
+      {/* Modal de selecao de ativos — abre pos-OAuth ou ao clicar "Gerenciar Ativos" */}
+      <MetaAssetPickerModal
+        open={showSelector}
+        onOpenChange={setShowSelector}
+        onComplete={() => {
+          setShowSelector(false);
+          toast({
+            title: 'Ativos conectados!',
+            description: 'Dados sendo sincronizados em background. O Dashboard sera populado em breve.',
+          });
+        }}
+      />
     </div>
   );
 };

@@ -120,52 +120,67 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- SAVE AD ACCOUNTS ---
+    // --- SOFT-DELETE: marca tudo como inativo, depois reativa os selecionados ---
     const adAccounts = body.ad_accounts ?? [];
+    const pages = body.pages ?? [];
 
-    // Delete existing
-    await supabaseAdmin
-      .from('meta_ad_accounts')
-      .delete()
-      .eq('company_id', company.id);
+    await supabaseAdmin.from('meta_ad_accounts').update({ is_active: false }).eq('company_id', company.id);
+    await supabaseAdmin.from('meta_pages').update({ is_active: false }).eq('company_id', company.id);
 
-    // Insert new selections
+    // --- BUSINESS MANAGERS: upsert dos BMs selecionados (derivados dos accounts+pages) ---
+    const bmMap = new Map<string, { id: string; name: string }>();
+    for (const acc of adAccounts) {
+      if (acc.business_id && acc.business_name) {
+        bmMap.set(acc.business_id, { id: acc.business_id, name: acc.business_name });
+      }
+    }
+    for (const p of pages) {
+      const bp = p as { business_id?: string; business_name?: string };
+      if (bp.business_id && bp.business_name) {
+        bmMap.set(bp.business_id, { id: bp.business_id, name: bp.business_name });
+      }
+    }
+    if (bmMap.size > 0) {
+      const bmRows = [...bmMap.values()].map((bm) => ({
+        integration_id: integration.id,
+        company_id: company.id,
+        external_id: bm.id,
+        name: bm.name,
+        last_scanned_at: new Date().toISOString(),
+        deleted_at: null,
+      }));
+      await supabaseAdmin
+        .from('meta_business_managers')
+        .upsert(bmRows, { onConflict: 'external_id,company_id' });
+    }
+
+    // --- AD ACCOUNTS: upsert por (company_id, account_id) com is_active=true ---
     if (adAccounts.length > 0) {
       const accountRows = adAccounts.map((acc) => ({
         integration_id: integration.id,
         company_id: company.id,
         account_id: acc.id,
         account_name: acc.name ?? null,
-        account_status: acc.account_status ?? null,
+        account_status: acc.account_status != null ? String(acc.account_status) : null,
         currency: acc.currency ?? null,
         business_id: acc.business_id ?? null,
         business_name: acc.business_name ?? null,
         is_active: true,
       }));
 
-      const { error: insertAccountsError } = await supabaseAdmin
+      const { error: upsertAccountsError } = await supabaseAdmin
         .from('meta_ad_accounts')
-        .insert(accountRows);
+        .upsert(accountRows, { onConflict: 'company_id,account_id' });
 
-      if (insertAccountsError) {
-        console.error('Failed to save ad accounts:', insertAccountsError);
-        return new Response(
-          JSON.stringify({ error: 'Falha ao salvar contas de anúncio' }),
-          { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
-        );
+      if (upsertAccountsError) {
+        console.error('Failed to upsert ad accounts:', upsertAccountsError);
+        return new Response(JSON.stringify({ error: 'Falha ao salvar contas de anuncio' }), {
+          status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
+        });
       }
     }
 
-    // --- SAVE PAGES ---
-    const pages = body.pages ?? [];
-
-    // Delete existing
-    await supabaseAdmin
-      .from('meta_pages')
-      .delete()
-      .eq('company_id', company.id);
-
-    // Insert new selections
+    // --- PAGES: upsert com is_active=true ---
     if (pages.length > 0) {
       const pageRows = pages.map((page) => ({
         integration_id: integration.id,
@@ -177,20 +192,19 @@ Deno.serve(async (req) => {
         is_active: true,
       }));
 
-      const { error: insertPagesError } = await supabaseAdmin
+      const { error: upsertPagesError } = await supabaseAdmin
         .from('meta_pages')
-        .insert(pageRows);
+        .upsert(pageRows, { onConflict: 'company_id,page_id' });
 
-      if (insertPagesError) {
-        console.error('Failed to save pages:', insertPagesError);
-        return new Response(
-          JSON.stringify({ error: 'Falha ao salvar páginas' }),
-          { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
-        );
+      if (upsertPagesError) {
+        console.error('Failed to upsert pages:', upsertPagesError);
+        return new Response(JSON.stringify({ error: 'Falha ao salvar paginas' }), {
+          status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
+        });
       }
     }
 
-    // Update integration with primary account info
+    // --- Integration: normaliza com primeira account selecionada (UI legada) ---
     const primaryAccount = adAccounts[0] ?? null;
     if (primaryAccount) {
       await supabaseAdmin
@@ -198,7 +212,7 @@ Deno.serve(async (req) => {
         .update({
           account_id: primaryAccount.id,
           account_name: primaryAccount.name ?? null,
-          account_status: primaryAccount.account_status ?? null,
+          account_status: primaryAccount.account_status != null ? String(primaryAccount.account_status) : null,
           business_id: primaryAccount.business_id ?? null,
           business_name: primaryAccount.business_name ?? null,
           updated_at: new Date().toISOString(),
