@@ -104,26 +104,47 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Delete tudo em ordem correta (FKs apontam pra integrations)
-    // 1. Dependentes diretos da integration
-    await supabaseAdmin.from('meta_ad_accounts').delete().eq('integration_id', integration.id);
-    await supabaseAdmin.from('meta_pages').delete().eq('integration_id', integration.id);
-    await supabaseAdmin.from('meta_business_managers').delete().eq('integration_id', integration.id);
+    // Delete cascata manual — TODAS as tabelas que podem ter integration_id FK
+    // Defensive: loga erro mas nao bloqueia (permite parcial cleanup)
+    const cleanupTables = [
+      'meta_ad_accounts',
+      'meta_pages',
+      'meta_business_managers',
+      'meta_api_rate_limit',
+      'meta_scan_logs',
+      'campaigns',
+      'adsets',
+      'creatives',
+    ];
+    const cleanupErrors: Array<{ table: string; error: string }> = [];
 
-    // 2. Dados do company relacionados (nao tem FK direta mas user espera reset completo)
-    await supabaseAdmin.from('meta_api_rate_limit').delete().eq('integration_id', integration.id);
-    await supabaseAdmin.from('meta_scan_logs').delete().eq('integration_id', integration.id);
+    for (const table of cleanupTables) {
+      const { error: delErr } = await supabaseAdmin
+        .from(table)
+        .delete()
+        .eq('integration_id', integration.id);
+      if (delErr && delErr.code !== '42703' /* column doesn't exist — ignore */) {
+        console.error(`[disconnect] Failed to clean ${table}:`, delErr);
+        cleanupErrors.push({ table, error: delErr.message });
+      }
+    }
 
-    // 3. Finalmente deletar integration
+    // Finalmente deletar integration
     const { error: deleteError } = await supabaseAdmin
       .from('integrations')
       .delete()
       .eq('id', integration.id);
 
     if (deleteError) {
-      console.error('Failed to delete integration:', deleteError);
+      console.error('[disconnect] Failed to delete integration:', deleteError);
       return new Response(
-        JSON.stringify({ error: `Falha ao remover integracao: ${deleteError.message}` }),
+        JSON.stringify({
+          error: `Falha ao remover integracao: ${deleteError.message}`,
+          details: deleteError.details ?? null,
+          hint: deleteError.hint ?? null,
+          code: deleteError.code ?? null,
+          cleanup_errors: cleanupErrors,
+        }),
         { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
