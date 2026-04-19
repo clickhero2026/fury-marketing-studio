@@ -216,10 +216,7 @@ Deno.serve(async (req) => {
       return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao criptografar token' });
     }
 
-    // Upsert integration (one per company for Meta)
-    const firstAccount = adAccounts[0] ?? null;
-    const firstBusiness = businesses[0] ?? null;
-
+    // Upsert integration (sem auto-selecao — user escolhe contas manualmente via MetaAccountSelector)
     const { error: upsertError } = await supabaseAdmin
       .from('integrations')
       .upsert(
@@ -227,17 +224,17 @@ Deno.serve(async (req) => {
           platform: 'meta',
           company_id: companyId,
           access_token: encryptedData, // encrypted
-          account_id: firstAccount?.id ?? null,
-          account_name: firstAccount?.name ?? null,
-          account_status: firstAccount?.account_status?.toString() ?? null,
-          business_id: firstBusiness?.id ?? null,
-          business_name: firstBusiness?.name ?? null,
+          account_id: null,
+          account_name: null,
+          account_status: null,
+          business_id: null,
+          business_name: null,
           facebook_user_id: meData.id,
           facebook_user_name: meData.name,
           connected_by_user_id: userId,
           token_expires_at: tokenExpiresAt,
           status: 'active',
-          last_sync: new Date().toISOString(),
+          last_sync: null,
           data_source: 'oauth',
           updated_at: new Date().toISOString(),
         },
@@ -245,10 +242,8 @@ Deno.serve(async (req) => {
       );
 
     if (upsertError) {
-      // If upsert fails due to no unique constraint, try insert
       console.error('Upsert failed, trying insert:', upsertError);
 
-      // Delete existing first
       await supabaseAdmin
         .from('integrations')
         .delete()
@@ -261,17 +256,11 @@ Deno.serve(async (req) => {
           platform: 'meta',
           company_id: companyId,
           access_token: encryptedData,
-          account_id: firstAccount?.id ?? null,
-          account_name: firstAccount?.name ?? null,
-          account_status: firstAccount?.account_status?.toString() ?? null,
-          business_id: firstBusiness?.id ?? null,
-          business_name: firstBusiness?.name ?? null,
           facebook_user_id: meData.id,
           facebook_user_name: meData.name,
           connected_by_user_id: userId,
           token_expires_at: tokenExpiresAt,
           status: 'active',
-          last_sync: new Date().toISOString(),
           data_source: 'oauth',
         });
 

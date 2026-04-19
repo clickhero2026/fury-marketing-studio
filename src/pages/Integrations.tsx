@@ -45,7 +45,7 @@ const Integrations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSelector, setShowSelector] = useState(false);
 
-  // Handle OAuth callback — show selector automatically after connect
+  // Handle OAuth callback via URL params (fallback se popup falhar)
   useEffect(() => {
     const success = searchParams.get('success');
     const error = searchParams.get('error');
@@ -57,7 +57,7 @@ const Integrations = () => {
         description: `${accounts || '0'} conta(s) de anuncio encontrada(s). Selecione quais deseja usar.`,
       });
       setSearchParams({});
-      setShowSelector(true); // Open selector after OAuth
+      setShowSelector(true);
     } else if (error) {
       toast({
         title: 'Erro na conexao Meta',
@@ -67,6 +67,13 @@ const Integrations = () => {
       setSearchParams({});
     }
   }, [searchParams, setSearchParams, toast]);
+
+  // Handle OAuth callback via postMessage (fluxo principal — popup)
+  useEffect(() => {
+    const handler = () => setShowSelector(true);
+    window.addEventListener('meta-oauth-completed', handler);
+    return () => window.removeEventListener('meta-oauth-completed', handler);
+  }, []);
 
   const getStatusBadge = () => {
     if (isConnected) {

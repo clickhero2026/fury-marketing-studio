@@ -105,8 +105,12 @@ export function useMetaConnect() {
           queryClient.invalidateQueries({ queryKey: ['meta-assets'] });
           toast({
             title: 'Meta conectado!',
-            description: `${event.data.accounts || 0} conta(s) encontrada(s).`,
+            description: `${event.data.accounts || 0} conta(s) encontrada(s). Selecione quais deseja usar.`,
           });
+          // Dispatch event global pra Integrations.tsx abrir o MetaAccountSelector
+          window.dispatchEvent(new CustomEvent('meta-oauth-completed', {
+            detail: { accounts: event.data.accounts ?? 0 },
+          }));
         } else if (event.data?.type === 'meta-oauth-error') {
           clearInterval(pollInterval);
           window.removeEventListener('message', messageHandler);
