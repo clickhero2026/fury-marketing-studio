@@ -10,8 +10,8 @@ interface Props {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="glass-card rounded-2xl p-5">
-      <h3 className="text-[13px] font-semibold text-foreground mb-4">{title}</h3>
+    <div className="rounded-xl border border-border/60 bg-card p-5 shadow-e1 transition-shadow duration-base ease-smooth hover:shadow-e2">
+      <h3 className="mb-4 text-sm font-semibold tracking-tight text-foreground">{title}</h3>
       {children}
     </div>
   );
@@ -20,9 +20,9 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 export function DashCharts({ metrics, loading }: Props) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="glass-card rounded-2xl h-[340px] animate-pulse" />
-        <div className="glass-card rounded-2xl h-[340px] animate-pulse" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="h-[340px] animate-pulse rounded-xl border border-border/60 bg-card" />
+        <div className="h-[340px] animate-pulse rounded-xl border border-border/60 bg-card" />
       </div>
     );
   }

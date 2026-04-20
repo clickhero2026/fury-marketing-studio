@@ -39,17 +39,17 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 w-full rounded-lg px-2 py-1.5 hover:bg-accent transition-colors text-left"
+          className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-base ease-smooth hover:bg-sidebar-accent/50"
         >
-          <Avatar className="h-7 w-7">
+          <Avatar className="h-8 w-8 ring-1 ring-sidebar-border">
             <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+            <AvatarFallback className="bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] text-xs font-semibold text-white">
               {getInitials(displayName)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium text-sidebar-accent-foreground">{displayName}</p>
+            <p className="truncate text-[11px] text-sidebar-foreground/60">{user.email}</p>
           </div>
         </button>
       </DropdownMenuTrigger>

@@ -1,9 +1,29 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { MetricRow } from './DashKpiGrid';
 
 interface Props {
   metrics: MetricRow[];
+}
+
+interface TooltipItem { value?: number; payload?: { fullName?: string } }
+
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: TooltipItem[] }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const item = payload[0];
+  return (
+    <div className="rounded-lg border border-border/60 bg-popover/95 px-3 py-2 shadow-e3 backdrop-blur-sm">
+      <div className="mb-1 max-w-[280px] truncate text-xs font-medium text-foreground">
+        {item.payload?.fullName}
+      </div>
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Conversas</span>
+        <span className="ml-auto font-mono font-semibold tabular-nums text-foreground">
+          {Number(item.value ?? 0).toLocaleString('pt-BR')}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function BarChartTop5Campaigns({ metrics }: Props) {
@@ -16,7 +36,8 @@ export function BarChartTop5Campaigns({ metrics }: Props) {
     }
     return [...byCampaign.entries()]
       .map(([name, conversas]) => ({
-        name: name.length > 22 ? name.slice(0, 22) + '…' : name,
+        fullName: name,
+        name: name.length > 20 ? name.slice(0, 20) + '…' : name,
         conversas,
       }))
       .sort((a, b) => b.conversas - a.conversas)
@@ -24,20 +45,35 @@ export function BarChartTop5Campaigns({ metrics }: Props) {
   }, [metrics]);
 
   if (data.length === 0) {
-    return <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">Sem dados</div>;
+    return (
+      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+        Sem dados
+      </div>
+    );
   }
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, bottom: 0, left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-        <XAxis type="number" tick={{ fontSize: 11, fill: '#888' }} />
-        <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#ccc' }} width={160} />
-        <Tooltip
-          contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: 8, fontSize: 12 }}
-          formatter={(v: number) => [v.toLocaleString('pt-BR'), 'Conversas']}
+      <BarChart data={data} layout="vertical" margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
+        <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" strokeOpacity={0.6} horizontal={false} />
+        <XAxis
+          type="number"
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: 'JetBrains Mono, monospace' }}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
         />
-        <Bar dataKey="conversas" fill="#8b5cf6" radius={[0, 6, 6, 0]} />
+        <YAxis
+          type="category"
+          dataKey="name"
+          tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+          tickLine={false}
+          axisLine={false}
+          width={170}
+          interval={0}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.4 }} />
+        <Bar dataKey="conversas" fill="#cf6f03" radius={[0, 4, 4, 0]} barSize={18} />
       </BarChart>
     </ResponsiveContainer>
   );

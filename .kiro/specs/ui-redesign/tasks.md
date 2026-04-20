@@ -25,10 +25,15 @@
 - [x] Commit "wave 2 — dashboard redesign"
 
 ## Wave 3 — Sidebar
-- [ ] Refinar AppSidebar (badge enterprise animated, nav selected indicator dot/bar)
-- [ ] Refinar OrganizationSwitcher (chip laranja no enterprise)
-- [ ] Refinar UserMenu (avatar com gradient, email truncado)
-- [ ] Build verde + commit "wave 3 — sidebar polish"
+- [x] Refinar AppSidebar (workspace label, indicador lateral animado primary, botao Nova conversa com shadow laranja + icon rotate)
+- [x] Refinar UserMenu (avatar gradient laranja com ring, tipografia refinada)
+- [ ] Refinar OrganizationSwitcher (futuro se necessario)
+- [x] Build verde + commit "wave 3 — sidebar polish"
+
+## Fixes extras (Wave 2.5)
+- [x] PieChartSpendByCampaign: labels dentro das slices + legenda a direita (sem overlap)
+- [x] BarChartTop5Campaigns: tooltip glass + cor primary + barSize fixo
+- [x] DashCharts: ChartCard usa rounded-xl + shadow-e1
 
 ## Wave 4 — Views funcionais
 - [ ] ChatView — header + input refinado + message bubbles com shadow-1 + timestamps mono
