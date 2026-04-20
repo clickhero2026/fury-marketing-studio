@@ -51,13 +51,13 @@ const Login = () => {
 
       <div className="relative w-full max-w-sm fade-in">
         {/* Logo */}
-        <div className="flex justify-center mb-10">
-          <img src="/logo-dark.png" alt="ClickHero" className="h-9 w-auto" />
+        <div className="flex justify-center mb-8">
+          <img src="/logo-dark.png" alt="ClickHero" className="h-7 w-auto" />
         </div>
 
         {/* Card */}
-        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
+        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-7 shadow-2xl transition-shadow hover:shadow-[0_0_40px_-10px_rgba(207,111,3,0.12)]">
+          <div className="text-center mb-6">
             <h1 className="text-xl font-semibold text-[#ecedef] tracking-tight">
               Bem-vindo de volta
             </h1>
@@ -67,7 +67,7 @@ const Login = () => {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 stagger-children">
               <FormField
                 control={form.control}
                 name="email"
@@ -79,7 +79,7 @@ const Login = () => {
                         type="email"
                         placeholder="seu@email.com"
                         autoComplete="email"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all"
+                        className="h-10 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-lg text-[13px] focus:border-primary/50 focus:ring-primary/20 transition-all"
                         {...field}
                       />
                     </FormControl>
@@ -99,7 +99,7 @@ const Login = () => {
                         type="password"
                         placeholder="••••••••"
                         autoComplete="current-password"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all"
+                        className="h-10 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-lg text-[13px] focus:border-primary/50 focus:ring-primary/20 transition-all"
                         {...field}
                       />
                     </FormControl>
@@ -110,7 +110,7 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-11 brand-gradient text-white font-medium rounded-xl hover:opacity-90 transition-all active:scale-[0.98]"
+                className="w-full h-10 brand-gradient text-[13px] text-white font-medium rounded-lg hover:opacity-90 transition-all active:scale-[0.98]"
                 disabled={isSubmitting}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

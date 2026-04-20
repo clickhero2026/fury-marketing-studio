@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMetaAssets, MetaAdAccount, MetaPage } from '@/hooks/use-meta-assets';
+import { useMetaAssets, type EnrichedAccount, type EnrichedPage } from '@/hooks/use-meta-assets';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -51,24 +51,33 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
   const handleSave = () => {
     if (!assets) return;
 
-    const adAccounts = assets.ad_accounts
+    const allAdAccounts = [
+      ...assets.personal_ad_accounts,
+      ...assets.businesses.flatMap((b) => b.ad_accounts),
+    ];
+    const allPages = [
+      ...assets.personal_pages,
+      ...assets.businesses.flatMap((b) => b.pages),
+    ];
+
+    const adAccounts = allAdAccounts
       .filter((a) => selectedAccounts.has(a.id))
       .map((a) => ({
         id: a.id,
         name: a.name,
-        account_status: a.account_status,
+        account_status: a.account_status ?? 0,
         currency: a.currency,
-        business_id: a.business?.id,
-        business_name: a.business?.name,
+        business_id: a.business_id,
+        business_name: undefined,
       }));
 
-    const pages = assets.pages
+    const pages = allPages
       .filter((p) => selectedPages.has(p.id))
       .map((p) => ({
         id: p.id,
         name: p.name,
-        category: p.category,
-        access_token: p.access_token,
+        category: p.category ?? '',
+        access_token: '',
       }));
 
     saveAssets(
@@ -96,7 +105,15 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
 
   if (!assets) return null;
 
-  const { ad_accounts, businesses, pages } = assets;
+  const ad_accounts = [
+    ...assets.personal_ad_accounts,
+    ...assets.businesses.flatMap((b) => b.ad_accounts),
+  ];
+  const { businesses } = assets;
+  const pages = [
+    ...assets.personal_pages,
+    ...assets.businesses.flatMap((b) => b.pages),
+  ];
 
   return (
     <div className="space-y-6">
@@ -113,8 +130,8 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
           <p className="text-xs text-white/30 pl-6">Nenhuma conta de anuncio encontrada.</p>
         ) : (
           <div className="space-y-1.5">
-            {ad_accounts.map((account: MetaAdAccount) => {
-              const status = accountStatusLabels[account.account_status] ?? {
+            {ad_accounts.map((account: EnrichedAccount) => {
+              const status = accountStatusLabels[String(account.account_status)] ?? {
                 label: account.account_status,
                 color: 'text-white/40 bg-white/5 border-white/10',
               };
@@ -184,7 +201,7 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
           <p className="text-xs text-white/30 pl-6">Nenhuma pagina encontrada.</p>
         ) : (
           <div className="space-y-1.5">
-            {pages.map((page: MetaPage) => (
+            {pages.map((page: EnrichedPage) => (
               <label
                 key={page.id}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] cursor-pointer transition-colors"

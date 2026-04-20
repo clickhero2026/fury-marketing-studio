@@ -27,12 +27,12 @@ export function KpiCard({ title, value, hint, deltaPct, higherIsBetter = true, i
   const deltaClassName = isFlat ? 'text-muted-foreground' : isBetter ? 'text-emerald-400' : isWorse ? 'text-red-400' : 'text-muted-foreground';
 
   return (
-    <div className="glass-card rounded-2xl p-5 slide-up transition-all">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1 min-w-0 flex-1">
-          <p className="text-[13px] font-medium text-muted-foreground truncate">{title}</p>
-          <p className="text-2xl font-semibold text-foreground tracking-tight">{value}</p>
-          <div className="flex items-center gap-1.5 text-xs">
+    <div className="glass-card rounded-xl p-4 slide-up transition-all hover:-translate-y-px hover:shadow-e2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-0.5 min-w-0 flex-1">
+          <p className="text-[12px] font-medium text-muted-foreground truncate">{title}</p>
+          <p className="text-xl font-bold text-foreground tracking-tight font-mono tabular-nums">{value}</p>
+          <div className="flex items-center gap-1.5 text-[11px]">
             {hasDelta && (
               <span className={cn('flex items-center gap-0.5 font-medium', deltaClassName)}>
                 <DeltaIcon className="w-3 h-3" />
@@ -42,8 +42,8 @@ export function KpiCard({ title, value, hint, deltaPct, higherIsBetter = true, i
             {hint && <span className="text-muted-foreground">{hint}</span>}
           </div>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 ml-2">
-          <Icon className="w-[18px] h-[18px] text-primary" />
+        <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+          <Icon className="w-[15px] h-[15px] text-primary/80" />
         </div>
       </div>
     </div>

@@ -64,7 +64,7 @@ const Register = () => {
     }
   };
 
-  const inputClass = "h-11 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all";
+  const inputClass = "h-10 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-lg text-[13px] focus:border-primary/50 focus:ring-primary/20 transition-all";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0c0d0a] p-4">
@@ -72,13 +72,13 @@ const Register = () => {
 
       <div className="relative w-full max-w-sm fade-in">
         {/* Logo */}
-        <div className="flex justify-center mb-10">
-          <img src="/logo-dark.png" alt="ClickHero" className="h-9 w-auto" />
+        <div className="flex justify-center mb-8">
+          <img src="/logo-dark.png" alt="ClickHero" className="h-7 w-auto" />
         </div>
 
         {/* Card */}
-        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-8 shadow-2xl">
-          <div className="text-center mb-7">
+        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-7 shadow-2xl transition-shadow hover:shadow-[0_0_40px_-10px_rgba(207,111,3,0.12)]">
+          <div className="text-center mb-6">
             <h1 className="text-xl font-semibold text-[#ecedef] tracking-tight">
               Criar conta
             </h1>
@@ -88,13 +88,13 @@ const Register = () => {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5 stagger-children">
               <FormField
                 control={form.control}
                 name="displayName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Seu nome</FormLabel>
+                    <FormLabel className="text-[12px] font-medium text-[#ecedef]/60">Seu nome</FormLabel>
                     <FormControl>
                       <Input placeholder="Joao Silva" autoComplete="name" className={inputClass} {...field} />
                     </FormControl>
@@ -108,7 +108,7 @@ const Register = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Email</FormLabel>
+                    <FormLabel className="text-[12px] font-medium text-[#ecedef]/60">Email</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="seu@email.com" autoComplete="email" className={inputClass} {...field} />
                     </FormControl>
@@ -122,7 +122,7 @@ const Register = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Senha</FormLabel>
+                    <FormLabel className="text-[12px] font-medium text-[#ecedef]/60">Senha</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="Minimo 8 caracteres" autoComplete="new-password" className={inputClass} {...field} />
                     </FormControl>
@@ -136,7 +136,7 @@ const Register = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Confirmar senha</FormLabel>
+                    <FormLabel className="text-[12px] font-medium text-[#ecedef]/60">Confirmar senha</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="Repita a senha" autoComplete="new-password" className={inputClass} {...field} />
                     </FormControl>
@@ -151,7 +151,7 @@ const Register = () => {
                   name="organizationName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Empresa / Organizacao</FormLabel>
+                      <FormLabel className="text-[12px] font-medium text-[#ecedef]/60">Empresa / Organizacao</FormLabel>
                       <FormControl>
                         <Input placeholder="Minha Agencia" className={inputClass} {...field} />
                       </FormControl>
@@ -163,7 +163,7 @@ const Register = () => {
 
               <Button
                 type="submit"
-                className="w-full h-11 brand-gradient text-white font-medium rounded-xl hover:opacity-90 transition-all active:scale-[0.98] mt-2"
+                className="w-full h-10 brand-gradient text-[13px] text-white font-medium rounded-lg hover:opacity-90 transition-all active:scale-[0.98] mt-1"
                 disabled={isSubmitting}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

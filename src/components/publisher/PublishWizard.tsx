@@ -76,9 +76,9 @@ export function PublishWizard({ onPublished }: { onPublished?: () => void }) {
     try {
       const result = await publish.mutateAsync({
         ad_account_id: adAccountId,
-        campaign_data: campaign,
-        adset_data: adset,
-        ad_data: ad,
+        campaign_data: campaign as unknown as Record<string, unknown>,
+        adset_data: adset as unknown as Record<string, unknown>,
+        ad_data: ad as unknown as Record<string, unknown>,
         force,
       });
       if (result.publication_id) setPublicationId(result.publication_id);

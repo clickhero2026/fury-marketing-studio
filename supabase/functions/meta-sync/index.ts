@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
         batch.map(async (account) => {
           try {
             await syncAccount(
-              supabaseAdmin,
+              supabaseAdmin as any,
               decryptedToken,
               integration.id,
               companyId,

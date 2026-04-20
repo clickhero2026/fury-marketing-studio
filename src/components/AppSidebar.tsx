@@ -26,31 +26,31 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   const navigate = useNavigate();
 
   return (
-    <aside className="flex h-screen w-[200px] shrink-0 flex-col border-r border-sidebar-border sidebar-gradient md:w-[220px] xl:w-[240px] 2xl:w-[260px]">
+    <aside className="flex h-screen w-[200px] shrink-0 flex-col border-r border-sidebar-border sidebar-gradient md:w-[210px] xl:w-[230px] 2xl:w-[250px]">
       {/* Topo: logo + org switcher + botao novo */}
       <div className="shrink-0">
-        <div className="px-5 pb-3 pt-5">
-          <img src="/logo-dark.png" alt="ClickHero" className="h-7 w-auto" />
+        <div className="px-4 pb-2.5 pt-4">
+          <img src="/logo-dark.png" alt="ClickHero" className="h-6 w-auto" />
         </div>
 
-        <div className="border-b border-sidebar-border px-4 pb-3">
+        <div className="border-b border-sidebar-border px-3 pb-2.5">
           <OrganizationSwitcher />
         </div>
 
         <div className="p-3">
           <button
             onClick={() => onViewChange("chat")}
-            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] px-3 py-2.5 text-sm font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.18),_0_2px_8px_-2px_rgb(207_111_3/0.5)] transition-all duration-base ease-smooth hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),_0_4px_12px_-2px_rgb(207_111_3/0.6)] active:scale-[0.98]"
+            className="group relative flex w-full items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] px-3 py-2 text-[12px] font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.18),_0_2px_8px_-2px_rgb(207_111_3/0.5)] transition-all duration-base ease-smooth hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),_0_4px_12px_-2px_rgb(207_111_3/0.6)] active:scale-[0.98]"
           >
-            <Plus className="h-4 w-4 transition-transform duration-base ease-smooth group-hover:rotate-90" />
+            <Plus className="h-3.5 w-3.5 transition-transform duration-base ease-smooth group-hover:rotate-90" />
             <span>Nova conversa</span>
           </button>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="scrollbar-dark min-h-0 flex-1 overflow-y-auto px-3 py-1">
-        <div className="mb-1 px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/50">
+      <nav className="scrollbar-dark min-h-0 flex-1 overflow-y-auto px-2.5 py-1">
+        <div className="mb-0.5 px-2.5 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/40">
           Workspace
         </div>
         <div className="space-y-0.5">
@@ -61,7 +61,7 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
                 className={cn(
-                  "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-base ease-smooth",
+                  "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-all duration-base ease-smooth",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-e1"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
@@ -76,10 +76,10 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
                 />
                 <item.icon
                   className={cn(
-                    "h-[18px] w-[18px] shrink-0 transition-colors",
+                    "h-4 w-4 shrink-0 transition-colors",
                     active ? "text-primary" : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground",
                   )}
-                  strokeWidth={active ? 2.2 : 1.8}
+                  strokeWidth={active ? 2 : 1.7}
                 />
                 <span className="truncate">{item.label}</span>
               </button>
@@ -89,21 +89,21 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
       </nav>
 
       {/* Footer: Integracoes + Configuracoes + User */}
-      <div className="shrink-0 space-y-0.5 border-t border-sidebar-border p-3">
+      <div className="shrink-0 space-y-0.5 border-t border-sidebar-border p-2.5">
         <button
           onClick={() => navigate('/integrations')}
-          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground transition-all duration-base ease-smooth hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-sidebar-foreground transition-all duration-base ease-smooth hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         >
-          <Plug className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/70 transition-colors group-hover:text-sidebar-accent-foreground" strokeWidth={1.8} />
+          <Plug className="h-4 w-4 shrink-0 text-sidebar-foreground/70 transition-colors group-hover:text-sidebar-accent-foreground" strokeWidth={1.7} />
           <span className="truncate">Integracoes</span>
         </button>
         <button
           type="button"
           disabled
           title="Em breve"
-          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/50 transition-all duration-base ease-smooth disabled:cursor-not-allowed"
+          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-sidebar-foreground/50 transition-all duration-base ease-smooth disabled:cursor-not-allowed"
         >
-          <Settings className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/40" strokeWidth={1.8} />
+          <Settings className="h-4 w-4 shrink-0 text-sidebar-foreground/40" strokeWidth={1.7} />
           <span className="truncate">Configuracoes</span>
         </button>
         <UserMenu />

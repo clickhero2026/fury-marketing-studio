@@ -134,7 +134,7 @@ export function useFuryEvaluate() {
       const s = data.stats;
       toast({
         title: 'FURY avaliou',
-        description: `${s.campaigns_evaluated ?? 0} campanhas, ${s.rules_triggered ?? 0} regras disparadas, ${s.actions_executed ?? 0} acoes executadas.`,
+        description: `${s.campaignsEvaluated ?? 0} campanhas, ${(s as any).rules_triggered ?? 0} regras disparadas, ${s.actionsExecuted ?? 0} acoes executadas.`,
       });
     },
     onError: (err: Error) => {

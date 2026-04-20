@@ -206,7 +206,7 @@ export function useComplianceScan() {
       const s = data.stats;
       toast({
         title: 'Analise concluida',
-        description: `${s.ads_analyzed ?? 0} anuncios analisados. ${s.ads_critical ?? 0} criticos, ${s.ads_paused ?? 0} pausados.`,
+        description: `${(s as any).ads_analyzed ?? s.total ?? 0} anuncios analisados. ${(s as any).ads_critical ?? s.critical ?? 0} criticos, ${(s as any).ads_paused ?? s.paused ?? 0} pausados.`,
       });
     },
     onError: (err: Error) => {
