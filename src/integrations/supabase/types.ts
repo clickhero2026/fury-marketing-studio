@@ -121,6 +121,116 @@ export type Database = {
           },
         ]
       }
+      adsets: {
+        Row: {
+          bid_strategy: string | null
+          billing_event: string | null
+          budget_remaining: number | null
+          campaign_external_id: string | null
+          campaign_id: string | null
+          company_id: string
+          created_at: string | null
+          daily_budget: number | null
+          deleted_at: string | null
+          effective_status: string | null
+          end_time: string | null
+          external_id: string
+          id: string
+          integration_id: string | null
+          last_scanned_at: string | null
+          lifetime_budget: number | null
+          name: string | null
+          optimization_goal: string | null
+          platform: string | null
+          promoted_object: Json | null
+          start_time: string | null
+          status: string | null
+          targeting: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          bid_strategy?: string | null
+          billing_event?: string | null
+          budget_remaining?: number | null
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          company_id: string
+          created_at?: string | null
+          daily_budget?: number | null
+          deleted_at?: string | null
+          effective_status?: string | null
+          end_time?: string | null
+          external_id: string
+          id?: string
+          integration_id?: string | null
+          last_scanned_at?: string | null
+          lifetime_budget?: number | null
+          name?: string | null
+          optimization_goal?: string | null
+          platform?: string | null
+          promoted_object?: Json | null
+          start_time?: string | null
+          status?: string | null
+          targeting?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          bid_strategy?: string | null
+          billing_event?: string | null
+          budget_remaining?: number | null
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          company_id?: string
+          created_at?: string | null
+          daily_budget?: number | null
+          deleted_at?: string | null
+          effective_status?: string | null
+          end_time?: string | null
+          external_id?: string
+          id?: string
+          integration_id?: string | null
+          last_scanned_at?: string | null
+          lifetime_budget?: number | null
+          name?: string | null
+          optimization_goal?: string | null
+          platform?: string | null
+          promoted_object?: Json | null
+          start_time?: string | null
+          status?: string | null
+          targeting?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adsets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adsets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adsets_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adsets_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
       ai_settings: {
         Row: {
           api_key: string | null
@@ -395,7 +505,215 @@ export type Database = {
           },
         ]
       }
+      budget_benchmarks: {
+        Row: {
+          avg_cpa: number | null
+          avg_cpl: number | null
+          avg_ctr: number | null
+          avg_roas: number | null
+          company_id: string
+          created_at: string | null
+          id: string
+          last_calculated_at: string | null
+          objective: string
+          samples_count: number | null
+          total_spend: number | null
+        }
+        Insert: {
+          avg_cpa?: number | null
+          avg_cpl?: number | null
+          avg_ctr?: number | null
+          avg_roas?: number | null
+          company_id: string
+          created_at?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          objective: string
+          samples_count?: number | null
+          total_spend?: number | null
+        }
+        Update: {
+          avg_cpa?: number | null
+          avg_cpl?: number | null
+          avg_ctr?: number | null
+          avg_roas?: number | null
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          last_calculated_at?: string | null
+          objective?: string
+          samples_count?: number | null
+          total_spend?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_benchmarks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_drafts: {
+        Row: {
+          ad_account_id: string
+          ad_data: Json
+          adset_data: Json
+          campaign_data: Json
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          ad_account_id: string
+          ad_data: Json
+          adset_data: Json
+          campaign_data: Json
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          ad_account_id?: string
+          ad_data?: Json
+          adset_data?: Json
+          campaign_data?: Json
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_drafts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_metrics: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_old: {
         Row: {
           ad_url: string | null
           anuncios: string
@@ -510,6 +828,1787 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_metrics_p_2025_04: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_05: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_06: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_07: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_08: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_09: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_10: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_11: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2025_12: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_01: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_02: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_03: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_04: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_05: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_metrics_p_2026_06: {
+        Row: {
+          ad_url: string | null
+          anuncios: string
+          campanha: string
+          cidade: string | null
+          cliques: number | null
+          company_id: string | null
+          conversas_iniciadas: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpm: number | null
+          created_at: string | null
+          custo_conversa: number | null
+          data: string
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          grupo_anuncios: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          nome_conta: string
+          quality_ranking: string | null
+          reach: number | null
+          regiao: string | null
+          source: string | null
+          status: string | null
+          sync_batch: string | null
+          unique_clicks: number | null
+          unique_ctr: number | null
+          updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          website_purchase_roas: number | null
+        }
+        Insert: {
+          ad_url?: string | null
+          anuncios: string
+          campanha: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Update: {
+          ad_url?: string | null
+          anuncios?: string
+          campanha?: string
+          cidade?: string | null
+          cliques?: number | null
+          company_id?: string | null
+          conversas_iniciadas?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string | null
+          custo_conversa?: number | null
+          data?: string
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          grupo_anuncios?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          nome_conta?: string
+          quality_ranking?: string | null
+          reach?: number | null
+          regiao?: string | null
+          source?: string | null
+          status?: string | null
+          sync_batch?: string | null
+          unique_clicks?: number | null
+          unique_ctr?: number | null
+          updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          website_purchase_roas?: number | null
+        }
+        Relationships: []
+      }
+      campaign_publication_steps: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          external_id: string | null
+          id: string
+          meta_api_response: Json | null
+          publication_id: string
+          status: string
+          step_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          publication_id: string
+          status: string
+          step_name: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          publication_id?: string
+          status?: string
+          step_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_publication_steps_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_publications: {
+        Row: {
+          company_id: string
+          compliance_score: number | null
+          compliance_violations: Json | null
+          created_by: string | null
+          current_step: string | null
+          draft_id: string | null
+          error_message: string | null
+          error_stage: string | null
+          finished_at: string | null
+          id: string
+          meta_ad_id: string | null
+          meta_adset_id: string | null
+          meta_campaign_id: string | null
+          meta_creative_id: string | null
+          name: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          compliance_score?: number | null
+          compliance_violations?: Json | null
+          created_by?: string | null
+          current_step?: string | null
+          draft_id?: string | null
+          error_message?: string | null
+          error_stage?: string | null
+          finished_at?: string | null
+          id?: string
+          meta_ad_id?: string | null
+          meta_adset_id?: string | null
+          meta_campaign_id?: string | null
+          meta_creative_id?: string | null
+          name: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          compliance_score?: number | null
+          compliance_violations?: Json | null
+          created_by?: string | null
+          current_step?: string | null
+          draft_id?: string | null
+          error_message?: string | null
+          error_stage?: string | null
+          finished_at?: string | null
+          id?: string
+          meta_ad_id?: string | null
+          meta_adset_id?: string | null
+          meta_campaign_id?: string | null
+          meta_creative_id?: string | null
+          name?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_publications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_publications_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_drafts"
             referencedColumns: ["id"]
           },
         ]
@@ -629,12 +2728,104 @@ export type Database = {
             referencedRelation: "integrations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaigns_integration_id_integrations_id_fk"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      chat_conversations: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          message_count: number | null
+          summary: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          message_count?: number | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          message_count?: number | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          role: string
+          tokens_used: number | null
+          tool_call_id: string | null
+          tool_calls: Json | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          role: string
+          tokens_used?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          tokens_used?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       companies: {
         Row: {
           audits_this_month: number | null
+          auto_takedown_enabled: boolean | null
           billing_email: string | null
+          brand_colors: string[] | null
+          brand_logo_url: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string | null
@@ -647,6 +2838,8 @@ export type Database = {
           max_users: number | null
           metadata: Json | null
           name: string
+          notification_email: string | null
+          notification_webhook_url: string | null
           organization_id: string | null
           primary_color: string | null
           settings: Json | null
@@ -658,13 +2851,18 @@ export type Database = {
             | null
           subscription_start_date: string | null
           subscription_status: string | null
+          takedown_severity_filter: string | null
+          takedown_threshold: number | null
           tax_id: string | null
           trial_ends_at: string | null
           updated_at: string | null
         }
         Insert: {
           audits_this_month?: number | null
+          auto_takedown_enabled?: boolean | null
           billing_email?: string | null
+          brand_colors?: string[] | null
+          brand_logo_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
@@ -677,6 +2875,8 @@ export type Database = {
           max_users?: number | null
           metadata?: Json | null
           name: string
+          notification_email?: string | null
+          notification_webhook_url?: string | null
           organization_id?: string | null
           primary_color?: string | null
           settings?: Json | null
@@ -688,13 +2888,18 @@ export type Database = {
             | null
           subscription_start_date?: string | null
           subscription_status?: string | null
+          takedown_severity_filter?: string | null
+          takedown_threshold?: number | null
           tax_id?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
         }
         Update: {
           audits_this_month?: number | null
+          auto_takedown_enabled?: boolean | null
           billing_email?: string | null
+          brand_colors?: string[] | null
+          brand_logo_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string | null
@@ -707,6 +2912,8 @@ export type Database = {
           max_users?: number | null
           metadata?: Json | null
           name?: string
+          notification_email?: string | null
+          notification_webhook_url?: string | null
           organization_id?: string | null
           primary_color?: string | null
           settings?: Json | null
@@ -718,6 +2925,8 @@ export type Database = {
             | null
           subscription_start_date?: string | null
           subscription_status?: string | null
+          takedown_severity_filter?: string | null
+          takedown_threshold?: number | null
           tax_id?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
@@ -728,6 +2937,285 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_actions: {
+        Row: {
+          action_type: string
+          company_id: string
+          created_at: string | null
+          creative_id: string
+          external_ad_id: string | null
+          id: string
+          meta_api_response: Json | null
+          performed_by: string | null
+          reason: string | null
+          score_id: string | null
+        }
+        Insert: {
+          action_type: string
+          company_id: string
+          created_at?: string | null
+          creative_id: string
+          external_ad_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          performed_by?: string | null
+          reason?: string | null
+          score_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          company_id?: string
+          created_at?: string | null
+          creative_id?: string
+          external_ad_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          performed_by?: string | null
+          reason?: string | null
+          score_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_actions_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "creatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_actions_score_id_fkey"
+            columns: ["score_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_scores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_rules: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean
+          rule_type: string
+          severity: string
+          source: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          rule_type: string
+          severity?: string
+          source?: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          rule_type?: string
+          severity?: string
+          source?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_scan_logs: {
+        Row: {
+          ads_analyzed: number | null
+          ads_critical: number | null
+          ads_healthy: number | null
+          ads_paused: number | null
+          ads_warning: number | null
+          company_id: string
+          created_at: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          ads_analyzed?: number | null
+          ads_critical?: number | null
+          ads_healthy?: number | null
+          ads_paused?: number | null
+          ads_warning?: number | null
+          company_id: string
+          created_at?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          ads_analyzed?: number | null
+          ads_critical?: number | null
+          ads_healthy?: number | null
+          ads_paused?: number | null
+          ads_warning?: number | null
+          company_id?: string
+          created_at?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_scan_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_scores: {
+        Row: {
+          company_id: string
+          copy_score: number | null
+          created_at: string | null
+          creative_id: string
+          external_ad_id: string | null
+          final_score: number
+          health_status: string
+          id: string
+          image_score: number | null
+          scan_model: string | null
+          scanned_at: string
+        }
+        Insert: {
+          company_id: string
+          copy_score?: number | null
+          created_at?: string | null
+          creative_id: string
+          external_ad_id?: string | null
+          final_score: number
+          health_status: string
+          id?: string
+          image_score?: number | null
+          scan_model?: string | null
+          scanned_at?: string
+        }
+        Update: {
+          company_id?: string
+          copy_score?: number | null
+          created_at?: string | null
+          creative_id?: string
+          external_ad_id?: string | null
+          final_score?: number
+          health_status?: string
+          id?: string
+          image_score?: number | null
+          scan_model?: string | null
+          scanned_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_scores_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_violations: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          creative_id: string
+          description: string
+          evidence: string | null
+          id: string
+          points_deducted: number
+          score_id: string
+          severity: string
+          violation_type: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          creative_id: string
+          description: string
+          evidence?: string | null
+          id?: string
+          points_deducted?: number
+          score_id: string
+          severity: string
+          violation_type: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          creative_id?: string
+          description?: string
+          evidence?: string | null
+          id?: string
+          points_deducted?: number
+          score_id?: string
+          severity?: string
+          violation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_violations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_violations_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "creatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_violations_score_id_fkey"
+            columns: ["score_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_scores"
             referencedColumns: ["id"]
           },
         ]
@@ -1019,6 +3507,281 @@ export type Database = {
           },
         ]
       }
+      fury_actions: {
+        Row: {
+          action_type: string
+          campaign_external_id: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          company_id: string
+          created_at: string | null
+          evaluation_id: string | null
+          id: string
+          meta_api_response: Json | null
+          metric_name: string | null
+          metric_value: number | null
+          performed_by: string | null
+          revert_before: string | null
+          reverted_at: string | null
+          rule_display_name: string | null
+          rule_key: string
+          status: string
+          threshold_value: number | null
+        }
+        Insert: {
+          action_type: string
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id: string
+          created_at?: string | null
+          evaluation_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          metric_name?: string | null
+          metric_value?: number | null
+          performed_by?: string | null
+          revert_before?: string | null
+          reverted_at?: string | null
+          rule_display_name?: string | null
+          rule_key: string
+          status?: string
+          threshold_value?: number | null
+        }
+        Update: {
+          action_type?: string
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id?: string
+          created_at?: string | null
+          evaluation_id?: string | null
+          id?: string
+          meta_api_response?: Json | null
+          metric_name?: string | null
+          metric_value?: number | null
+          performed_by?: string | null
+          revert_before?: string | null
+          reverted_at?: string | null
+          rule_display_name?: string | null
+          rule_key?: string
+          status?: string
+          threshold_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fury_actions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fury_actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fury_actions_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "fury_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fury_evaluations: {
+        Row: {
+          avg_cpc: number | null
+          avg_cpm: number | null
+          avg_ctr: number | null
+          avg_frequency: number | null
+          budget_pct_used: number | null
+          campaign_external_id: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          company_id: string
+          daily_cpa: number | null
+          days_with_data: number | null
+          evaluated_at: string | null
+          id: string
+          overall_health: string | null
+          rules_triggered: string[] | null
+          total_clicks: number | null
+          total_conversions: number | null
+          total_impressions: number | null
+          total_spend: number | null
+          trend_direction: string | null
+          trend_pct_change: number | null
+        }
+        Insert: {
+          avg_cpc?: number | null
+          avg_cpm?: number | null
+          avg_ctr?: number | null
+          avg_frequency?: number | null
+          budget_pct_used?: number | null
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id: string
+          daily_cpa?: number | null
+          days_with_data?: number | null
+          evaluated_at?: string | null
+          id?: string
+          overall_health?: string | null
+          rules_triggered?: string[] | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+          total_impressions?: number | null
+          total_spend?: number | null
+          trend_direction?: string | null
+          trend_pct_change?: number | null
+        }
+        Update: {
+          avg_cpc?: number | null
+          avg_cpm?: number | null
+          avg_ctr?: number | null
+          avg_frequency?: number | null
+          budget_pct_used?: number | null
+          campaign_external_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id?: string
+          daily_cpa?: number | null
+          days_with_data?: number | null
+          evaluated_at?: string | null
+          id?: string
+          overall_health?: string | null
+          rules_triggered?: string[] | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+          total_impressions?: number | null
+          total_spend?: number | null
+          trend_direction?: string | null
+          trend_pct_change?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fury_evaluations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fury_evaluations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fury_rules: {
+        Row: {
+          action_type: string
+          auto_execute: boolean | null
+          company_id: string
+          consecutive_days: number
+          created_at: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_enabled: boolean | null
+          rule_key: string
+          threshold_unit: string
+          threshold_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          action_type: string
+          auto_execute?: boolean | null
+          company_id: string
+          consecutive_days?: number
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_enabled?: boolean | null
+          rule_key: string
+          threshold_unit: string
+          threshold_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          auto_execute?: boolean | null
+          company_id?: string
+          consecutive_days?: number
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_enabled?: boolean | null
+          rule_key?: string
+          threshold_unit?: string
+          threshold_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fury_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fury_scan_logs: {
+        Row: {
+          actions_executed: number | null
+          campaigns_evaluated: number | null
+          company_id: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          rules_triggered: number | null
+          started_at: string | null
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          actions_executed?: number | null
+          campaigns_evaluated?: number | null
+          company_id: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          rules_triggered?: number | null
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          actions_executed?: number | null
+          campaigns_evaluated?: number | null
+          company_id?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          rules_triggered?: number | null
+          started_at?: string | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fury_scan_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_sheets_config: {
         Row: {
           company_id: string | null
@@ -1195,10 +3958,13 @@ export type Database = {
           facebook_user_id: string | null
           facebook_user_name: string | null
           id: string
+          last_deep_scan_at: string | null
           last_full_sync: string | null
           last_sync: string | null
+          next_scan_at: string | null
           platform: string
           refresh_token: string | null
+          scan_interval_hours: number | null
           status: string | null
           token_expires_at: string | null
           updated_at: string | null
@@ -1218,10 +3984,13 @@ export type Database = {
           facebook_user_id?: string | null
           facebook_user_name?: string | null
           id?: string
+          last_deep_scan_at?: string | null
           last_full_sync?: string | null
           last_sync?: string | null
+          next_scan_at?: string | null
           platform: string
           refresh_token?: string | null
+          scan_interval_hours?: number | null
           status?: string | null
           token_expires_at?: string | null
           updated_at?: string | null
@@ -1241,10 +4010,13 @@ export type Database = {
           facebook_user_id?: string | null
           facebook_user_name?: string | null
           id?: string
+          last_deep_scan_at?: string | null
           last_full_sync?: string | null
           last_sync?: string | null
+          next_scan_at?: string | null
           platform?: string
           refresh_token?: string | null
+          scan_interval_hours?: number | null
           status?: string | null
           token_expires_at?: string | null
           updated_at?: string | null
@@ -1317,6 +4089,544 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      memories: {
+        Row: {
+          access_count: number | null
+          category: string | null
+          company_id: string | null
+          confidence: number | null
+          content: string
+          content_embedding: string | null
+          created_at: string | null
+          id: string
+          importance: number | null
+          is_active: boolean | null
+          last_accessed_at: string | null
+          memory_type: string
+          source_conversation_id: string | null
+          superseded_by: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_count?: number | null
+          category?: string | null
+          company_id?: string | null
+          confidence?: number | null
+          content: string
+          content_embedding?: string | null
+          created_at?: string | null
+          id?: string
+          importance?: number | null
+          is_active?: boolean | null
+          last_accessed_at?: string | null
+          memory_type: string
+          source_conversation_id?: string | null
+          superseded_by?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_count?: number | null
+          category?: string | null
+          company_id?: string | null
+          confidence?: number | null
+          content?: string
+          content_embedding?: string | null
+          created_at?: string | null
+          id?: string
+          importance?: number | null
+          is_active?: boolean | null
+          last_accessed_at?: string | null
+          memory_type?: string
+          source_conversation_id?: string | null
+          superseded_by?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_source_conversation_id_fkey"
+            columns: ["source_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_ad_accounts: {
+        Row: {
+          account_id: string
+          account_name: string | null
+          account_status: string | null
+          account_status_code: number | null
+          amount_spent: number | null
+          balance: number | null
+          business_id: string | null
+          business_name: string | null
+          company_id: string
+          created_at: string | null
+          currency: string | null
+          deleted_at: string | null
+          funding_source: string | null
+          id: string
+          integration_id: string
+          is_active: boolean | null
+          last_scanned_at: string | null
+          selected_at: string | null
+          spend_cap: number | null
+          timezone_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          account_name?: string | null
+          account_status?: string | null
+          account_status_code?: number | null
+          amount_spent?: number | null
+          balance?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          company_id: string
+          created_at?: string | null
+          currency?: string | null
+          deleted_at?: string | null
+          funding_source?: string | null
+          id?: string
+          integration_id: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          selected_at?: string | null
+          spend_cap?: number | null
+          timezone_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          account_name?: string | null
+          account_status?: string | null
+          account_status_code?: number | null
+          amount_spent?: number | null
+          balance?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          company_id?: string
+          created_at?: string | null
+          currency?: string | null
+          deleted_at?: string | null
+          funding_source?: string | null
+          id?: string
+          integration_id?: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          selected_at?: string | null
+          spend_cap?: number | null
+          timezone_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_ad_accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ad_accounts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ad_accounts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      meta_api_rate_limit: {
+        Row: {
+          company_id: string
+          endpoint_pattern: string
+          id: string
+          integration_id: string | null
+          last_429_at: string | null
+          updated_at: string | null
+          x_app_usage: Json | null
+          x_business_use_case_usage: Json | null
+        }
+        Insert: {
+          company_id: string
+          endpoint_pattern: string
+          id?: string
+          integration_id?: string | null
+          last_429_at?: string | null
+          updated_at?: string | null
+          x_app_usage?: Json | null
+          x_business_use_case_usage?: Json | null
+        }
+        Update: {
+          company_id?: string
+          endpoint_pattern?: string
+          id?: string
+          integration_id?: string | null
+          last_429_at?: string | null
+          updated_at?: string | null
+          x_app_usage?: Json | null
+          x_business_use_case_usage?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_api_rate_limit_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_api_rate_limit_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_api_rate_limit_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      meta_business_managers: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_time: string | null
+          deleted_at: string | null
+          external_id: string
+          id: string
+          integration_id: string
+          last_scanned_at: string | null
+          name: string | null
+          primary_page: string | null
+          two_factor_type: string | null
+          updated_at: string | null
+          verification_status: string | null
+          vertical: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          created_time?: string | null
+          deleted_at?: string | null
+          external_id: string
+          id?: string
+          integration_id: string
+          last_scanned_at?: string | null
+          name?: string | null
+          primary_page?: string | null
+          two_factor_type?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+          vertical?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_time?: string | null
+          deleted_at?: string | null
+          external_id?: string
+          id?: string
+          integration_id?: string
+          last_scanned_at?: string | null
+          name?: string | null
+          primary_page?: string | null
+          two_factor_type?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+          vertical?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_business_managers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_business_managers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_business_managers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      meta_pages: {
+        Row: {
+          category_list: Json | null
+          company_id: string
+          created_at: string | null
+          deleted_at: string | null
+          fan_count: number | null
+          followers_count: number | null
+          id: string
+          integration_id: string
+          is_active: boolean | null
+          last_scanned_at: string | null
+          link: string | null
+          page_access_token: string | null
+          page_category: string | null
+          page_id: string
+          page_name: string | null
+          picture_url: string | null
+          selected_at: string | null
+          updated_at: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          category_list?: Json | null
+          company_id: string
+          created_at?: string | null
+          deleted_at?: string | null
+          fan_count?: number | null
+          followers_count?: number | null
+          id?: string
+          integration_id: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          link?: string | null
+          page_access_token?: string | null
+          page_category?: string | null
+          page_id: string
+          page_name?: string | null
+          picture_url?: string | null
+          selected_at?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          category_list?: Json | null
+          company_id?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          fan_count?: number | null
+          followers_count?: number | null
+          id?: string
+          integration_id?: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          link?: string | null
+          page_access_token?: string | null
+          page_category?: string | null
+          page_id?: string
+          page_name?: string | null
+          picture_url?: string | null
+          selected_at?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_pages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pages_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pages_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      meta_pixels: {
+        Row: {
+          ad_account_id: string | null
+          automatic_matching_fields: Json | null
+          can_proxy: boolean | null
+          code: string | null
+          company_id: string
+          created_at: string | null
+          creation_time: string | null
+          deleted_at: string | null
+          external_id: string
+          first_party_cookie_status: string | null
+          id: string
+          integration_id: string | null
+          is_unavailable: boolean | null
+          last_fired_time: string | null
+          last_scanned_at: string | null
+          name: string | null
+          owner_business_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_account_id?: string | null
+          automatic_matching_fields?: Json | null
+          can_proxy?: boolean | null
+          code?: string | null
+          company_id: string
+          created_at?: string | null
+          creation_time?: string | null
+          deleted_at?: string | null
+          external_id: string
+          first_party_cookie_status?: string | null
+          id?: string
+          integration_id?: string | null
+          is_unavailable?: boolean | null
+          last_fired_time?: string | null
+          last_scanned_at?: string | null
+          name?: string | null
+          owner_business_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_account_id?: string | null
+          automatic_matching_fields?: Json | null
+          can_proxy?: boolean | null
+          code?: string | null
+          company_id?: string
+          created_at?: string | null
+          creation_time?: string | null
+          deleted_at?: string | null
+          external_id?: string
+          first_party_cookie_status?: string | null
+          id?: string
+          integration_id?: string | null
+          is_unavailable?: boolean | null
+          last_fired_time?: string | null
+          last_scanned_at?: string | null
+          name?: string | null
+          owner_business_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_pixels_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pixels_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pixels_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
+        ]
+      }
+      meta_scan_logs: {
+        Row: {
+          company_id: string
+          error: string | null
+          error_summary: Json | null
+          finished_at: string | null
+          id: string
+          integration_id: string | null
+          scan_type: string
+          started_at: string
+          stats: Json | null
+          status: string
+          triggered_by: string
+        }
+        Insert: {
+          company_id: string
+          error?: string | null
+          error_summary?: Json | null
+          finished_at?: string | null
+          id?: string
+          integration_id?: string | null
+          scan_type: string
+          started_at?: string
+          stats?: Json | null
+          status: string
+          triggered_by: string
+        }
+        Update: {
+          company_id?: string
+          error?: string | null
+          error_summary?: Json | null
+          finished_at?: string | null
+          id?: string
+          integration_id?: string | null
+          scan_type?: string
+          started_at?: string
+          stats?: Json | null
+          status?: string
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_scan_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_scan_logs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_scan_logs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
           },
         ]
       }
@@ -1933,6 +5243,13 @@ export type Database = {
             referencedRelation: "integrations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sync_history_integration_id_integrations_id_fk"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "meta_scan_health"
+            referencedColumns: ["integration_id"]
+          },
         ]
       }
       tags: {
@@ -2070,12 +5387,110 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      meta_scan_health: {
+        Row: {
+          company_id: string | null
+          consecutive_failures: number | null
+          health_status: string | null
+          integration_id: string | null
+          integration_status: string | null
+          last_deep_scan_at: string | null
+          last_error_summary: Json | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          next_scan_at: string | null
+          scan_interval_hours: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          consecutive_failures?: never
+          health_status?: never
+          integration_id?: string | null
+          integration_status?: string | null
+          last_deep_scan_at?: string | null
+          last_error_summary?: never
+          last_failure_at?: never
+          last_success_at?: never
+          next_scan_at?: string | null
+          scan_interval_hours?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          consecutive_failures?: never
+          health_status?: never
+          integration_id?: string | null
+          integration_status?: string | null
+          last_deep_scan_at?: string | null
+          last_error_summary?: never
+          last_failure_at?: never
+          last_success_at?: never
+          next_scan_at?: string | null
+          scan_interval_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_company_id_companies_id_fk"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integrations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      backfill_adsets_campaign_id: {
+        Args: { p_company_id: string }
+        Returns: number
+      }
+      bump_memory_access: {
+        Args: { p_memory_ids: string[] }
+        Returns: undefined
+      }
+      create_next_campaign_metrics_partition: {
+        Args: never
+        Returns: undefined
+      }
       current_user_company_id: { Args: never; Returns: string }
       current_user_organization_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
+      decrypt_meta_token: { Args: { encrypted_token: string }; Returns: string }
+      detect_stale_meta_scans: { Args: never; Returns: number }
+      encrypt_meta_token: { Args: { token: string }; Returns: string }
+      get_vault_secret: { Args: { secret_name: string }; Returns: string }
+      refresh_budget_benchmarks: {
+        Args: { p_company_id: string }
+        Returns: number
+      }
+      search_memories: {
+        Args: {
+          p_categories?: string[]
+          p_limit?: number
+          p_memory_types?: string[]
+          p_query_embedding: string
+          p_user_id: string
+        }
+        Returns: {
+          category: string
+          content: string
+          final_score: number
+          id: string
+          importance: number
+          memory_type: string
+          similarity: number
+        }[]
+      }
+      trigger_compliance_fast_tick: { Args: never; Returns: undefined }
+      trigger_compliance_scan_tick: { Args: never; Returns: undefined }
+      trigger_fury_evaluate_tick: { Args: never; Returns: undefined }
+      trigger_meta_deep_scan_tick: { Args: never; Returns: undefined }
     }
     Enums: {
       company_status: "active" | "suspended" | "trial" | "cancelled"
