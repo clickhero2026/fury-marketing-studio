@@ -12,8 +12,8 @@ dist
 dist-ssr
 *.local
 
-# Secrets — NEVER commit
-.env
+# Secrets — NEVER commit .env.local ou variantes com secrets reais
+# .env pode ser commitado pois so contem VITE_* publicas (anon key e design public).
 .env.local
 .env.*.local
 *.pem
