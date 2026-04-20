@@ -233,12 +233,12 @@ const Integrations = () => {
                   </Select>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3">
+                {/* Actions — layout responsivo: quebra em multiplas linhas se precisar */}
+                <div className="flex flex-wrap gap-2 md:gap-3">
                   <Button
                     onClick={() => setShowSelector(!showSelector)}
                     variant="outline"
-                    className="flex-1 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+                    className="flex-1 min-w-[140px] bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
                   >
                     <Settings2 className="w-4 h-4 mr-2" />
                     {showSelector ? 'Fechar Ativos' : 'Gerenciar Ativos'}
@@ -246,7 +246,7 @@ const Integrations = () => {
                   <Button
                     onClick={sync}
                     disabled={isSyncing || !isConnected}
-                    className="flex-1 brand-gradient text-white hover:opacity-90"
+                    className="flex-1 min-w-[140px] brand-gradient text-white hover:opacity-90"
                   >
                     {isSyncing ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -259,7 +259,7 @@ const Integrations = () => {
                     onClick={deepScan}
                     disabled={isDeepScanning || !isConnected}
                     variant="outline"
-                    className="flex-1 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+                    className="flex-1 min-w-[140px] bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
                   >
                     {isDeepScanning ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -272,7 +272,7 @@ const Integrations = () => {
                     <Button
                       onClick={connect}
                       disabled={isConnecting}
-                      className="flex-1 brand-gradient text-white hover:opacity-90"
+                      className="flex-1 min-w-[140px] brand-gradient text-white hover:opacity-90"
                     >
                       {isConnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                       <ExternalLink className="w-4 h-4 mr-2" />
@@ -283,7 +283,7 @@ const Integrations = () => {
                     onClick={disconnect}
                     disabled={isDisconnecting}
                     variant="outline"
-                    className="border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    className="flex-1 min-w-[140px] border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                   >
                     {isDisconnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     <Unplug className="w-4 h-4 mr-2" />
