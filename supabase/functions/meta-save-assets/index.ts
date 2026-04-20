@@ -155,8 +155,12 @@ Deno.serve(async (req) => {
     }
 
     // --- AD ACCOUNTS: upsert por (company_id, account_id) com is_active=true ---
+    // Dedup por acc.id — mesma conta pode chegar 2x (owned em um BM + client em outro)
     if (adAccounts.length > 0) {
-      const accountRows = adAccounts.map((acc) => ({
+      const uniqAccounts = new Map<string, typeof adAccounts[number]>();
+      for (const acc of adAccounts) if (acc.id) uniqAccounts.set(acc.id, acc);
+
+      const accountRows = [...uniqAccounts.values()].map((acc) => ({
         integration_id: integration.id,
         company_id: company.id,
         account_id: acc.id,
@@ -174,15 +178,19 @@ Deno.serve(async (req) => {
 
       if (upsertAccountsError) {
         console.error('Failed to upsert ad accounts:', upsertAccountsError);
-        return new Response(JSON.stringify({ error: 'Falha ao salvar contas de anuncio' }), {
+        return new Response(JSON.stringify({ error: 'Falha ao salvar contas de anuncio', details: upsertAccountsError.message }), {
           status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
         });
       }
     }
 
     // --- PAGES: upsert com is_active=true ---
+    // Dedup por page.id — mesma page pode estar em multiplos BMs (owned+client)
     if (pages.length > 0) {
-      const pageRows = pages.map((page) => ({
+      const uniqPages = new Map<string, typeof pages[number]>();
+      for (const p of pages) if (p.id) uniqPages.set(p.id, p);
+
+      const pageRows = [...uniqPages.values()].map((page) => ({
         integration_id: integration.id,
         company_id: company.id,
         page_id: page.id,
@@ -198,7 +206,7 @@ Deno.serve(async (req) => {
 
       if (upsertPagesError) {
         console.error('Failed to upsert pages:', upsertPagesError);
-        return new Response(JSON.stringify({ error: 'Falha ao salvar paginas' }), {
+        return new Response(JSON.stringify({ error: 'Falha ao salvar paginas', details: upsertPagesError.message }), {
           status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
         });
       }
