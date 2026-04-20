@@ -141,15 +141,25 @@ Deno.serve(async (req) => {
     const longLivedToken = longLivedData.access_token;
     const expiresIn = longLivedData.expires_in ?? 5184000; // ~60 days default
 
-    // --- Step 3: Fetch user info ---
-    const meResp = await fetch(
-      `${GRAPH_BASE}/me?fields=id,name&access_token=${longLivedToken}`
-    );
-    const meData = await meResp.json();
+    // --- Step 3: Fetch user info (com retry em rate limit transitorio) ---
+    let meData: { id?: string; name?: string; error?: { code?: number; message?: string; is_transient?: boolean } } = {};
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const meResp = await fetch(`${GRAPH_BASE}/me?fields=id,name&access_token=${longLivedToken}`);
+      meData = await meResp.json();
+      if (!meData.error) break;
+      // Code 4 = App Rate Limit, Code 17 = User Rate Limit, Code 32 = Page Rate Limit
+      const rateLimited = [4, 17, 32].includes(meData.error.code ?? 0) || meData.error.is_transient;
+      if (!rateLimited || attempt === 2) break;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
 
     if (meData.error) {
       console.error('Failed to fetch /me:', meData.error);
-      return redirectResponse({ oauth_error: 'Falha ao obter dados do usuario Meta' });
+      const isRateLimit = [4, 17, 32].includes(meData.error.code ?? 0);
+      const errMsg = isRateLimit
+        ? 'Meta esta limitando requisicoes do app agora (muitos reconnects). Aguarde ~30min e tente novamente.'
+        : `Falha ao obter dados do usuario Meta: ${meData.error.message ?? 'erro desconhecido'}`;
+      return redirectResponse({ oauth_error: errMsg });
     }
 
     // --- Step 4: Fetch ad accounts ---
