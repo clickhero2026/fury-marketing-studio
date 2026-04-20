@@ -42,7 +42,12 @@ function redirectResponse(params: Record<string, string | number>): Response {
 
   return new Response(null, {
     status: 302,
-    headers: { Location: `${baseUrl}?${qs.toString()}` },
+    headers: {
+      Location: `${baseUrl}?${qs.toString()}`,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+      Expires: '0',
+    },
   });
 }
 

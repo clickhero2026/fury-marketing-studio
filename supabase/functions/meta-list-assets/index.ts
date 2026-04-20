@@ -231,12 +231,14 @@ Deno.serve(async (req) => {
     ];
 
     const batchRequests: Array<{ method: string; relative_url: string }> = [];
+    // Usa `filtering` com status=ACTIVE (configurado pelo user) em vez de `effective_status`
+    // (que pode divergir por billing/conta pausada).
+    const filtering = encodeURIComponent(JSON.stringify([{ field: 'status', operator: 'IN', value: ['ACTIVE'] }]));
     for (const a of allAccounts) {
       const actId = a.id.startsWith('act_') ? a.id : `act_${a.account_id ?? a.id}`;
-      // Active campaigns count
       batchRequests.push({
         method: 'GET',
-        relative_url: `${actId}/campaigns?effective_status=["ACTIVE"]&limit=1&summary=true&fields=id`,
+        relative_url: `${actId}/campaigns?filtering=${filtering}&limit=0&summary=total_count`,
       });
       // Spend 30d
       batchRequests.push({
@@ -257,7 +259,11 @@ Deno.serve(async (req) => {
         try {
           const body = JSON.parse(campaignsResult.body);
           activeCount = body.summary?.total_count ?? body.data?.length ?? 0;
-        } catch { /* empty */ }
+        } catch (e) {
+          console.error('[meta-list-assets] parse campaigns failed:', e);
+        }
+      } else if (campaignsResult) {
+        console.error('[meta-list-assets] campaigns batch non-200:', campaignsResult.code, campaignsResult.body?.slice(0, 300));
       }
 
       let spend30d = 0;
