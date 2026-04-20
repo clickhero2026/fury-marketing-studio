@@ -197,12 +197,12 @@ const ChatView = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8 space-y-4">
         {/* Welcome + Suggestions (only when no messages) */}
         {messages.length === 0 && (
-          <div className="max-w-2xl mx-auto fade-in">
+          <div className="max-w-3xl mx-auto w-full fade-in">
             <div className="text-center mb-8">
               <div className="w-12 h-12 rounded-2xl brand-gradient flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-white" />
@@ -231,7 +231,7 @@ const ChatView = () => {
           <div
             key={msg.id}
             className={cn(
-              "max-w-2xl mx-auto slide-up",
+              "max-w-3xl mx-auto w-full slide-up",
               msg.role === "user" ? "flex justify-end" : ""
             )}
           >
@@ -257,7 +257,7 @@ const ChatView = () => {
 
         {/* Status indicator (e.g., "Buscando dados...") */}
         {status && (
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-3xl mx-auto w-full">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-xs text-primary/70">
               <Search className="w-3 h-3 animate-pulse" />
               {status}
@@ -269,8 +269,8 @@ const ChatView = () => {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-border/60 bg-background p-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="border-t border-border/60 bg-background p-4 md:p-6">
+        <div className="max-w-3xl mx-auto w-full">
           <div className="flex items-end gap-2 bg-card border border-border/60 rounded-2xl p-2 focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-sm">
             <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50">
               <Paperclip className="w-[18px] h-[18px]" />

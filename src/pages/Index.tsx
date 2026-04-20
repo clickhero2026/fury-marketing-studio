@@ -29,8 +29,8 @@ const Index = () => {
     <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar currentView={currentView} onViewChange={setCurrentView} />
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-12 border-b border-border/60 bg-background flex items-center px-6">
-          <h2 className="text-[13px] font-semibold text-foreground tracking-tight">
+        <header className="h-12 md:h-14 border-b border-border/60 bg-background flex items-center px-4 md:px-6 shrink-0">
+          <h2 className="text-[13px] md:text-sm font-semibold text-foreground tracking-tight">
             {viewTitles[currentView]}
           </h2>
         </header>

@@ -4,7 +4,7 @@ import { GoalWizard } from './GoalWizard';
 export default function BudgetSmartView() {
   return (
     <div className="h-full overflow-auto">
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="max-w-3xl mx-auto p-4 md:p-6 xl:p-8 space-y-4 md:space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-emerald-500/10">
             <Wallet className="w-6 h-6 text-emerald-400" />

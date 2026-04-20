@@ -26,7 +26,7 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   const navigate = useNavigate();
 
   return (
-    <aside className="w-[220px] xl:w-[260px] sidebar-gradient flex flex-col h-screen border-r border-sidebar-border shrink-0">
+    <aside className="w-[200px] md:w-[220px] xl:w-[240px] 2xl:w-[260px] sidebar-gradient flex flex-col h-screen border-r border-sidebar-border shrink-0">
       {/* Logo */}
       <div className="px-5 pt-5 pb-3">
         <img
