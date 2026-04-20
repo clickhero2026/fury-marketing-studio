@@ -23,11 +23,16 @@ const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:8080';
 // Fluxo redirect e mais confiavel que popup (nao depende de window.opener,
 // nao e afetado por extensoes, nao mostra HTML cru se script falhar)
 function redirectResponse(params: Record<string, string | number>): Response {
+  // Redireciona pra /oauth/meta/complete — rota do proprio app que:
+  // 1. Le os params
+  // 2. Faz postMessage pro opener (se for popup)
+  // 3. Fecha o popup
+  // Como essa rota e mesmo origem do opener, nao tem problema cross-origin
   let baseUrl: string;
   try {
-    baseUrl = new URL('/integrations', APP_URL).toString();
+    baseUrl = new URL('/oauth/meta/complete', APP_URL).toString();
   } catch {
-    baseUrl = 'http://localhost:8080/integrations';
+    baseUrl = 'http://localhost:8080/oauth/meta/complete';
   }
 
   const qs = new URLSearchParams();

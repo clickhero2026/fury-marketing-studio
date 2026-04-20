@@ -10,6 +10,7 @@ import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Integrations from "./pages/Integrations.tsx";
+import OAuthComplete from "./pages/OAuthComplete.tsx";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* OAuth complete — roda dentro do popup, publica — nao exige auth */}
+            <Route path="/oauth/meta/complete" element={<OAuthComplete />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

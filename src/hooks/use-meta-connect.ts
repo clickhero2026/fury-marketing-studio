@@ -62,10 +62,70 @@ export function useMetaConnect() {
       return data as { url: string; state: string };
     },
     onSuccess: (data) => {
-      // Redirect flow — navegacao inteira pro Meta OAuth (sem popup)
-      // Mais confiavel: nao e bloqueado por extensoes, sem HTML cru, sem cross-origin
-      // Meta redireciona de volta pra /integrations?oauth_success=true&accounts=N
-      window.location.href = data.url;
+      // Popup flow — abre Meta em popup, callback redireciona pra /oauth/meta/complete
+      // (rota do proprio app — nao tem cross-origin, nao mostra HTML cru)
+      // Essa rota faz postMessage pro opener e fecha o popup
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const popup = window.open(
+        data.url,
+        'meta-oauth',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Popup bloqueado',
+          description: 'Permita popups para conectar a conta Meta.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Polling de fallback: se o popup fechou (usuario cancelou ou postMessage falhou)
+      const pollInterval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(pollInterval);
+          window.removeEventListener('message', messageHandler);
+          queryClient.invalidateQueries({ queryKey: ['meta-integration'] });
+          queryClient.invalidateQueries({ queryKey: ['meta-assets'] });
+        }
+      }, 500);
+
+      // Listener do postMessage vindo de /oauth/meta/complete
+      const messageHandler = (event: MessageEvent) => {
+        // SECURITY: so aceita messages da mesma origem
+        if (event.origin !== window.location.origin) return;
+
+        if (event.data?.type === 'meta-oauth-success') {
+          clearInterval(pollInterval);
+          window.removeEventListener('message', messageHandler);
+          try { popup.close(); } catch { /* empty */ }
+          queryClient.invalidateQueries({ queryKey: ['meta-integration'] });
+          queryClient.invalidateQueries({ queryKey: ['meta-assets'] });
+          toast({
+            title: 'Meta conectado!',
+            description: `${event.data.accounts || 0} conta(s) encontrada(s). Selecione quais deseja usar.`,
+          });
+          // Dispatch evento global pra Integrations.tsx abrir o MetaAssetPickerModal
+          window.dispatchEvent(new CustomEvent('meta-oauth-completed', {
+            detail: { accounts: event.data.accounts ?? 0 },
+          }));
+        } else if (event.data?.type === 'meta-oauth-error') {
+          clearInterval(pollInterval);
+          window.removeEventListener('message', messageHandler);
+          try { popup.close(); } catch { /* empty */ }
+          toast({
+            title: 'Erro na conexao',
+            description: event.data.error || 'Tente novamente.',
+            variant: 'destructive',
+          });
+        }
+      };
+      window.addEventListener('message', messageHandler);
     },
     onError: (error: Error) => {
       toast({

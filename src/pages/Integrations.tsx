@@ -46,20 +46,20 @@ const Integrations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSelector, setShowSelector] = useState(false);
 
-  // Handle OAuth callback via URL params (redirect flow — principal)
+  // Handle OAuth callback via evento global (popup → postMessage → /oauth/meta/complete)
+  useEffect(() => {
+    const handler = () => setTimeout(() => setShowSelector(true), 300);
+    window.addEventListener('meta-oauth-completed', handler);
+    return () => window.removeEventListener('meta-oauth-completed', handler);
+  }, []);
+
+  // Fallback: URL params (caso popup feche sem postMessage ou alguem navegue direto)
   useEffect(() => {
     const success = searchParams.get('oauth_success');
     const error = searchParams.get('oauth_error');
-    const accounts = searchParams.get('accounts');
 
     if (success === 'true') {
-      toast({
-        title: 'Meta conectado com sucesso!',
-        description: `${accounts || '0'} conta(s) de anuncio encontrada(s). Selecione quais deseja usar.`,
-      });
-      // Limpa os params antes de abrir o modal
       setSearchParams({});
-      // Aguarda um tick pra query do meta-integration atualizar
       setTimeout(() => setShowSelector(true), 300);
     } else if (error) {
       toast({
