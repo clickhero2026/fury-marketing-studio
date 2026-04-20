@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { TrendingUp, DollarSign, Wallet, Target, Receipt, Percent } from 'lucide-react';
-import { KpiCard } from './KpiCard';
+import { KpiCard } from '@/components/shared/KpiCard';
+import { KpiCardCompact } from '@/components/shared/KpiCardCompact';
 import { fmtBRL } from '@/lib/meta-labels';
 
 export interface MetricRow {
@@ -22,7 +23,7 @@ interface Totals {
   conversas: number;
   receita: number;
   lucro: number;
-  roi: number | null;    // null quando nao calculavel
+  roi: number | null;
   cpl: number | null;
   roas: number | null;
 }
@@ -57,35 +58,122 @@ function fmtOrDash(value: number | null, formatter: (n: number) => string): stri
   return value == null ? '—' : formatter(value);
 }
 
+/**
+ * Constroi serie diaria agregada para sparklines.
+ * Retorna array de valores por dia ordenado cronologicamente.
+ */
+function dailySeries(metrics: MetricRow[], pick: (t: Totals) => number | null): number[] {
+  const byDay = new Map<string, MetricRow[]>();
+  for (const m of metrics) {
+    if (!m.data) continue;
+    if (!byDay.has(m.data)) byDay.set(m.data, []);
+    byDay.get(m.data)!.push(m);
+  }
+  const dates = [...byDay.keys()].sort();
+  return dates
+    .map((d) => pick(computeTotals(byDay.get(d)!)))
+    .filter((v): v is number => v != null && isFinite(v));
+}
+
 export function DashKpiGrid({ currentMetrics, previousMetrics, loading }: Props) {
-  const { cur, prev } = useMemo(() => ({
+  const { cur, prev, sparks } = useMemo(() => ({
     cur: computeTotals(currentMetrics),
     prev: computeTotals(previousMetrics),
+    sparks: {
+      roas: dailySeries(currentMetrics, (t) => t.roas),
+      lucro: dailySeries(currentMetrics, (t) => t.lucro),
+      invest: dailySeries(currentMetrics, (t) => t.investimento),
+    },
   }), [currentMetrics, previousMetrics]);
 
-  const cards = [
-    { title: 'ROI', value: fmtOrDash(cur.roi, (v) => `${v.toFixed(1)}%`), deltaPct: delta(cur.roi, prev.roi), higherIsBetter: true, icon: Percent },
-    { title: 'Lucro', value: fmtBRL(cur.lucro), deltaPct: delta(cur.lucro, prev.lucro), higherIsBetter: true, icon: TrendingUp },
-    { title: 'Investimento', value: fmtBRL(cur.investimento), deltaPct: delta(cur.investimento, prev.investimento), higherIsBetter: false, icon: Wallet },
-    { title: 'Leads/Conv.', value: cur.conversas.toLocaleString('pt-BR'), deltaPct: delta(cur.conversas, prev.conversas), higherIsBetter: true, icon: Target },
-    { title: 'CPL/CPA', value: fmtOrDash(cur.cpl, fmtBRL), deltaPct: delta(cur.cpl, prev.cpl), higherIsBetter: false, icon: Receipt },
-    { title: 'ROAS', value: fmtOrDash(cur.roas, (v) => `${v.toFixed(2)}x`), deltaPct: delta(cur.roas, prev.roas), higherIsBetter: true, icon: DollarSign },
+  // Tier 1 — cards grandes com sparkline
+  const tier1 = [
+    {
+      label: 'ROAS',
+      value: cur.roas != null ? cur.roas.toFixed(2) : '—',
+      unit: cur.roas != null ? 'x' : undefined,
+      deltaPct: delta(cur.roas, prev.roas),
+      higherIsBetter: true,
+      icon: DollarSign,
+      spark: sparks.roas,
+    },
+    {
+      label: 'Lucro',
+      value: fmtBRL(cur.lucro),
+      deltaPct: delta(cur.lucro, prev.lucro),
+      higherIsBetter: true,
+      icon: TrendingUp,
+      spark: sparks.lucro,
+      accent: cur.lucro >= 0 ? 'text-emerald-600' : 'text-red-600',
+    },
+    {
+      label: 'Investimento',
+      value: fmtBRL(cur.investimento),
+      deltaPct: delta(cur.investimento, prev.investimento),
+      higherIsBetter: false,
+      icon: Wallet,
+      spark: sparks.invest,
+    },
+  ];
+
+  // Tier 2 — compactos
+  const tier2 = [
+    {
+      label: 'ROI',
+      value: fmtOrDash(cur.roi, (v) => v.toFixed(1)),
+      unit: cur.roi != null ? '%' : undefined,
+      deltaPct: delta(cur.roi, prev.roi),
+      higherIsBetter: true,
+      icon: Percent,
+    },
+    {
+      label: 'Leads / Conv.',
+      value: cur.conversas.toLocaleString('pt-BR'),
+      deltaPct: delta(cur.conversas, prev.conversas),
+      higherIsBetter: true,
+      icon: Target,
+    },
+    {
+      label: 'CPL / CPA',
+      value: fmtOrDash(cur.cpl, fmtBRL),
+      deltaPct: delta(cur.cpl, prev.cpl),
+      higherIsBetter: false,
+      icon: Receipt,
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-      {cards.map((c) => (
-        <KpiCard
-          key={c.title}
-          title={c.title}
-          value={loading ? '—' : c.value}
-          deltaPct={loading ? null : c.deltaPct}
-          higherIsBetter={c.higherIsBetter}
-          icon={c.icon}
-          hint="vs periodo anterior"
-          loading={loading}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {tier1.map((c) => (
+          <KpiCard
+            key={c.label}
+            label={c.label}
+            value={loading ? '—' : c.value}
+            unit={c.unit}
+            deltaPct={loading ? null : c.deltaPct}
+            higherIsBetter={c.higherIsBetter}
+            icon={c.icon}
+            sparklineData={loading ? undefined : c.spark}
+            accentClassName={c.accent}
+            loading={loading}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {tier2.map((c) => (
+          <KpiCardCompact
+            key={c.label}
+            label={c.label}
+            value={loading ? '—' : c.value}
+            unit={c.unit}
+            deltaPct={loading ? null : c.deltaPct}
+            higherIsBetter={c.higherIsBetter}
+            icon={c.icon}
+            loading={loading}
+          />
+        ))}
+      </div>
     </div>
   );
 }

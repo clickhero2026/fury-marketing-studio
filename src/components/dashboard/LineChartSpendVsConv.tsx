@@ -1,10 +1,40 @@
 import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { fmtBRL, fmtCompact } from '@/lib/meta-labels';
 import type { MetricRow } from './DashKpiGrid';
 
 interface Props {
   metrics: MetricRow[];
+}
+
+const PRIMARY = '#cf6f03';
+const EMERALD = '#059669';
+
+interface TooltipItem { name?: string; value?: number; dataKey?: string }
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipItem[]; label?: string }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const labelDate = label ? new Date(label).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '';
+  return (
+    <div className="rounded-lg border border-border/60 bg-popover/95 px-3 py-2 shadow-e3 backdrop-blur-sm">
+      <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{labelDate}</div>
+      {payload.map((p, i) => {
+        const isSpend = p.dataKey === 'investimento';
+        return (
+          <div key={i} className="flex items-center gap-2 text-xs">
+            <span
+              className="h-2 w-2 rounded-sm"
+              style={{ backgroundColor: isSpend ? PRIMARY : EMERALD }}
+            />
+            <span className="text-muted-foreground">{isSpend ? 'Investimento' : 'Conversas'}</span>
+            <span className="ml-auto font-mono font-semibold tabular-nums text-foreground">
+              {isSpend ? fmtBRL(Number(p.value)) : Number(p.value).toLocaleString('pt-BR')}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function LineChartSpendVsConv({ metrics }: Props) {
@@ -21,35 +51,85 @@ export function LineChartSpendVsConv({ metrics }: Props) {
   }, [metrics]);
 
   if (data.length === 0) {
-    return <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">Sem dados no periodo</div>;
+    return (
+      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+        Sem dados no periodo
+      </div>
+    );
   }
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <LineChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+      <AreaChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+        <defs>
+          <linearGradient id="spend-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.25} />
+            <stop offset="100%" stopColor={PRIMARY} stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="conv-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={EMERALD} stopOpacity={0.2} />
+            <stop offset="100%" stopColor={EMERALD} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" strokeOpacity={0.6} vertical={false} />
         <XAxis
           dataKey="data"
-          tick={{ fontSize: 11, fill: '#888' }}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: 'JetBrains Mono, monospace' }}
+          tickLine={false}
+          axisLine={false}
           tickFormatter={(v: string) => {
             const d = new Date(v);
-            return `${d.getDate()}/${d.getMonth() + 1}`;
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
           }}
+          tickMargin={8}
         />
-        <YAxis yAxisId="spend" orientation="left" tick={{ fontSize: 11, fill: '#888' }} tickFormatter={(v) => fmtCompact(v)} />
-        <YAxis yAxisId="conv" orientation="right" tick={{ fontSize: 11, fill: '#888' }} />
-        <Tooltip
-          contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: 8, fontSize: 12 }}
-          labelFormatter={(v: string) => new Date(v).toLocaleDateString('pt-BR')}
-          formatter={(val: number, name: string) => {
-            if (name === 'investimento') return [fmtBRL(val), 'Investimento'];
-            return [val.toLocaleString('pt-BR'), 'Conversas'];
-          }}
+        <YAxis
+          yAxisId="spend"
+          orientation="left"
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: 'JetBrains Mono, monospace' }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v: number) => fmtCompact(v)}
+          width={50}
         />
-        <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        <Line yAxisId="spend" type="monotone" dataKey="investimento" stroke="#3b82f6" strokeWidth={2} dot={false} name="Investimento" />
-        <Line yAxisId="conv" type="monotone" dataKey="conversas" stroke="#10b981" strokeWidth={2} dot={false} name="Conversas" />
-      </LineChart>
+        <YAxis
+          yAxisId="conv"
+          orientation="right"
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: 'JetBrains Mono, monospace' }}
+          tickLine={false}
+          axisLine={false}
+          width={40}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }} />
+        <Legend
+          wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
+          iconType="square"
+          iconSize={8}
+          formatter={(value) => (
+            <span className="text-xs text-muted-foreground">
+              {value === 'investimento' ? 'Investimento' : 'Conversas'}
+            </span>
+          )}
+        />
+        <Area
+          yAxisId="spend"
+          type="monotone"
+          dataKey="investimento"
+          stroke={PRIMARY}
+          strokeWidth={2}
+          fill="url(#spend-gradient)"
+          name="investimento"
+        />
+        <Area
+          yAxisId="conv"
+          type="monotone"
+          dataKey="conversas"
+          stroke={EMERALD}
+          strokeWidth={2}
+          fill="url(#conv-gradient)"
+          name="conversas"
+        />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }

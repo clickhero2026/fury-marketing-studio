@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { DashFilters, type Period } from './dashboard/DashFilters';
 import { DashKpiGrid, type MetricRow } from './dashboard/DashKpiGrid';
 import { DashCharts } from './dashboard/DashCharts';
@@ -81,21 +82,25 @@ const DashboardView = () => {
   const error = metricsQ.isError;
 
   return (
-    <div className="p-4 md:p-6 xl:p-8 space-y-4 md:space-y-6 overflow-y-auto h-full">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground tracking-tight">Dashboard</h2>
-          <p className="text-[13px] text-muted-foreground mt-0.5">Visao geral das campanhas Meta Ads</p>
-        </div>
-        <div className={cn(
-          'flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-medium',
-          error ? 'bg-danger/10 text-danger' : 'bg-emerald-500/10 text-emerald-400'
-        )}>
-          <span className={cn('w-1.5 h-1.5 rounded-full', error ? 'bg-danger' : 'bg-emerald-500 animate-pulse')} />
-          {error ? 'Erro' : loading ? 'Carregando...' : 'Ao vivo (5 min)'}
-        </div>
-      </div>
+    <div className="mx-auto h-full max-w-[1600px] space-y-6 overflow-y-auto p-4 md:p-6 xl:p-8">
+      <PageHeader
+        title="Dashboard"
+        description="Visao geral das campanhas Meta Ads"
+        badge={
+          <div className={cn(
+            'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
+            error
+              ? 'border-red-600/10 bg-red-50 text-red-700'
+              : 'border-emerald-600/10 bg-emerald-50 text-emerald-700'
+          )}>
+            <span className={cn(
+              'h-1.5 w-1.5 rounded-full',
+              error ? 'bg-red-500' : 'bg-emerald-500 animate-pulse'
+            )} />
+            {error ? 'Erro' : loading ? 'Carregando' : 'Ao vivo · 5min'}
+          </div>
+        }
+      />
 
       {/* Filters */}
       <DashFilters

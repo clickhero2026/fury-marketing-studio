@@ -14,15 +14,15 @@
 - [x] Build verde + commit "wave 1 — design foundations"
 
 ## Wave 2 — Dashboard
-- [ ] Criar `Sparkline.tsx` (SVG minimalista, gradient fill)
-- [ ] Criar `TrendIndicator.tsx` (arrow + percent/absolute + color semantic)
-- [ ] Criar `KpiCard.tsx` (tier 1: label uppercase + valor tabular grande + trend + sparkline)
-- [ ] Criar `KpiCardCompact.tsx` (tier 2: label + numero + delta inline)
-- [ ] Refatorar `DashboardView.tsx`: header + 3 tier-1 + 3 tier-2 + charts row
-- [ ] Refinar chart "Investimento vs Conversas" com gradient fill + tooltip glass
-- [ ] Refinar card "Timeline FURY" (icones coloridos por tipo, timestamps tabular)
-- [ ] Build verde + screenshot
-- [ ] Commit "wave 2 — dashboard redesign"
+- [x] Criar `Sparkline.tsx` (SVG minimalista, gradient fill)
+- [x] Criar `TrendIndicator.tsx` (arrow + percent/absolute + color semantic)
+- [x] Criar `KpiCard.tsx` (tier 1: label uppercase + valor tabular grande + trend + sparkline)
+- [x] Criar `KpiCardCompact.tsx` (tier 2: label + numero + delta inline)
+- [x] Refatorar `DashboardView.tsx`: PageHeader + 3 tier-1 + 3 tier-2 + charts row
+- [x] Refinar chart "Investimento vs Conversas" (AreaChart + gradient fill + tooltip glass custom)
+- [ ] Refinar card "Timeline FURY" (wave 4)
+- [x] Build verde
+- [x] Commit "wave 2 — dashboard redesign"
 
 ## Wave 3 — Sidebar
 - [ ] Refinar AppSidebar (badge enterprise animated, nav selected indicator dot/bar)
