@@ -260,6 +260,7 @@ Deno.serve(async (req) => {
                 let args: Record<string, unknown> = {};
                 try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
                 const result = await executeTool(tc.function.name, args, supabaseAdmin, companyId ?? '');
+                const result = await executeTool(tc.function.name, args, supabaseAdmin as any, companyId ?? '');
                 toolResults.push({ tool_call_id: tc.id, role: 'tool', content: result });
               }
 
