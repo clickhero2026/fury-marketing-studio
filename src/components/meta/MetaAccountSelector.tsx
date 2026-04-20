@@ -130,7 +130,6 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
           <p className="text-xs text-white/30 pl-6">Nenhuma conta de anuncio encontrada.</p>
         ) : (
           <div className="space-y-1.5">
-            {ad_accounts.map((account: MetaAdAccount) => {
             {ad_accounts.map((account: EnrichedAccount) => {
               const status = accountStatusLabels[String(account.account_status)] ?? {
                 label: account.account_status,
@@ -202,7 +201,6 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
           <p className="text-xs text-white/30 pl-6">Nenhuma pagina encontrada.</p>
         ) : (
           <div className="space-y-1.5">
-            {pages.map((page: MetaPage) => (
             {pages.map((page: EnrichedPage) => (
               <label
                 key={page.id}
