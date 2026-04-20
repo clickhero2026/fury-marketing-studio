@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -70,6 +71,25 @@
     --sidebar-accent-foreground: 60 4% 93%;
     --sidebar-border: 72 10% 12%;
     --sidebar-ring: 32 96% 41%;
+
+    /* Gray scale (9 steps) — estrutura neutra */
+    --gray-50: 0 0% 98%;
+    --gray-100: 240 5% 96%;
+    --gray-200: 240 6% 90%;
+    --gray-300: 240 5% 84%;
+    --gray-400: 240 5% 65%;
+    --gray-500: 240 4% 46%;
+    --gray-600: 240 5% 34%;
+    --gray-700: 240 5% 26%;
+    --gray-800: 240 4% 16%;
+    --gray-900: 240 6% 10%;
+
+    /* Motion tokens */
+    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+    --duration-slow: 400ms;
   }
 }
 
@@ -81,8 +101,15 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Tabular numbers utility */
+  .font-mono,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   /* Apple-style selection */
@@ -92,6 +119,13 @@
 }
 
 @layer utilities {
+  /* Elevation scale */
+  .shadow-e1 { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03); }
+  .shadow-e2 { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04); }
+  .shadow-e3 { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04); }
+  .shadow-e4 { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04); }
+  .shadow-e5 { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.04); }
+
   /* Premium glass card */
   .glass-card {
     @apply bg-card border border-border/60 shadow-sm;
