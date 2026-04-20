@@ -42,9 +42,9 @@ export function AdStep({ data, onChange }: Props) {
     queryKey: ['meta-pages-for-publish'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('meta_pages')
+        .from('meta_pages' as any)
         .select('page_id, page_name')
-        .is('deleted_at', null);
+        .is('deleted_at', null) as any;
       if (error) throw error;
       return data ?? [];
     },

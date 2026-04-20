@@ -148,10 +148,10 @@ export function ComplianceSettings() {
   const { data: settings } = useQuery<CompanySettings & { _companyId?: string }>({
     queryKey: ['company-compliance-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('companies')
-        .select('id, auto_takedown_enabled, takedown_threshold, takedown_severity_filter, notification_webhook_url, notification_email')
-        .single();
+        .select('id, auto_takedown_enabled, takedown_threshold, takedown_severity_filter, notification_webhook_url, notification_email') as any)
+        .single() as any;
       if (error) throw error;
       return { ...data, _companyId: data.id } as CompanySettings & { _companyId: string };
     },

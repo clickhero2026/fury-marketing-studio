@@ -51,24 +51,33 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
   const handleSave = () => {
     if (!assets) return;
 
-    const adAccounts = assets.ad_accounts
+    const allAdAccounts = [
+      ...assets.personal_ad_accounts,
+      ...assets.businesses.flatMap((b) => b.ad_accounts),
+    ];
+    const allPages = [
+      ...assets.personal_pages,
+      ...assets.businesses.flatMap((b) => b.pages),
+    ];
+
+    const adAccounts = allAdAccounts
       .filter((a) => selectedAccounts.has(a.id))
       .map((a) => ({
         id: a.id,
         name: a.name,
-        account_status: a.account_status,
+        account_status: a.account_status ?? 0,
         currency: a.currency,
-        business_id: a.business?.id,
-        business_name: a.business?.name,
+        business_id: a.business_id,
+        business_name: undefined,
       }));
 
-    const pages = assets.pages
+    const pages = allPages
       .filter((p) => selectedPages.has(p.id))
       .map((p) => ({
         id: p.id,
         name: p.name,
-        category: p.category,
-        access_token: p.access_token,
+        category: p.category ?? '',
+        access_token: '',
       }));
 
     saveAssets(
@@ -96,7 +105,15 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
 
   if (!assets) return null;
 
-  const { ad_accounts, businesses, pages } = assets;
+  const ad_accounts = [
+    ...assets.personal_ad_accounts,
+    ...assets.businesses.flatMap((b) => b.ad_accounts),
+  ];
+  const { businesses } = assets;
+  const pages = [
+    ...assets.personal_pages,
+    ...assets.businesses.flatMap((b) => b.pages),
+  ];
 
   return (
     <div className="space-y-6">

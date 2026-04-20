@@ -44,9 +44,9 @@ const DashboardView = () => {
     queryKey: ['ad-accounts-for-dash'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('meta_ad_accounts')
+        .from('meta_ad_accounts' as any)
         .select('account_id, account_name')
-        .is('deleted_at', null);
+        .is('deleted_at', null) as any;
       return data ?? [];
     },
     staleTime: 5 * 60_000,
