@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMetaAssets, MetaAdAccount, MetaPage } from '@/hooks/use-meta-assets';
+import { useMetaAssets, type EnrichedAccount, type EnrichedPage } from '@/hooks/use-meta-assets';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -131,7 +131,8 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
         ) : (
           <div className="space-y-1.5">
             {ad_accounts.map((account: MetaAdAccount) => {
-              const status = accountStatusLabels[account.account_status] ?? {
+            {ad_accounts.map((account: EnrichedAccount) => {
+              const status = accountStatusLabels[String(account.account_status)] ?? {
                 label: account.account_status,
                 color: 'text-white/40 bg-white/5 border-white/10',
               };
@@ -202,6 +203,7 @@ export function MetaAccountSelector({ onComplete }: MetaAccountSelectorProps) {
         ) : (
           <div className="space-y-1.5">
             {pages.map((page: MetaPage) => (
+            {pages.map((page: EnrichedPage) => (
               <label
                 key={page.id}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] cursor-pointer transition-colors"
