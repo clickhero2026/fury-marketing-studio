@@ -12,6 +12,9 @@
 | `ai-chat-memory` | implemented (as-built) | OpenAI Function Calling + memoria vetorial pgvector |
 | `meta-sync-dashboard` | implemented (as-built) | Sync campaigns/insights/creatives + dashboard real |
 | `meta-deep-scan` | implemented | Varredura profunda BMs/Adsets/Pixels/Pages + cron stagger + particionamento campaign_metrics |
+| `meta-oauth-asset-picker` | implemented (as-built, 2026-04-19) | Modal hierarquico (BM -> Accounts -> Pages) pos-OAuth, com toggle "apenas campanhas ativas" e contagem via Graph API batch (filtering status=ACTIVE) |
+| `meta-disconnect-cascade` | implemented (as-built, 2026-04-19) | Disconnect via Edge Function com CASCADE em 5 FKs (fury/compliance) + cleanup defensivo em 8 tabelas |
+| `sdd-enforcement-automation` | implemented (as-built, 2026-04-20) | Hook PreToolUse `.claude/hooks/sdd-gate.cjs` bloqueia nova Edge Function/migration sem spec; bypass via `.kiro/.fast-track` |
 
 ## Tabelas Supabase Existentes
 

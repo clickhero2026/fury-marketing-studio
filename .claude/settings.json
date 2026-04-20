@@ -27,5 +27,18 @@
       "Bash(claude:*)",
       "Read(//e/clickhero-newapp/**)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/sdd-gate.cjs\""
+          }
+        ]
+      }
+    ]
   }
 }

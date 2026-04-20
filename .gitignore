@@ -19,6 +19,9 @@ dist-ssr
 *.pem
 *.key
 
+# SDD fast-track sentinel (session-only)
+.kiro/.fast-track
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
