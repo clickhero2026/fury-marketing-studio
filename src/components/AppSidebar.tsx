@@ -27,65 +27,61 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
 
   return (
     <aside className="w-[200px] md:w-[220px] xl:w-[240px] 2xl:w-[260px] sidebar-gradient flex flex-col h-screen border-r border-sidebar-border shrink-0">
-      {/* Logo */}
-      <div className="px-5 pt-5 pb-3">
-        <img
-          src="/logo-dark.png"
-          alt="ClickHero"
-          className="h-7 w-auto"
-        />
+      {/* Topo fixo: logo + org switcher + botao novo */}
+      <div className="shrink-0">
+        <div className="px-5 pt-5 pb-3">
+          <img src="/logo-dark.png" alt="ClickHero" className="h-7 w-auto" />
+        </div>
+
+        <div className="px-4 pb-3 border-b border-sidebar-border">
+          <OrganizationSwitcher />
+        </div>
+
+        <div className="p-3">
+          <button
+            onClick={() => onViewChange("chat")}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium brand-gradient text-white hover:opacity-90 transition-all active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" />
+            Nova conversa
+          </button>
+        </div>
       </div>
 
-      {/* Organization Switcher */}
-      <div className="px-4 pb-3 border-b border-sidebar-border">
-        <OrganizationSwitcher />
-      </div>
-
-      {/* New Chat Button */}
-      <div className="p-3">
-        <button
-          onClick={() => onViewChange("chat")}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium brand-gradient text-white hover:opacity-90 transition-all active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4" />
-          Nova conversa
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-0.5">
+      {/* Navigation — rola se nao couber */}
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-0.5 scrollbar-thin">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all",
+              "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all",
               currentView === item.id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
             )}
           >
             <item.icon className={cn(
-              "w-[18px] h-[18px] transition-colors",
+              "w-[18px] h-[18px] transition-colors shrink-0",
               currentView === item.id ? "text-primary" : ""
             )} />
-            {item.label}
+            <span className="truncate">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border space-y-0.5">
+      {/* Footer fixo: Integracoes + Configuracoes + User */}
+      <div className="shrink-0 p-3 border-t border-sidebar-border space-y-0.5">
         <button
           onClick={() => navigate('/integrations')}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all"
         >
-          <Plug className="w-[18px] h-[18px]" />
-          Integracoes
+          <Plug className="w-[18px] h-[18px] shrink-0" />
+          <span className="truncate">Integracoes</span>
         </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all">
-          <Settings className="w-[18px] h-[18px]" />
-          Configuracoes
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all">
+          <Settings className="w-[18px] h-[18px] shrink-0" />
+          <span className="truncate">Configuracoes</span>
         </button>
         <UserMenu />
       </div>
