@@ -19,42 +19,25 @@ const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 // App redirect after OAuth completes
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:8080';
 
-// Returns HTML that posts message to opener (popup parent) and closes
-// SECURITY: targetOrigin e o APP_URL configurado (NAO '*'), previne vazamento de token
-function popupResponse(payload: Record<string, unknown>): Response {
-  // Extrai origin do APP_URL (ex: https://app.clickhero.com.br → mesma origem)
-  let appOrigin: string;
+// Returns 302 redirect para o app com query params
+// Fluxo redirect e mais confiavel que popup (nao depende de window.opener,
+// nao e afetado por extensoes, nao mostra HTML cru se script falhar)
+function redirectResponse(params: Record<string, string | number>): Response {
+  let baseUrl: string;
   try {
-    appOrigin = new URL(APP_URL).origin;
+    baseUrl = new URL('/integrations', APP_URL).toString();
   } catch {
-    appOrigin = 'http://localhost:8080';
+    baseUrl = 'http://localhost:8080/integrations';
   }
 
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>ClickHero</title></head>
-<body style="background:#0c0d0a;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-  <div style="text-align:center">
-    <div style="font-size:14px;opacity:0.6">Concluindo conexao...</div>
-  </div>
-  <script>
-    (function() {
-      try {
-        if (window.opener) {
-          // SECURITY: target origin restrito (APP_URL). NAO usa window.opener.location (bloqueado cross-origin)
-          window.opener.postMessage(${JSON.stringify(payload)}, ${JSON.stringify(appOrigin)});
-        }
-      } catch(e) {
-        console.error('[meta-oauth-callback] postMessage failed:', e);
-      }
-      setTimeout(function(){ window.close(); }, 500);
-    })();
-  </script>
-</body>
-</html>`;
-  return new Response(html, {
-    status: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    qs.set(k, String(v));
+  }
+
+  return new Response(null, {
+    status: 302,
+    headers: { Location: `${baseUrl}?${qs.toString()}` },
   });
 }
 
@@ -67,7 +50,7 @@ Deno.serve(async (req) => {
     if (errorParam) {
       const errorDesc = url.searchParams.get('error_description') ?? 'Unknown error';
       console.error('Meta OAuth error:', errorParam, errorDesc);
-      return popupResponse({ type: 'meta-oauth-error', error: errorDesc });
+      return redirectResponse({ oauth_error: errorDesc });
     }
 
     // --- Extract code and state ---
@@ -75,7 +58,7 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get('state');
 
     if (!code || !state) {
-      return popupResponse({ type: 'meta-oauth-error', error: 'Parametros invalidos' });
+      return redirectResponse({ oauth_error: 'Parametros invalidos' });
     }
 
     // --- Admin client (bypasses RLS) ---
@@ -94,13 +77,13 @@ Deno.serve(async (req) => {
 
     if (sessionError || !session) {
       console.error('Invalid OAuth state:', state, sessionError);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Sessao OAuth invalida ou expirada' });
+      return redirectResponse({ oauth_error: 'Sessao OAuth invalida ou expirada' });
     }
 
     // Check expiry
     if (new Date(session.expires_at) < new Date()) {
       await supabaseAdmin.from('oauth_sessions').delete().eq('id', state);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Sessao OAuth expirada. Tente novamente.' });
+      return redirectResponse({ oauth_error: 'Sessao OAuth expirada. Tente novamente.' });
     }
 
     const userId = session.user_id;
@@ -125,7 +108,7 @@ Deno.serve(async (req) => {
 
     if (tokenData.error) {
       console.error('Token exchange failed:', tokenData.error);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao trocar codigo por token' });
+      return redirectResponse({ oauth_error: 'Falha ao trocar codigo por token' });
     }
 
     const shortLivedToken = tokenData.access_token;
@@ -142,7 +125,7 @@ Deno.serve(async (req) => {
 
     if (longLivedData.error) {
       console.error('Long-lived token exchange failed:', longLivedData.error);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao gerar token de longa duracao' });
+      return redirectResponse({ oauth_error: 'Falha ao gerar token de longa duracao' });
     }
 
     const longLivedToken = longLivedData.access_token;
@@ -156,7 +139,7 @@ Deno.serve(async (req) => {
 
     if (meData.error) {
       console.error('Failed to fetch /me:', meData.error);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao obter dados do usuario Meta' });
+      return redirectResponse({ oauth_error: 'Falha ao obter dados do usuario Meta' });
     }
 
     // --- Step 4: Fetch ad accounts ---
@@ -169,9 +152,8 @@ Deno.serve(async (req) => {
 
     if (adAccounts.length === 0) {
       console.error('Meta retornou 0 ad accounts — usuario nao tem contas ou permissao ads_management');
-      return popupResponse({
-        type: 'meta-oauth-error',
-        error: 'Nenhuma conta de anuncios encontrada. Confirme que voce tem acesso a pelo menos 1 Ad Account na Meta e que autorizou as permissoes necessarias.',
+      return redirectResponse({
+        oauth_error: 'Nenhuma conta de anuncios encontrada. Confirme que voce tem acesso a pelo menos 1 Ad Account na Meta e que autorizou as permissoes necessarias.',
       });
     }
 
@@ -201,7 +183,7 @@ Deno.serve(async (req) => {
     }
 
     if (!companyId) {
-      return popupResponse({ type: 'meta-oauth-error', error: 'Empresa nao encontrada. Configure sua organizacao primeiro.' });
+      return redirectResponse({ oauth_error: 'Empresa nao encontrada. Configure sua organizacao primeiro.' });
     }
 
     // --- Step 7: Encrypt token and save ---
@@ -213,7 +195,7 @@ Deno.serve(async (req) => {
 
     if (encryptError) {
       console.error('Token encryption failed:', encryptError);
-      return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao criptografar token' });
+      return redirectResponse({ oauth_error: 'Falha ao criptografar token' });
     }
 
     // Upsert integration (sem auto-selecao — user escolhe contas manualmente via MetaAccountSelector)
@@ -266,7 +248,7 @@ Deno.serve(async (req) => {
 
       if (insertError) {
         console.error('Insert integration failed:', insertError);
-        return popupResponse({ type: 'meta-oauth-error', error: 'Falha ao salvar integracao' });
+        return redirectResponse({ oauth_error: 'Falha ao salvar integracao' });
       }
     }
 
@@ -283,9 +265,9 @@ Deno.serve(async (req) => {
 
     // --- Success: postMessage to opener and close popup ---
     const accountCount = adAccounts.length;
-    return popupResponse({ type: 'meta-oauth-success', accounts: accountCount });
+    return redirectResponse({ oauth_success: 'true', accounts: accountCount });
   } catch (error) {
     console.error('Unexpected error in meta-oauth-callback:', error);
-    return popupResponse({ type: 'meta-oauth-error', error: 'Erro interno do servidor' });
+    return redirectResponse({ oauth_error: 'Erro interno do servidor' });
   }
 });

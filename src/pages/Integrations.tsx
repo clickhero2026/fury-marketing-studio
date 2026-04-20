@@ -46,10 +46,10 @@ const Integrations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSelector, setShowSelector] = useState(false);
 
-  // Handle OAuth callback via URL params (fallback se popup falhar)
+  // Handle OAuth callback via URL params (redirect flow — principal)
   useEffect(() => {
-    const success = searchParams.get('success');
-    const error = searchParams.get('error');
+    const success = searchParams.get('oauth_success');
+    const error = searchParams.get('oauth_error');
     const accounts = searchParams.get('accounts');
 
     if (success === 'true') {
@@ -57,8 +57,10 @@ const Integrations = () => {
         title: 'Meta conectado com sucesso!',
         description: `${accounts || '0'} conta(s) de anuncio encontrada(s). Selecione quais deseja usar.`,
       });
+      // Limpa os params antes de abrir o modal
       setSearchParams({});
-      setShowSelector(true);
+      // Aguarda um tick pra query do meta-integration atualizar
+      setTimeout(() => setShowSelector(true), 300);
     } else if (error) {
       toast({
         title: 'Erro na conexao Meta',
@@ -68,13 +70,6 @@ const Integrations = () => {
       setSearchParams({});
     }
   }, [searchParams, setSearchParams, toast]);
-
-  // Handle OAuth callback via postMessage (fluxo principal — popup)
-  useEffect(() => {
-    const handler = () => setShowSelector(true);
-    window.addEventListener('meta-oauth-completed', handler);
-    return () => window.removeEventListener('meta-oauth-completed', handler);
-  }, []);
 
   const getStatusBadge = () => {
     if (isConnected) {

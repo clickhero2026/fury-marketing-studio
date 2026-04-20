@@ -62,67 +62,10 @@ export function useMetaConnect() {
       return data as { url: string; state: string };
     },
     onSuccess: (data) => {
-      // Open Meta OAuth in popup window
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const popup = window.open(
-        data.url,
-        'meta-oauth',
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
-      );
-
-      if (!popup) {
-        toast({
-          title: 'Popup bloqueado',
-          description: 'Permita popups para conectar a conta Meta.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Poll popup until it closes
-      const pollInterval = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(pollInterval);
-          // Refresh integration status after popup closes
-          queryClient.invalidateQueries({ queryKey: ['meta-integration'] });
-          queryClient.invalidateQueries({ queryKey: ['meta-assets'] });
-        }
-      }, 500);
-
-      // Listen for postMessage from callback (faster than polling)
-      const messageHandler = (event: MessageEvent) => {
-        // SECURITY: so aceita messages da mesma origem — previne spoofing de iframes externos
-        if (event.origin !== window.location.origin) return;
-        if (event.data?.type === 'meta-oauth-success') {
-          clearInterval(pollInterval);
-          window.removeEventListener('message', messageHandler);
-          popup.close();
-          queryClient.invalidateQueries({ queryKey: ['meta-integration'] });
-          queryClient.invalidateQueries({ queryKey: ['meta-assets'] });
-          toast({
-            title: 'Meta conectado!',
-            description: `${event.data.accounts || 0} conta(s) encontrada(s). Selecione quais deseja usar.`,
-          });
-          // Dispatch event global pra Integrations.tsx abrir o MetaAccountSelector
-          window.dispatchEvent(new CustomEvent('meta-oauth-completed', {
-            detail: { accounts: event.data.accounts ?? 0 },
-          }));
-        } else if (event.data?.type === 'meta-oauth-error') {
-          clearInterval(pollInterval);
-          window.removeEventListener('message', messageHandler);
-          popup.close();
-          toast({
-            title: 'Erro na conexao',
-            description: event.data.error || 'Tente novamente.',
-            variant: 'destructive',
-          });
-        }
-      };
-      window.addEventListener('message', messageHandler);
+      // Redirect flow — navegacao inteira pro Meta OAuth (sem popup)
+      // Mais confiavel: nao e bloqueado por extensoes, sem HTML cru, sem cross-origin
+      // Meta redireciona de volta pra /integrations?oauth_success=true&accounts=N
+      window.location.href = data.url;
     },
     onError: (error: Error) => {
       toast({
