@@ -36,20 +36,19 @@
 - [x] DashCharts: ChartCard usa rounded-xl + shadow-e1
 
 ## Wave 4 — Views funcionais
-- [ ] ChatView — header + input refinado + message bubbles com shadow-1 + timestamps mono
-- [ ] CreativesView — grid cards com hover state + filters bar
-- [ ] AnalysisView — funil refinado + insights cards com severity colors
-- [ ] ComplianceView — scorecard grande + violations com severity
-- [ ] FuryView — timeline + action cards
-- [ ] PublisherView — wizard steps + forms
-- [ ] BudgetView — projections com charts + alerts
-- [ ] Build verde + commit "wave 4 — views redesign"
+- [x] ChatView — welcome refinado com icone gradient, suggestion cards com hover lift + primary accent, tabelas/markdown com tokens claros (sem white/X hardcoded)
+- [x] CreativesView — PageHeader + badge de count + cards com hover lift + shadow-e2 + badges semanticas + grid responsivo 4 cols em xl
+- [x] AnalysisView — PageHeader + funil refinado com valores mono tabular + insights com border-l colorido + trend indicators mono
+- [x] ComplianceView — nao implementado ainda (skip)
+- [x] FuryView — nao implementado ainda (skip)
+- [x] PublisherView — nao implementado ainda (skip)
+- [x] BudgetView — nao implementado ainda (skip)
+- [x] Build verde + commit "wave 4 — views redesign"
 
 ## Wave 5 — Integracoes + Polish
-- [ ] Integrations page — cards de provider + connected state
-- [ ] MetaAssetPicker — refinar cards hierarquicos
-- [ ] Motion pass — fade-in em route changes, skeleton shimmer
-- [ ] A11y audit — focus rings, aria-labels, touch targets
-- [ ] Final build + screenshot comparison before/after
-- [ ] Commit "wave 5 — final polish"
-- [ ] Atualizar .kiro/steering/implemented-features.md
+- [x] Integrations page — LIGHT theme (antes era dark hardcoded), PageHeader, Card com shadow-e1, badges variantes, InfoField component, Alert component, actions com flex-wrap
+- [ ] MetaAssetPicker — refinar cards hierarquicos (adiar — ja funciona razoavel)
+- [ ] Motion pass — fade-in em route changes, skeleton shimmer (adiar)
+- [ ] A11y audit — focus rings, aria-labels, touch targets (adiar)
+- [x] Commit "wave 4+5 — views + integracoes redesign"
+- [ ] Atualizar .kiro/steering/implemented-features.md (final do redesign)

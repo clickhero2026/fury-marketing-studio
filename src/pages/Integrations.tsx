@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { MetaAssetPickerModal } from '@/components/meta/MetaAssetPickerModal';
-import { MetaAssetPicker } from '@/components/meta/MetaAssetPicker';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -46,14 +46,12 @@ const Integrations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSelector, setShowSelector] = useState(false);
 
-  // Handle OAuth callback via evento global (popup → postMessage → /oauth/meta/complete)
   useEffect(() => {
     const handler = () => setTimeout(() => setShowSelector(true), 300);
     window.addEventListener('meta-oauth-completed', handler);
     return () => window.removeEventListener('meta-oauth-completed', handler);
   }, []);
 
-  // Fallback: URL params (caso popup feche sem postMessage ou alguem navegue direto)
   useEffect(() => {
     const success = searchParams.get('oauth_success');
     const error = searchParams.get('oauth_error');
@@ -74,60 +72,59 @@ const Integrations = () => {
   const getStatusBadge = () => {
     if (isConnected) {
       return (
-        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-          <CheckCircle2 className="w-3 h-3 mr-1" />
+        <Badge variant="success" className="gap-1">
+          <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
           Conectado
         </Badge>
       );
     }
     if (isExpiringSoon) {
       return (
-        <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
-          <AlertTriangle className="w-3 h-3 mr-1" />
+        <Badge variant="warning" className="gap-1">
+          <AlertTriangle className="h-3 w-3" strokeWidth={2.5} />
           Expira em {daysUntilExpiry} dias
         </Badge>
       );
     }
     if (isExpired) {
       return (
-        <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
-          <XCircle className="w-3 h-3 mr-1" />
+        <Badge variant="danger" className="gap-1">
+          <XCircle className="h-3 w-3" strokeWidth={2.5} />
           Expirado
         </Badge>
       );
     }
-    return (
-      <Badge className="bg-white/5 text-white/50 border-white/10">
-        Desconectado
-      </Badge>
-    );
+    return <Badge variant="outline">Desconectado</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0d0a]">
-      {/* Header */}
-      <header className="h-14 border-b border-white/[0.06] bg-[#161714]/80 backdrop-blur-xl flex items-center px-6 gap-4">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border/60 bg-background/80 px-6 backdrop-blur-xl">
         <Link
           to="/"
-          className="flex items-center gap-2 text-sm text-white/50 hover:text-white/80 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Voltar
         </Link>
-        <h1 className="text-sm font-semibold text-white/90">Integracoes</h1>
+        <h1 className="text-sm font-semibold text-foreground">Integracoes</h1>
       </header>
 
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6 xl:p-8">
+        <PageHeader
+          title="Integracoes"
+          description="Conecte plataformas de anuncio para importar campanhas, metricas e insights"
+        />
+
         {/* Meta Ads Card */}
-        <Card className="bg-[#161714]/80 border-white/[0.06] backdrop-blur-xl">
+        <Card className="overflow-hidden">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                {/* Meta logo */}
-                <div className="w-10 h-10 rounded-xl bg-[#1877F2]/10 flex items-center justify-center">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#1877F2]/10 ring-1 ring-[#1877F2]/15">
                   <svg
-                    width="20"
-                    height="20"
+                    width="22"
+                    height="22"
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
@@ -138,10 +135,10 @@ const Integrations = () => {
                     />
                   </svg>
                 </div>
-                <div>
-                  <CardTitle className="text-base text-white/90">Meta Ads</CardTitle>
-                  <CardDescription className="text-white/40">
-                    Conecte suas contas de anuncio do Facebook e Instagram
+                <div className="min-w-0">
+                  <CardTitle className="text-base tracking-tight">Meta Ads</CardTitle>
+                  <CardDescription className="text-[13px]">
+                    Conecte contas de anuncio do Facebook e Instagram
                   </CardDescription>
                 </div>
               </div>
@@ -152,74 +149,52 @@ const Integrations = () => {
           <CardContent className="space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : integration && (isConnected || isExpiringSoon || isExpired) ? (
               <>
                 {/* Connected info */}
-                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Conta Meta</span>
-                      <span className="text-white/80">{integration.facebook_user_name || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Ad Account</span>
-                      <span className="text-white/80">{integration.account_name || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Business</span>
-                      <span className="text-white/80">{integration.business_name || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Expira em</span>
-                      <span className="text-white/80">
-                        {daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : '—'}
-                      </span>
-                    </div>
+                <div className="space-y-3 rounded-xl border border-border/60 bg-secondary/30 p-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <InfoField label="Conta Meta" value={integration.facebook_user_name || '—'} />
+                    <InfoField label="Ad Account" value={integration.account_name || '—'} />
+                    <InfoField label="Business" value={integration.business_name || '—'} />
+                    <InfoField
+                      label="Expira em"
+                      value={daysUntilExpiry !== null ? `${daysUntilExpiry} dias` : '—'}
+                      mono
+                    />
                   </div>
-
                   {integration.last_sync && (
-                    <p className="text-xs text-white/30">
-                      Ultima sincronizacao:{' '}
-                      {new Date(integration.last_sync).toLocaleString('pt-BR')}
+                    <p className="border-t border-border/50 pt-3 font-mono text-[11px] tabular-nums text-muted-foreground">
+                      Ultima sync: {new Date(integration.last_sync).toLocaleString('pt-BR')}
                     </p>
                   )}
                 </div>
 
-                {/* Warning for expiring/expired */}
                 {isExpiringSoon && (
-                  <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                    <p className="text-sm text-amber-200/80">
-                      Seu token expira em {daysUntilExpiry} dias. Reconecte para renovar.
-                    </p>
-                  </div>
+                  <Alert tone="warning" icon={AlertTriangle}>
+                    Seu token expira em {daysUntilExpiry} dias. Reconecte para renovar.
+                  </Alert>
                 )}
 
                 {isExpired && (
-                  <div className="rounded-xl bg-red-500/5 border border-red-500/20 p-3 flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-                    <p className="text-sm text-red-200/80">
-                      Token expirado. Reconecte sua conta Meta para continuar usando.
-                    </p>
-                  </div>
+                  <Alert tone="danger" icon={XCircle}>
+                    Token expirado. Reconecte sua conta Meta para continuar usando.
+                  </Alert>
                 )}
 
-                {/* Scan health card */}
                 <ScanHealthCard />
 
                 {/* Scan interval */}
-                <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="text-sm text-white/70">
-                    Intervalo de varredura automatica
-                  </div>
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/30 p-3">
+                  <div className="text-sm text-foreground/80">Intervalo de varredura automatica</div>
                   <Select
                     value={String(integration?.scan_interval_hours ?? 24)}
                     onValueChange={(v) => updateScanInterval(Number(v))}
                     disabled={isUpdatingScanInterval || !isConnected}
                   >
-                    <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="w-[170px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,49 +208,37 @@ const Integrations = () => {
                   </Select>
                 </div>
 
-                {/* Actions — layout responsivo: quebra em multiplas linhas se precisar */}
-                <div className="flex flex-wrap gap-2 md:gap-3">
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2">
                   <Button
                     onClick={() => setShowSelector(!showSelector)}
                     variant="outline"
-                    className="flex-1 min-w-[140px] bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+                    className="min-w-[140px] flex-1"
                   >
-                    <Settings2 className="w-4 h-4 mr-2" />
+                    <Settings2 className="h-4 w-4" />
                     {showSelector ? 'Fechar Ativos' : 'Gerenciar Ativos'}
                   </Button>
                   <Button
                     onClick={sync}
                     disabled={isSyncing || !isConnected}
-                    className="flex-1 min-w-[140px] brand-gradient text-white hover:opacity-90"
+                    className="min-w-[140px] flex-1"
                   >
-                    {isSyncing ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                    )}
-                    {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
+                    {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    {isSyncing ? 'Sincronizando' : 'Sincronizar'}
                   </Button>
                   <Button
                     onClick={deepScan}
                     disabled={isDeepScanning || !isConnected}
                     variant="outline"
-                    className="flex-1 min-w-[140px] bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+                    className="min-w-[140px] flex-1"
                   >
-                    {isDeepScanning ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Radar className="w-4 h-4 mr-2" />
-                    )}
-                    {isDeepScanning ? 'Varrendo...' : 'Varredura Profunda'}
+                    {isDeepScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
+                    {isDeepScanning ? 'Varrendo' : 'Varredura Profunda'}
                   </Button>
                   {(isExpiringSoon || isExpired) && (
-                    <Button
-                      onClick={connect}
-                      disabled={isConnecting}
-                      className="flex-1 min-w-[140px] brand-gradient text-white hover:opacity-90"
-                    >
-                      {isConnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                    <Button onClick={connect} disabled={isConnecting} className="min-w-[140px] flex-1">
+                      {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <ExternalLink className="h-4 w-4" />
                       Reconectar
                     </Button>
                   )}
@@ -283,47 +246,39 @@ const Integrations = () => {
                     onClick={disconnect}
                     disabled={isDisconnecting}
                     variant="outline"
-                    className="flex-1 min-w-[140px] border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    className="min-w-[140px] flex-1 border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                   >
-                    {isDisconnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    <Unplug className="w-4 h-4 mr-2" />
+                    {isDisconnecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <Unplug className="h-4 w-4" />
                     Desconectar
                   </Button>
                 </div>
               </>
             ) : (
               <>
-                {/* Not connected */}
-                <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-6 text-center space-y-3">
-                  <p className="text-sm text-white/50">
-                    Conecte sua conta Meta Ads para importar campanhas, metricas e insights
-                    automaticamente.
+                <div className="space-y-3 rounded-xl border border-dashed border-border bg-secondary/30 p-6 text-center">
+                  <p className="text-sm text-foreground/80">
+                    Conecte sua conta Meta Ads para importar campanhas, metricas e insights automaticamente.
                   </p>
-                  <ul className="text-xs text-white/30 space-y-1">
-                    <li>Leitura e gestao de campanhas</li>
-                    <li>Metricas e insights em tempo real</li>
-                    <li>Acesso ao Business Manager</li>
-                    <li>Analise de criativos</li>
+                  <ul className="flex flex-wrap justify-center gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <li className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border">Campanhas</li>
+                    <li className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border">Metricas</li>
+                    <li className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border">Business Manager</li>
+                    <li className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border">Criativos</li>
                   </ul>
                 </div>
 
-                <Button
-                  onClick={connect}
-                  disabled={isConnecting}
-                  className="w-full h-11 brand-gradient text-white font-medium rounded-xl hover:opacity-90 transition-all"
-                >
-                  {isConnecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                <Button onClick={connect} disabled={isConnecting} size="lg" className="w-full">
+                  {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <ExternalLink className="h-4 w-4" />
                   Conectar Meta Ads
                 </Button>
               </>
             )}
           </CardContent>
         </Card>
-
       </div>
 
-      {/* Modal de selecao de ativos — abre pos-OAuth ou ao clicar "Gerenciar Ativos" */}
       <MetaAssetPickerModal
         open={showSelector}
         onOpenChange={setShowSelector}
@@ -338,5 +293,28 @@ const Integrations = () => {
     </div>
   );
 };
+
+function InfoField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
+      <div className={mono ? "font-mono text-[13px] tabular-nums text-foreground" : "truncate text-[13px] text-foreground"}>{value}</div>
+    </div>
+  );
+}
+
+function Alert({ tone, icon: Icon, children }: { tone: 'warning' | 'danger'; icon: React.ElementType; children: React.ReactNode }) {
+  const styles = {
+    warning: 'border-amber-200 bg-amber-50 text-amber-800',
+    danger: 'border-red-200 bg-red-50 text-red-800',
+  };
+  const iconColor = tone === 'warning' ? 'text-amber-600' : 'text-red-600';
+  return (
+    <div className={`flex items-start gap-2.5 rounded-xl border p-3 ${styles[tone]}`}>
+      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconColor}`} strokeWidth={2} />
+      <p className="text-sm">{children}</p>
+    </div>
+  );
+}
 
 export default Integrations;

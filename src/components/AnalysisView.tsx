@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 interface Insight {
   id: string;
@@ -66,9 +67,9 @@ const iconMap = {
 };
 
 const styleMap = {
-  success: { border: "border-success/20", bg: "bg-success/10", icon: "text-success" },
-  warning: { border: "border-warning/20", bg: "bg-warning/10", icon: "text-warning" },
-  tip: { border: "border-info/20", bg: "bg-info/10", icon: "text-info" },
+  success: { border: "border-l-emerald-500", bg: "bg-emerald-50", icon: "text-emerald-600" },
+  warning: { border: "border-l-amber-500", bg: "bg-amber-50", icon: "text-amber-600" },
+  tip: { border: "border-l-blue-500", bg: "bg-blue-50", icon: "text-blue-600" },
 };
 
 const funnelSteps = [
@@ -81,24 +82,24 @@ const funnelSteps = [
 
 const AnalysisView = () => {
   return (
-    <div className="p-6 lg:p-8 space-y-6 overflow-y-auto h-full">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground tracking-tight">Analise de Campanhas</h2>
-        <p className="text-[13px] text-muted-foreground mt-0.5">Insights e recomendacoes baseados em dados</p>
-      </div>
+    <div className="mx-auto h-full max-w-[1600px] space-y-6 overflow-y-auto p-4 md:p-6 xl:p-8">
+      <PageHeader
+        title="Analise"
+        description="Insights e recomendacoes baseados em dados das suas campanhas"
+      />
 
       {/* Funnel */}
-      <div className="glass-card rounded-2xl p-6">
-        <h3 className="text-[13px] font-semibold text-foreground mb-5">Funil de Conversao</h3>
-        <div className="flex items-end gap-3 h-40">
+      <div className="rounded-xl border border-border/60 bg-card p-6 shadow-e1">
+        <h3 className="mb-5 text-sm font-semibold tracking-tight text-foreground">Funil de Conversao</h3>
+        <div className="flex h-48 items-end gap-3">
           {funnelSteps.map((step, i) => (
-            <div key={step.label} className="flex-1 flex flex-col items-center gap-2">
-              <p className="text-[12px] font-semibold text-foreground">{step.value}</p>
+            <div key={step.label} className="flex flex-1 flex-col items-center gap-2">
+              <p className="font-mono text-sm font-semibold tabular-nums text-foreground">{step.value}</p>
               <div
-                className="w-full rounded-lg brand-gradient transition-all"
-                style={{ height: `${step.pct}%`, opacity: Math.max(0.25, 1 - i * 0.15) }}
+                className="w-full rounded-lg bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] shadow-[inset_0_1px_0_rgb(255_255_255/0.15)] transition-all"
+                style={{ height: `${step.pct}%`, opacity: Math.max(0.3, 1 - i * 0.13) }}
               />
-              <p className="text-[11px] text-muted-foreground text-center leading-tight">{step.label}</p>
+              <p className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{step.label}</p>
             </div>
           ))}
         </div>
@@ -106,38 +107,42 @@ const AnalysisView = () => {
 
       {/* Insights */}
       <div className="space-y-3">
-        <h3 className="text-[13px] font-semibold text-foreground">Insights Automaticos</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-foreground">Insights Automaticos</h3>
         {insights.map((insight) => {
           const Icon = iconMap[insight.type];
           const style = styleMap[insight.type];
           return (
             <div
               key={insight.id}
-              className={cn("glass-card rounded-2xl p-4 border-l-[3px] slide-up", style.border)}
+              className={cn(
+                "animate-slide-up rounded-xl border border-border/60 bg-card p-4 shadow-e1 transition-shadow duration-base ease-smooth hover:shadow-e2",
+                "border-l-[3px]",
+                style.border,
+              )}
             >
               <div className="flex items-start gap-3">
-                <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", style.bg)}>
-                  <Icon className={cn("w-4 h-4", style.icon)} />
+                <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", style.bg)}>
+                  <Icon className={cn("h-4 w-4", style.icon)} strokeWidth={2} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[13px] font-semibold text-foreground">{insight.title}</p>
                     {insight.metric && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-semibold text-foreground">{insight.metric}</span>
+                        <span className="font-mono text-[13px] font-semibold tabular-nums text-foreground">{insight.metric}</span>
                         {insight.change && (
                           <span className={cn(
-                            "text-[11px] font-medium flex items-center gap-0.5",
-                            insight.positive ? "text-success" : "text-danger"
+                            "flex items-center gap-0.5 font-mono text-[11px] font-medium tabular-nums",
+                            insight.positive ? "text-emerald-600" : "text-red-600",
                           )}>
-                            {insight.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            {insight.positive ? <TrendingUp className="h-3 w-3" strokeWidth={2.5} /> : <TrendingDown className="h-3 w-3" strokeWidth={2.5} />}
                             {insight.change}
                           </span>
                         )}
                       </div>
                     )}
                   </div>
-                  <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{insight.description}</p>
                 </div>
               </div>
             </div>

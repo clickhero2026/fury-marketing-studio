@@ -102,17 +102,17 @@ const ChatView = () => {
           <div key={`table-${i}`} className="overflow-x-auto my-2">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr className="border-b border-border">
                   {headers.map((h, hi) => (
-                    <th key={hi} className="text-left px-2 py-1.5 text-white/50 font-medium">{h}</th>
+                    <th key={hi} className="text-left px-2 py-1.5 text-muted-foreground font-semibold uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, ri) => (
-                  <tr key={ri} className="border-b border-white/[0.04]">
+                  <tr key={ri} className="border-b border-border/40">
                     {row.map((cell, ci) => (
-                      <td key={ci} className="px-2 py-1.5 text-white/70">{cell}</td>
+                      <td key={ci} className="px-2 py-1.5 text-foreground/80">{cell}</td>
                     ))}
                   </tr>
                 ))}
@@ -126,7 +126,7 @@ const ChatView = () => {
 
       // Headers
       if (line.startsWith('## ')) {
-        elements.push(<h3 key={i} className="text-sm font-semibold text-white/90 mt-3 mb-1">{line.slice(3)}</h3>);
+        elements.push(<h3 key={i} className="text-sm font-semibold text-foreground mt-3 mb-1">{line.slice(3)}</h3>);
         continue;
       }
 
@@ -173,17 +173,17 @@ const ChatView = () => {
         <div key="table-end" className="overflow-x-auto my-2">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="border-b border-white/10">
+              <tr className="border-b border-border">
                 {headers.map((h, hi) => (
-                  <th key={hi} className="text-left px-2 py-1.5 text-white/50 font-medium">{h}</th>
+                  <th key={hi} className="text-left px-2 py-1.5 text-muted-foreground font-semibold uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, ri) => (
-                <tr key={ri} className="border-b border-white/[0.04]">
+                <tr key={ri} className="border-b border-border/40">
                   {row.map((cell, ci) => (
-                    <td key={ci} className="px-2 py-1.5 text-white/70">{cell}</td>
+                    <td key={ci} className="px-2 py-1.5 text-foreground/80">{cell}</td>
                   ))}
                 </tr>
               ))}
@@ -202,24 +202,27 @@ const ChatView = () => {
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8 space-y-4">
         {/* Welcome + Suggestions (only when no messages) */}
         {messages.length === 0 && (
-          <div className="max-w-3xl mx-auto w-full fade-in">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 rounded-2xl brand-gradient flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-6 h-6 text-white" />
+          <div className="mx-auto w-full max-w-3xl animate-fade-in">
+            <div className="mb-10 text-center">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] shadow-[inset_0_1px_0_rgb(255_255_255/0.2),_0_8px_24px_-6px_rgb(207_111_3/0.5)]">
+                <Sparkles className="h-7 w-7 text-white" strokeWidth={2} />
               </div>
-              <h2 className="text-lg font-semibold text-white/90 mb-1">ClickHero AI</h2>
-              <p className="text-sm text-white/40">
-                Seu assistente de Meta Ads com dados reais das suas campanhas
+              <h2 className="text-display-sm font-semibold tracking-tight text-foreground">Assistente ClickHero</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Seu co-piloto de Meta Ads com dados em tempo real das suas campanhas
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-left p-3.5 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-accent/50 text-[13px] text-muted-foreground transition-all"
+                  className="group rounded-xl border border-border/60 bg-card p-4 text-left text-[13px] text-muted-foreground shadow-e1 transition-all duration-base ease-smooth hover:-translate-y-0.5 hover:border-primary/30 hover:bg-accent/40 hover:text-foreground hover:shadow-e2"
                 >
-                  {s}
+                  <div className="flex items-start gap-2.5">
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60 transition-colors group-hover:text-primary" strokeWidth={2} />
+                    <span className="leading-snug">{s}</span>
+                  </div>
                 </button>
               ))}
             </div>
