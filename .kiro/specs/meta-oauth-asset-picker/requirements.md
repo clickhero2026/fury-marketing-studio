@@ -21,9 +21,11 @@ Nao auto-selecionar — user escolhe manualmente.
 
 ### REQ-2 — Contagem de campanhas ativas
 **Quando** o backend enriquecer os ad accounts,
-**o sistema deve** consultar a Graph API via batch request contando campanhas com
-`status=ACTIVE` (usando `filtering=[{field:status,operator:IN,value:[ACTIVE]}]`
-URL-encoded). Nao usar `effective_status` (pode divergir por issues de billing).
+**o sistema deve** consultar a Graph API via batch request
+(`/act_{id}/campaigns?fields=status&limit=500`) e contar CLIENT-SIDE os
+campaigns com `status === 'ACTIVE'`. Nao usar `filtering`/`summary` dentro de
+batch (quirks da API causam contagem zerada). Nao usar `effective_status`
+(diverge por issues de billing).
 
 ### REQ-3 — Filtros UI
 **Quando** o usuario interagir com o modal,

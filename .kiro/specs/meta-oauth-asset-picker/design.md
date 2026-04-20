@@ -45,19 +45,13 @@
 do popup, mostrando codigo cru em deploys futuros. Solucao: callback sempre
 redireciona (302) para rota SPA mesmo-origin, que faz postMessage.
 
-### 2. `filtering=status=ACTIVE` em vez de `effective_status=ACTIVE`
-**Razao**: `effective_status` inclui estados derivados de issues (billing, conta
-pausada) que mascaram a intencao do usuario. `status` conta o que o user
-configurou como ativo, que e o que o filtro do UI representa.
-
-### 3. URL-encoded do parametro filtering dentro do batch
-**Razao**: Dentro de `relative_url` de batch request, colchetes/aspas JSON sao
-interpretados pela infraestrutura antes do endpoint Graph. `encodeURIComponent`
-garante transporte seguro.
-
-### 4. `summary=total_count` em vez de `summary=true`
-**Razao**: `summary=true` pode nao retornar total_count em alguns endpoints.
-Explicito e seguro.
+### 2. Contagem client-side em vez de `filtering`/`summary`
+**Razao**: Tentativas com `filtering=[{field:status,operator:IN,value:[ACTIVE]}]`
++ `summary=total_count` dentro de batch retornavam 0 consistentemente mesmo
+com campanhas ACTIVE existentes. Abordagem final:
+`/campaigns?fields=status&limit=500` + filter client-side por `status === 'ACTIVE'`.
+Mais verboso no payload mas 100% deterministico. Nao usa `effective_status`
+(diverge por billing/conta pausada).
 
 ### 5. Cache-Control: no-store no callback
 **Razao**: Evita que browsers (Chrome em particular) cacheiem respostas antigas

@@ -231,14 +231,13 @@ Deno.serve(async (req) => {
     ];
 
     const batchRequests: Array<{ method: string; relative_url: string }> = [];
-    // Usa `filtering` com status=ACTIVE (configurado pelo user) em vez de `effective_status`
-    // (que pode divergir por billing/conta pausada).
-    const filtering = encodeURIComponent(JSON.stringify([{ field: 'status', operator: 'IN', value: ['ACTIVE'] }]));
+    // Abordagem simples e confiavel: busca campanhas com field=status e conta
+    // client-side. Evita quirks de `filtering`/`summary` dentro de batch requests.
     for (const a of allAccounts) {
       const actId = a.id.startsWith('act_') ? a.id : `act_${a.account_id ?? a.id}`;
       batchRequests.push({
         method: 'GET',
-        relative_url: `${actId}/campaigns?filtering=${filtering}&limit=0&summary=total_count`,
+        relative_url: `${actId}/campaigns?fields=status&limit=500`,
       });
       // Spend 30d
       batchRequests.push({
@@ -258,12 +257,14 @@ Deno.serve(async (req) => {
       if (campaignsResult?.code === 200) {
         try {
           const body = JSON.parse(campaignsResult.body);
-          activeCount = body.summary?.total_count ?? body.data?.length ?? 0;
+          const campaigns: Array<{ status?: string }> = body.data ?? [];
+          activeCount = campaigns.filter((c) => c.status === 'ACTIVE').length;
+          console.log(`[meta-list-assets] ${allAccounts[i].id} (${allAccounts[i].name}): ${campaigns.length} campanhas total, ${activeCount} ACTIVE`);
         } catch (e) {
           console.error('[meta-list-assets] parse campaigns failed:', e);
         }
       } else if (campaignsResult) {
-        console.error('[meta-list-assets] campaigns batch non-200:', campaignsResult.code, campaignsResult.body?.slice(0, 300));
+        console.error(`[meta-list-assets] campaigns batch non-200 for ${allAccounts[i].id}:`, campaignsResult.code, campaignsResult.body?.slice(0, 300));
       }
 
       let spend30d = 0;
