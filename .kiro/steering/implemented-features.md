@@ -15,6 +15,7 @@
 | `meta-oauth-asset-picker` | implemented (as-built, 2026-04-19) | Modal hierarquico (BM -> Accounts -> Pages) pos-OAuth, com toggle "apenas campanhas ativas" e contagem via Graph API batch (filtering status=ACTIVE) |
 | `meta-disconnect-cascade` | implemented (as-built, 2026-04-19) | Disconnect via Edge Function com CASCADE em 5 FKs (fury/compliance) + cleanup defensivo em 8 tabelas |
 | `sdd-enforcement-automation` | implemented (as-built, 2026-04-20) | Hook PreToolUse `.claude/hooks/sdd-gate.cjs` bloqueia nova Edge Function/migration sem spec; bypass via `.kiro/.fast-track` |
+| `ui-redesign` | implemented (2026-04-20) | Editorial Fintech — tokens expandidos (JetBrains Mono, 9 grays, shadow-e1..e5, duration/ease), Button gradient + inner shadow, Card rounded-xl, Badge variantes semanticas, Dialog backdrop-blur, PageHeader/KpiCard/KpiCardCompact/Sparkline/TrendIndicator em `components/shared/`, Dashboard com 2 tiers de KPI + charts refinados (AreaChart gradient, pie labels inside), Sidebar com indicador lateral animado + avatar gradient, views Chat/Criativos/Analise/Integrations re-skinned, skeleton shimmer real, animate-fade-in em route roots |
 
 ## Tabelas Supabase Existentes
 

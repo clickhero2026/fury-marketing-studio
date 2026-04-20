@@ -126,6 +126,18 @@
   .shadow-e4 { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04); }
   .shadow-e5 { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.04); }
 
+  /* Shimmer skeleton — gradient animado, mais premium que pulse basico */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.4) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
   /* Premium glass card */
   .glass-card {
     @apply bg-card border border-border/60 shadow-sm;

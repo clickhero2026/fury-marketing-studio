@@ -21,8 +21,8 @@ export function DashCharts({ metrics, loading }: Props) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="h-[340px] animate-pulse rounded-xl border border-border/60 bg-card" />
-        <div className="h-[340px] animate-pulse rounded-xl border border-border/60 bg-card" />
+        <div className="skeleton h-[340px] rounded-xl" />
+        <div className="skeleton h-[340px] rounded-xl" />
       </div>
     );
   }

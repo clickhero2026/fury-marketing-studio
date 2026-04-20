@@ -48,7 +48,7 @@ export function KpiCard({
 
       <div className="mt-3 flex items-baseline gap-1">
         {loading ? (
-          <div className="h-9 w-24 animate-pulse rounded bg-muted" />
+          <div className="h-9 w-24 skeleton rounded" />
         ) : (
           <>
             <span className="font-mono text-display-sm font-semibold tabular-nums tracking-tight text-foreground">
@@ -63,7 +63,7 @@ export function KpiCard({
 
       <div className="mt-1.5">
         {loading ? (
-          <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-20 skeleton rounded" />
         ) : (
           <TrendIndicator deltaPct={deltaPct} higherIsBetter={higherIsBetter} hint={hint} />
         )}

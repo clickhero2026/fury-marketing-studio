@@ -38,7 +38,7 @@ export function KpiCardCompact({
         </div>
         <div className="mt-1 flex items-baseline gap-0.5">
           {loading ? (
-            <div className="h-6 w-16 animate-pulse rounded bg-muted" />
+            <div className="h-6 w-16 skeleton rounded" />
           ) : (
             <>
               <span className="font-mono text-xl font-semibold tabular-nums tracking-tight text-foreground">

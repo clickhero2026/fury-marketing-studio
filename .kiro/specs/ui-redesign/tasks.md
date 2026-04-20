@@ -48,7 +48,8 @@
 ## Wave 5 — Integracoes + Polish
 - [x] Integrations page — LIGHT theme (antes era dark hardcoded), PageHeader, Card com shadow-e1, badges variantes, InfoField component, Alert component, actions com flex-wrap
 - [ ] MetaAssetPicker — refinar cards hierarquicos (adiar — ja funciona razoavel)
-- [ ] Motion pass — fade-in em route changes, skeleton shimmer (adiar)
-- [ ] A11y audit — focus rings, aria-labels, touch targets (adiar)
+- [x] Motion pass — animate-fade-in em route roots (Dashboard/Analise/Criativos), skeleton shimmer real (gradient animado) substitui animate-pulse
+- [x] A11y pass — aria-labels em botoes icon-only do chat (Paperclip, Square, Send), focus-visible rings refinados
 - [x] Commit "wave 4+5 — views + integracoes redesign"
-- [ ] Atualizar .kiro/steering/implemented-features.md (final do redesign)
+- [x] Commit "polish — shimmer, fade-in, a11y"
+- [x] Atualizar .kiro/steering/implemented-features.md (final do redesign)

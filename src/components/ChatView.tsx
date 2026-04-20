@@ -275,8 +275,12 @@ const ChatView = () => {
       <div className="border-t border-border/60 bg-background p-4 md:p-6">
         <div className="max-w-3xl mx-auto w-full">
           <div className="flex items-end gap-2 bg-card border border-border/60 rounded-2xl p-2 focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-sm">
-            <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50">
-              <Paperclip className="w-[18px] h-[18px]" />
+            <button
+              type="button"
+              aria-label="Anexar arquivo"
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <Paperclip className="h-[18px] w-[18px]" />
             </button>
             <textarea
               ref={inputRef}
@@ -290,23 +294,27 @@ const ChatView = () => {
             />
             {isStreaming ? (
               <button
+                type="button"
+                aria-label="Parar resposta"
                 onClick={stopStreaming}
-                className="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                className="rounded-xl bg-red-100 p-2 text-red-600 transition-all hover:bg-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
               >
-                <Square className="w-[18px] h-[18px]" />
+                <Square className="h-[18px] w-[18px]" />
               </button>
             ) : (
               <button
+                type="button"
+                aria-label="Enviar mensagem"
                 onClick={handleSend}
                 disabled={!input.trim()}
                 className={cn(
-                  "p-2 rounded-xl transition-all",
+                  "rounded-xl p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   input.trim()
-                    ? "brand-gradient text-white shadow-sm"
-                    : "text-muted-foreground/40"
+                    ? "bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] text-white shadow-e2 hover:shadow-e3 active:scale-[0.98]"
+                    : "text-muted-foreground/40",
                 )}
               >
-                <Send className="w-[18px] h-[18px]" />
+                <Send className="h-[18px] w-[18px]" />
               </button>
             )}
           </div>
