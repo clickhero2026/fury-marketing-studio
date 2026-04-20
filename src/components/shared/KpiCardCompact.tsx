@@ -1,6 +1,5 @@
 import { type LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { TrendIndicator } from "./TrendIndicator";
 
 interface KpiCardCompactProps {
@@ -51,9 +50,11 @@ export function KpiCardCompact({
           )}
         </div>
       </div>
-      <div className={cn("shrink-0 text-right", loading && "opacity-0")}>
-        <TrendIndicator deltaPct={deltaPct} higherIsBetter={higherIsBetter} hint={hint} className="justify-end" />
-      </div>
+      {!loading && (
+        <div className="shrink-0 text-right">
+          <TrendIndicator deltaPct={deltaPct} higherIsBetter={higherIsBetter} hint={hint} className="justify-end" />
+        </div>
+      )}
     </Card>
   );
 }

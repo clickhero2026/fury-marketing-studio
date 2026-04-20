@@ -124,8 +124,12 @@ Deno.serve(async (req) => {
     const adAccounts = body.ad_accounts ?? [];
     const pages = body.pages ?? [];
 
-    await supabaseAdmin.from('meta_ad_accounts').update({ is_active: false }).eq('company_id', company.id);
-    await supabaseAdmin.from('meta_pages').update({ is_active: false }).eq('company_id', company.id);
+    // Paraleliza soft-delete pra reduzir janela de inconsistencia (ambos
+    // updates resolvem juntos; falha de um ainda e possivel mas janela e menor).
+    await Promise.all([
+      supabaseAdmin.from('meta_ad_accounts').update({ is_active: false }).eq('company_id', company.id),
+      supabaseAdmin.from('meta_pages').update({ is_active: false }).eq('company_id', company.id),
+    ]);
 
     // --- BUSINESS MANAGERS: upsert dos BMs selecionados (derivados dos accounts+pages) ---
     const bmMap = new Map<string, { id: string; name: string }>();

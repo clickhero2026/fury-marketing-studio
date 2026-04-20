@@ -97,8 +97,13 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
           <Plug className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/70 transition-colors group-hover:text-sidebar-accent-foreground" strokeWidth={1.8} />
           <span className="truncate">Integracoes</span>
         </button>
-        <button className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground transition-all duration-base ease-smooth hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
-          <Settings className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/70 transition-colors group-hover:text-sidebar-accent-foreground" strokeWidth={1.8} />
+        <button
+          type="button"
+          disabled
+          title="Em breve"
+          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/50 transition-all duration-base ease-smooth disabled:cursor-not-allowed"
+        >
+          <Settings className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/40" strokeWidth={1.8} />
           <span className="truncate">Configuracoes</span>
         </button>
         <UserMenu />

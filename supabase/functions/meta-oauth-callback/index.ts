@@ -244,32 +244,11 @@ Deno.serve(async (req) => {
       );
 
     if (upsertError) {
-      console.error('Upsert failed, trying insert:', upsertError);
-
-      await supabaseAdmin
-        .from('integrations')
-        .delete()
-        .eq('company_id', companyId)
-        .eq('platform', 'meta');
-
-      const { error: insertError } = await supabaseAdmin
-        .from('integrations')
-        .insert({
-          platform: 'meta',
-          company_id: companyId,
-          access_token: encryptedData,
-          facebook_user_id: meData.id,
-          facebook_user_name: meData.name,
-          connected_by_user_id: userId,
-          token_expires_at: tokenExpiresAt,
-          status: 'active',
-          data_source: 'oauth',
-        });
-
-      if (insertError) {
-        console.error('Insert integration failed:', insertError);
-        return redirectResponse({ oauth_error: 'Falha ao salvar integracao' });
-      }
+      // NAO fazer delete+insert como fallback — FK CASCADE propaga pra campaigns/
+      // metrics/fury/compliance. Um upsert transiente com falha nao pode apagar
+      // dados historicos. Retorna erro pro user tentar de novo.
+      console.error('Upsert integration failed:', upsertError);
+      return redirectResponse({ oauth_error: 'Falha ao salvar integracao. Tente novamente.' });
     }
 
     // --- Step 8: Save all accounts in oauth_sessions for selection UI ---
