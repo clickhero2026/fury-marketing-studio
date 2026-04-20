@@ -21,7 +21,8 @@ export function Sparkline({
   fillClassName = "text-primary/20",
   height = 40,
 }: SparklineProps) {
-  const id = useId();
+  // useId retorna `:r0:` com colons — sanitiza para gerar id valido em url(#...)
+  const id = useId().replace(/:/g, "");
   if (!data || data.length < 2) {
     return <div className={cn("h-full w-full", className)} style={{ height }} />;
   }

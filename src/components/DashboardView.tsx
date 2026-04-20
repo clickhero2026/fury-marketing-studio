@@ -116,11 +116,11 @@ const DashboardView = () => {
 
       {/* Error state */}
       {error && (
-        <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-          <AlertCircle className="w-6 h-6 text-red-400" />
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border/60 bg-card p-8 shadow-e1">
+          <AlertCircle className="h-6 w-6 text-red-600" />
           <p className="text-sm text-muted-foreground">Erro ao carregar metricas</p>
           <Button size="sm" variant="outline" onClick={() => metricsQ.refetch()}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            <RefreshCw className="h-3.5 w-3.5" />
             Tentar novamente
           </Button>
         </div>
@@ -149,8 +149,8 @@ const DashboardView = () => {
 
       {/* Empty state (carregou mas sem dados) */}
       {!error && !loading && currentMetrics.length === 0 && (
-        <div className="glass-card rounded-2xl p-12 text-center">
-          <p className="text-sm text-muted-foreground mb-2">Nenhuma metrica no periodo selecionado.</p>
+        <div className="rounded-xl border border-dashed border-border bg-card/50 p-12 text-center">
+          <p className="mb-1 text-sm text-foreground/80">Nenhuma metrica no periodo selecionado.</p>
           <p className="text-xs text-muted-foreground">Va em Integracoes e clique em Sincronizar, ou escolha outro periodo.</p>
         </div>
       )}

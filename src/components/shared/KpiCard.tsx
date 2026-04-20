@@ -35,8 +35,9 @@ export function KpiCard({
   accentClassName = "text-primary",
   loading = false,
 }: KpiCardProps) {
+  const hasSparkline = !!(sparklineData && sparklineData.length >= 2);
   return (
-    <Card className="group relative overflow-hidden p-5 hover:shadow-e3">
+    <Card className={cn("group relative overflow-hidden p-5 hover:shadow-e3", hasSparkline && "pb-14")}>
       <div className="flex items-start justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {label}
@@ -69,8 +70,8 @@ export function KpiCard({
         )}
       </div>
 
-      {sparklineData && sparklineData.length >= 2 ? (
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-10 opacity-80 transition-opacity group-hover:opacity-100", accentClassName)}>
+      {hasSparkline ? (
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-10 opacity-70 transition-opacity group-hover:opacity-100", accentClassName)}>
           <Sparkline
             data={sparklineData}
             strokeClassName="text-current"
