@@ -49,7 +49,7 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="scrollbar-thin flex-1 min-h-0 overflow-y-auto px-3 py-1">
+      <nav className="scrollbar-dark min-h-0 flex-1 overflow-y-auto px-3 py-1">
         <div className="mb-1 px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/50">
           Workspace
         </div>

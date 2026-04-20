@@ -126,6 +126,48 @@
   .shadow-e4 { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04); }
   .shadow-e5 { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.04); }
 
+  /* Scrollbar — fina e sutil, theme-aware */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 3px;
+    transition: background 150ms ease;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+
+  /* Scrollbar dark — variant para sidebar preta */
+  .scrollbar-dark {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-foreground) / 0.15) transparent;
+  }
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-dark::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: hsl(var(--sidebar-foreground) / 0.15);
+    border-radius: 3px;
+    transition: background 150ms ease;
+  }
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sidebar-foreground) / 0.3);
+  }
+
   /* Shimmer skeleton — gradient animado, mais premium que pulse basico */
   .skeleton {
     background: linear-gradient(
