@@ -19,10 +19,25 @@ function getAllowedOrigins(): string[] {
   return DEFAULT_ORIGINS;
 }
 
+// Hostnames permitidos via wildcard (cobre preview URLs que mudam a cada deploy)
+const ALLOWED_HOST_SUFFIXES = ['.lovable.app', '.lovable.dev'];
+
+function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
+  if (!origin) return false;
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    const { hostname, protocol } = new URL(origin);
+    if (protocol !== 'https:' && protocol !== 'http:') return false;
+    return ALLOWED_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
+  } catch {
+    return false;
+  }
+}
+
 export function getCorsHeaders(req?: Request): Record<string, string> {
   const allowedOrigins = getAllowedOrigins();
   const origin = req?.headers.get('origin') ?? '';
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  const allowedOrigin = isOriginAllowed(origin, allowedOrigins) ? origin : allowedOrigins[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
