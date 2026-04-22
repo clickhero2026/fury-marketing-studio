@@ -235,15 +235,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (authError) return { error: authError.message };
     if (!authData.user) return { error: 'Falha ao criar conta' };
 
+    // 1.5. Ensure we have a session. If email confirmation is ON, signUp returns
+    // no session; try signInWithPassword (works when confirmation is OFF) — if the
+    // signIn fails because email is unconfirmed, we must tell the user to confirm
+    // first, because create-organization requires an Authorization header.
+    let hasSession = !!authData.session;
+    if (!hasSession) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (signInError || !signInData.session) {
+        console.warn('Sign-in after signup failed (email confirmation likely ON):', signInError);
+        return {
+          error:
+            'Conta criada! Verifique seu email para confirmar o cadastro e depois faca login para completar a configuracao da organizacao.',
+        };
+      }
+      hasSession = true;
+    }
+
     // 2. Create organization via Edge Function (atomic)
     const slug = data.slug?.trim() || slugify(data.organizationName);
-    const { error: fnError } = await supabase.functions.invoke('create-organization', {
+    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-organization', {
       body: { name: data.organizationName.trim(), slug },
     });
 
     if (fnError) {
-      console.error('Failed to create organization:', fnError);
-      return { error: 'Conta criada, mas falhou ao criar organização. Faça login e tente novamente.' };
+      // Try to extract the real server error message (supabase-js wraps it)
+      let detail = fnError.message ?? 'Erro desconhecido';
+      try {
+        const ctx = (fnError as { context?: { json?: () => Promise<{ error?: string }> } }).context;
+        if (ctx?.json) {
+          const body = await ctx.json();
+          if (body?.error) detail = body.error;
+        }
+      } catch {
+        /* ignore — keep fallback message */
+      }
+      console.error('Failed to create organization:', { fnError, fnData, detail });
+      return { error: `Falha ao criar organizacao: ${detail}` };
     }
 
     // 3. Post-creation updates (non-blocking — if these fail we still consider signup OK)
