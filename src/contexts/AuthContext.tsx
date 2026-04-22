@@ -271,28 +271,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Create organization via Edge Function (atomic)
-    // Passa Authorization explicitamente para evitar race condition com o
-    // session cache do supabase-js logo apos signInWithPassword.
+    // Usa fetch direto (nao supabase.functions.invoke) para garantir que o
+    // Authorization header com o JWT do user seja enviado literalmente —
+    // supabase-js sobrescreve headers em alguns casos.
     const slug = data.slug?.trim() || slugify(data.organizationName);
-    const { data: fnData, error: fnError } = await supabase.functions.invoke('create-organization', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: { name: data.organizationName.trim(), slug },
-    });
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+    const anonKey =
+      (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
+      (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string);
+    const edgeUrl = `${supabaseUrl}/functions/v1/create-organization`;
 
-    if (fnError) {
-      // Try to extract the real server error message (supabase-js wraps it)
-      let detail = fnError.message ?? 'Erro desconhecido';
+    try {
+      const res = await fetch(edgeUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: anonKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: data.organizationName.trim(), slug }),
+      });
+
+      let bodyJson: { error?: string } = {};
       try {
-        const ctx = (fnError as { context?: { json?: () => Promise<{ error?: string }> } }).context;
-        if (ctx?.json) {
-          const body = await ctx.json();
-          if (body?.error) detail = body.error;
-        }
+        bodyJson = await res.json();
       } catch {
-        /* ignore — keep fallback message */
+        /* response might be empty */
       }
-      console.error('[signUp] create-organization failed:', { fnError, fnData, detail });
-      return { error: `Falha ao criar organizacao: ${detail}` };
+
+      if (!res.ok) {
+        const detail = bodyJson.error || `HTTP ${res.status}`;
+        console.error('[signUp] create-organization failed:', { status: res.status, body: bodyJson });
+        return { error: `Falha ao criar organizacao: ${detail}` };
+      }
+    } catch (fetchError) {
+      console.error('[signUp] create-organization fetch threw:', fetchError);
+      return { error: 'Erro de rede ao criar organizacao. Tente novamente.' };
     }
 
     // 3. Post-creation updates (non-blocking — if these fail we still consider signup OK)
