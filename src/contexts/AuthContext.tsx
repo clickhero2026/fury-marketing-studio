@@ -236,7 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!authData.user) return { error: 'Falha ao criar conta' };
 
     // 2. Create organization via Edge Function (atomic)
-    const slug = slugify(data.organizationName);
+    const slug = data.slug?.trim() || slugify(data.organizationName);
     const { error: fnError } = await supabase.functions.invoke('create-organization', {
       body: { name: data.organizationName.trim(), slug },
     });
@@ -244,6 +244,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (fnError) {
       console.error('Failed to create organization:', fnError);
       return { error: 'Conta criada, mas falhou ao criar organização. Faça login e tente novamente.' };
+    }
+
+    // 3. Post-creation updates (non-blocking — if these fail we still consider signup OK)
+    try {
+      if (data.plan && data.plan !== 'free') {
+        const { error: planError } = await supabase
+          .from('organizations')
+          .update({ plan: data.plan })
+          .eq('slug', slug);
+        if (planError) console.warn('Failed to set plan:', planError);
+      }
+
+      if (data.avatarSeed) {
+        const { error: avatarError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: `gradient:${data.avatarSeed}` })
+          .eq('id', authData.user.id);
+        if (avatarError) console.warn('Failed to set avatar:', avatarError);
+      }
+    } catch (postError) {
+      console.warn('Non-blocking post-signup update failed:', postError);
     }
 
     return { error: null };
