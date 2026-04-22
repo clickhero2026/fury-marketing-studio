@@ -232,32 +232,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    if (authError) return { error: authError.message };
+    if (authError) {
+      console.error('[signUp] auth.signUp failed:', authError);
+      // Traduz mensagens comuns do Supabase pra portugues
+      const msg = authError.message || '';
+      if (/already registered|User already/i.test(msg)) {
+        return { error: 'Este email ja esta cadastrado. Faca login ou use outro email.' };
+      }
+      if (/password.*(short|weak|length)/i.test(msg)) {
+        return { error: 'Senha muito fraca. Use ao menos 8 caracteres com letras, numeros e simbolos.' };
+      }
+      return { error: msg || 'Falha ao criar conta' };
+    }
     if (!authData.user) return { error: 'Falha ao criar conta' };
 
-    // 1.5. Ensure we have a session. If email confirmation is ON, signUp returns
-    // no session; try signInWithPassword (works when confirmation is OFF) — if the
-    // signIn fails because email is unconfirmed, we must tell the user to confirm
-    // first, because create-organization requires an Authorization header.
-    let hasSession = !!authData.session;
-    if (!hasSession) {
+    // 1.1. Anti-enumeration detection: Supabase retorna 200 com user.identities=[]
+    // quando o email ja esta em uso (modo padrao anti-enumeracao). Tratar como erro.
+    if (Array.isArray(authData.user.identities) && authData.user.identities.length === 0) {
+      return { error: 'Este email ja esta cadastrado. Faca login ou use outro email.' };
+    }
+
+    // 1.5. Garantir session. Se signUp nao devolveu (confirmacao de email ON),
+    // fazer signInWithPassword pra obter token.
+    let accessToken = authData.session?.access_token ?? null;
+    if (!accessToken) {
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
       if (signInError || !signInData.session) {
-        console.warn('Sign-in after signup failed (email confirmation likely ON):', signInError);
+        console.warn('[signUp] signIn pos-signup falhou:', signInError);
         return {
           error:
             'Conta criada! Verifique seu email para confirmar o cadastro e depois faca login para completar a configuracao da organizacao.',
         };
       }
-      hasSession = true;
+      accessToken = signInData.session.access_token;
     }
 
     // 2. Create organization via Edge Function (atomic)
+    // Passa Authorization explicitamente para evitar race condition com o
+    // session cache do supabase-js logo apos signInWithPassword.
     const slug = data.slug?.trim() || slugify(data.organizationName);
     const { data: fnData, error: fnError } = await supabase.functions.invoke('create-organization', {
+      headers: { Authorization: `Bearer ${accessToken}` },
       body: { name: data.organizationName.trim(), slug },
     });
 
@@ -273,7 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         /* ignore — keep fallback message */
       }
-      console.error('Failed to create organization:', { fnError, fnData, detail });
+      console.error('[signUp] create-organization failed:', { fnError, fnData, detail });
       return { error: `Falha ao criar organizacao: ${detail}` };
     }
 
