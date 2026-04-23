@@ -22,9 +22,11 @@ import {
   Link2,
   Sparkles,
   Crown,
-  Rocket,
   Zap,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Logo } from '@/components/shared/Logo';
+import { HexGrid } from '@/components/shared/HexGrid';
 
 type OrgPlan = 'free' | 'pro' | 'enterprise';
 
@@ -212,25 +214,29 @@ const Register = () => {
   };
 
   const inputClass =
-    'h-11 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all';
+    'h-11 bg-background/50 border-border rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all';
 
   const maxWidth = step === 2 ? 'max-w-2xl' : 'max-w-md';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0c0d0a] p-4 overflow-hidden">
-      {/* Animated background blobs */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(207,111,3,0.12)_0%,_transparent_55%)]" />
-      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl animate-pulse" />
-      <div
-        className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-fuchsia-500/5 blur-3xl animate-pulse"
-        style={{ animationDelay: '1.5s' }}
-      />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 relative overflow-hidden transition-colors duration-500">
+      <HexGrid />
+      
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-8 right-8 z-20">
+        <ThemeToggle />
+      </div>
 
-      <div className={cn('relative w-full fade-in transition-all duration-500', maxWidth)}>
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src="/logo-dark.png" alt="ClickHero" className="h-9 w-auto" />
-        </div>
+      <div className={cn("w-full transition-all duration-700 relative z-10", maxWidth)}>
+        <div className="bento-card bg-card/80 backdrop-blur-xl border-border shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="mb-6 hover-lift cursor-pointer transition-all duration-500">
+              <Logo size="lg" />
+            </div>
+            <h2 className="text-3xl font-bold tracking-tighter text-foreground">
+              ClickHero
+            </h2>
+          </div>
 
         {/* Stepper */}
         <div className="mb-6">
@@ -243,11 +249,11 @@ const Register = () => {
                   <div
                     aria-current={isActive ? 'step' : undefined}
                     className={cn(
-                      'flex items-center justify-center h-8 w-8 rounded-full text-[13px] font-semibold transition-all duration-300',
-                      isDone && 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40',
+                      'flex items-center justify-center h-8 w-8 rounded-full text-[13px] font-bold transition-all duration-300',
+                      isDone && 'bg-emerald-500/20 text-emerald-500 ring-1 ring-emerald-500/40',
                       isActive &&
-                        'brand-gradient text-white ring-2 ring-primary/30 shadow-lg shadow-primary/20 scale-110',
-                      !isActive && !isDone && 'bg-white/[0.04] text-[#ecedef]/40 ring-1 ring-white/[0.06]',
+                        'bg-primary text-primary-foreground ring-2 ring-primary/30 shadow-lg shadow-primary/20 scale-110',
+                      !isActive && !isDone && 'bg-muted text-muted-foreground ring-1 ring-border',
                     )}
                   >
                     {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : n}
@@ -256,7 +262,7 @@ const Register = () => {
                     <div
                       className={cn(
                         'h-px w-10 transition-colors duration-500',
-                        step > n ? 'bg-emerald-500/40' : 'bg-white/[0.08]',
+                        step > n ? 'bg-emerald-500/40' : 'bg-border',
                       )}
                     />
                   )}
@@ -264,7 +270,7 @@ const Register = () => {
               );
             })}
           </div>
-          <Progress value={(step / 3) * 100} className="h-1 bg-white/[0.04]" />
+          <Progress value={(step / 3) * 100} className="h-1.5 bg-muted" />
           <div className="flex justify-between mt-2 text-[11px] text-[#ecedef]/40">
             <span className={cn(step >= 1 && 'text-[#ecedef]/80')}>Conta</span>
             <span className={cn(step >= 2 && 'text-[#ecedef]/80')}>Organizacao</span>
@@ -273,18 +279,18 @@ const Register = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-7 md:p-8 shadow-2xl">
+        <div className="bento-card">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* ------ STEP 1 ------ */}
               {step === 1 && (
                 <div className="space-y-5 fade-in">
                   <div className="text-center mb-4">
-                    <h1 className="text-xl font-semibold text-[#ecedef] tracking-tight">
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">
                       Bem-vindo ao ClickHero
                     </h1>
-                    <p className="text-sm text-[#ecedef]/50 mt-1.5">
-                      Vamos comecar pelos seus dados de acesso
+                    <p className="text-sm text-muted-foreground mt-1.5 font-medium">
+                      Vamos começar pelos seus dados de acesso
                     </p>
                   </div>
 
@@ -623,23 +629,26 @@ const Register = () => {
                   </Button>
                 )}
                 {step < 3 && (
-                  <Button
-                    type="button"
-                    onClick={next}
-                    className="flex-1 h-11 brand-gradient text-white font-medium rounded-xl hover:opacity-90 transition-all active:scale-[0.98]"
-                  >
-                    Continuar <ArrowRight className="h-4 w-4 ml-1.5" />
-                  </Button>
-                )}
-                {step === 3 && (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 h-11 brand-gradient text-white font-medium rounded-xl hover:opacity-90 transition-all active:scale-[0.98]"
-                  >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar conta
-                  </Button>
+                    <Button
+                      type="button"
+                      onClick={next}
+                      className="flex-1 h-11 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                    >
+                      Continuar <ArrowRight className="h-4 w-4 ml-1.5" />
+                    </Button>
+                  )}
+                  {step === 3 && (
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 h-11 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "Criar minha conta"
+                      )}
+                    </Button>
                 )}
               </div>
             </form>

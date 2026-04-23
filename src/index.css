@@ -7,89 +7,81 @@
 
 @layer base {
   :root {
-    /* ClickHero Brand Palette
-       Preto: #0c0d0a  |  Branco: #ecedef  |  Laranja: #cf6f03
-    */
-
-    /* Backgrounds & Surfaces */
-    --background: 60 4% 97%;
-    --foreground: 72 16% 4%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 72 16% 4%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 72 16% 4%;
+    --popover-foreground: 240 10% 3.9%;
 
-    /* Primary = Laranja ClickHero #cf6f03 */
-    --primary: 32 96% 41%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 98%;
 
-    /* Secondary = Cinza neutro suave */
-    --secondary: 220 6% 94%;
-    --secondary-foreground: 72 16% 20%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    /* Muted = Cinza para textos secundarios */
-    --muted: 220 6% 96%;
-    --muted-foreground: 220 5% 46%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 35%; /* Escurecido para melhor contraste */
 
-    /* Accent = Laranja suave */
-    --accent: 32 96% 96%;
-    --accent-foreground: 32 96% 30%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 6% 90%;
-    --input: 220 6% 90%;
-    --ring: 32 96% 41%;
+    --border: 240 5.9% 85%; /* Mais visivel */
+    --input: 240 5.9% 85%;
+    --ring: 24.6 95% 53.1%;
 
     --radius: 0.75rem;
 
-    /* Semantic Colors (KPIs) */
-    --success: 152 60% 42%;
-    --success-light: 152 60% 96%;
-    --warning: 32 96% 41%;
-    --warning-light: 32 96% 96%;
-    --danger: 0 72% 51%;
-    --danger-light: 0 72% 96%;
-    --info: 220 14% 50%;
-    --info-light: 220 14% 96%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 15%; /* Mais escuro */
+    --sidebar-primary: 24.6 95% 53.1%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 92%; /* Mais profundo */
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 85%;
+    --sidebar-ring: 24.6 95% 53.1%;
+    --success: 142.1 70.6% 45.3%;
+    --warning: 47.9 95.8% 53.1%;
+    --danger: 0 84.2% 60.2%;
+    --info: 198.6 88.7% 48.4%;
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  }
 
-    /* Chat */
-    --chat-user: 32 96% 41%;
-    --chat-user-foreground: 0 0% 100%;
-    --chat-ai: 220 6% 96%;
-    --chat-ai-foreground: 72 16% 10%;
-
-    /* Sidebar = Preto ClickHero #0c0d0a */
-    --sidebar-background: 72 16% 3%;
-    --sidebar-foreground: 60 4% 65%;
-    --sidebar-primary: 32 96% 41%;
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 24.6 95% 53.1%;
+    --sidebar-background: 240 10% 2%;
+    --sidebar-foreground: 240 5% 65%;
+    --sidebar-primary: 24.6 95% 53.1%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 72 10% 10%;
-    --sidebar-accent-foreground: 60 4% 93%;
-    --sidebar-border: 72 10% 12%;
-    --sidebar-ring: 32 96% 41%;
-
-    /* Gray scale (9 steps) — estrutura neutra */
-    --gray-50: 0 0% 98%;
-    --gray-100: 240 5% 96%;
-    --gray-200: 240 6% 90%;
-    --gray-300: 240 5% 84%;
-    --gray-400: 240 5% 65%;
-    --gray-500: 240 4% 46%;
-    --gray-600: 240 5% 34%;
-    --gray-700: 240 5% 26%;
-    --gray-800: 240 4% 16%;
-    --gray-900: 240 6% 10%;
-
-    /* Motion tokens */
-    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-    --duration-fast: 150ms;
-    --duration-base: 200ms;
-    --duration-slow: 400ms;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 10%;
+    --sidebar-ring: 24.6 95% 53.1%;
   }
 }
 
@@ -99,137 +91,58 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Tabular numbers utility */
-  .font-mono,
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Apple-style selection */
-  ::selection {
-    background: hsl(32 96% 41% / 0.15);
   }
 }
 
 @layer utilities {
-  /* Elevation scale */
-  .shadow-e1 { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03); }
-  .shadow-e2 { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04); }
-  .shadow-e3 { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04); }
-  .shadow-e4 { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04); }
-  .shadow-e5 { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.04); }
-
-  /* Scrollbar — fina e sutil, theme-aware */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  .glass {
+    @apply bg-background/60 backdrop-blur-md border border-white/5;
   }
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.2);
-    border-radius: 3px;
-    transition: background 150ms ease;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.35);
-  }
-
-  /* Scrollbar dark — variant para sidebar preta */
-  .scrollbar-dark {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--sidebar-foreground) / 0.15) transparent;
-  }
-  .scrollbar-dark::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-dark::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-dark::-webkit-scrollbar-thumb {
-    background: hsl(var(--sidebar-foreground) / 0.15);
-    border-radius: 3px;
-    transition: background 150ms ease;
-  }
-  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--sidebar-foreground) / 0.3);
-  }
-
-  /* Shimmer skeleton — gradient animado, mais premium que pulse basico */
-  .skeleton {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--muted) / 0.4) 50%,
-      hsl(var(--muted)) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
-  }
-
-  /* Premium glass card */
+  
   .glass-card {
-    @apply bg-card border border-border/60 shadow-sm;
-    box-shadow:
-      0 0 0 1px hsl(var(--border) / 0.5),
-      0 1px 3px 0 rgb(0 0 0 / 0.04),
-      0 1px 2px -1px rgb(0 0 0 / 0.04);
+    @apply bg-zinc-900/40 backdrop-blur-sm border border-white/5 shadow-2xl;
   }
 
-  .glass-card:hover {
-    box-shadow:
-      0 0 0 1px hsl(var(--border) / 0.6),
-      0 4px 6px -1px rgb(0 0 0 / 0.06),
-      0 2px 4px -2px rgb(0 0 0 / 0.04);
+  .bento-card {
+    @apply relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/40 shadow-sm hover:shadow-md dark:shadow-none dark:bg-card/40 dark:border-border/50;
   }
 
-  /* Brand gradient (laranja) */
-  .brand-gradient {
-    background: linear-gradient(135deg, #cf6f03 0%, #e8850a 50%, #cf6f03 100%);
+  .bg-hexagons {
+    --s: 60px; /* Tamanho discreto */
+    --c: hsl(var(--primary) / 0.07); /* Laranja sutil */
+    
+    background:
+      fixed
+      conic-gradient(from 150deg at 50% 33%, var(--c) 60deg, transparent 0) 0 0 / var(--s) calc(var(--s) * 1.732),
+      fixed
+      conic-gradient(from 330deg at 50% 66%, var(--c) 60deg, transparent 0) 0 0 / var(--s) calc(var(--s) * 1.732);
+    background-color: var(--background);
   }
 
-  /* Chat gradient */
-  .chat-gradient {
-    background: linear-gradient(135deg, #cf6f03 0%, #b56203 100%);
+  .dark .bg-hexagons {
+    --c: hsl(var(--primary) / 0.12); /* Um pouco mais visivel no escuro */
   }
 
-  /* Sidebar gradient */
-  .sidebar-gradient {
-    background: linear-gradient(180deg, #0c0d0a 0%, #0a0b08 100%);
+  .text-gradient {
+    @apply bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent;
   }
 
-  /* Stat card subtle glow */
-  .stat-glow {
-    box-shadow:
-      0 0 0 1px hsl(var(--border) / 0.5),
-      0 1px 3px 0 rgb(0 0 0 / 0.04);
+  .orange-glow {
+    box-shadow: 0 0 20px -5px rgba(249, 115, 22, 0.3);
   }
 
-  /* Animations */
-  .fade-in {
-    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Scrollbar - Premium */
+  ::-webkit-scrollbar {
+    @apply w-1.5;
   }
-
-  .slide-up {
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
   }
-
-  /* Apple-style focus ring */
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  ::-webkit-scrollbar-thumb {
+    @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
   }
 }
 

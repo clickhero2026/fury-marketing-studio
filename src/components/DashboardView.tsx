@@ -90,8 +90,8 @@ const DashboardView = () => {
           <div className={cn(
             'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
             error
-              ? 'border-red-600/10 bg-red-50 text-red-700'
-              : 'border-emerald-600/10 bg-emerald-50 text-emerald-700'
+              ? 'border-red-500/20 bg-red-500/10 text-red-500'
+              : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500'
           )}>
             <span className={cn(
               'h-1.5 w-1.5 rounded-full',

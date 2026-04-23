@@ -27,34 +27,38 @@ export function KpiCardCompact({
   loading = false,
 }: KpiCardCompactProps) {
   return (
-    <Card className="flex items-center justify-between gap-3 p-4 hover:shadow-e2">
+    <div className="bento-card group flex items-center justify-between p-4">
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          {Icon ? <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} /> : null}
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <div className="flex items-center gap-2 mb-2">
+          {Icon && (
+            <div className="p-1.5 rounded-md bg-white/5 border border-white/5">
+              <Icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={2.5} />
+            </div>
+          )}
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             {label}
           </span>
         </div>
-        <div className="mt-1 flex items-baseline gap-0.5">
+        <div className="flex items-baseline gap-1">
           {loading ? (
-            <div className="h-6 w-16 skeleton rounded" />
+            <div className="h-7 w-20 skeleton rounded-lg bg-white/5" />
           ) : (
             <>
-              <span className="font-mono text-xl font-semibold tabular-nums tracking-tight text-foreground">
+              <span className="text-2xl font-bold tracking-tight text-foreground">
                 {value}
               </span>
-              {unit ? (
-                <span className="font-mono text-sm text-muted-foreground">{unit}</span>
-              ) : null}
+              {unit && (
+                <span className="text-sm font-medium text-muted-foreground">{unit}</span>
+              )}
             </>
           )}
         </div>
       </div>
       {!loading && (
-        <div className="shrink-0 text-right">
+        <div className="shrink-0">
           <TrendIndicator deltaPct={deltaPct} higherIsBetter={higherIsBetter} hint={hint} className="justify-end" />
         </div>
       )}
-    </Card>
+    </div>
   );
 }

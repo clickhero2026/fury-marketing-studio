@@ -37,49 +37,53 @@ export function KpiCard({
 }: KpiCardProps) {
   const hasSparkline = !!(sparklineData && sparklineData.length >= 2);
   return (
-    <Card className={cn("group relative overflow-hidden p-5 hover:shadow-e3", hasSparkline && "pb-14")}>
-      <div className="flex items-start justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          {label}
-        </span>
-        {Icon ? (
-          <Icon className={cn("h-4 w-4 opacity-60", accentClassName)} strokeWidth={2} />
-        ) : null}
+    <div className={cn("bento-card group h-full", hasSparkline && "pb-16")}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          {Icon && (
+            <div className="p-2 rounded-lg bg-white/5 border border-white/5">
+              <Icon className={cn("h-4 w-4", accentClassName)} strokeWidth={2.5} />
+            </div>
+          )}
+          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            {label}
+          </span>
+        </div>
       </div>
 
-      <div className="mt-3 flex items-baseline gap-1">
+      <div className="flex items-baseline gap-1">
         {loading ? (
-          <div className="h-9 w-24 skeleton rounded" />
+          <div className="h-10 w-28 skeleton rounded-xl bg-white/5" />
         ) : (
           <>
-            <span className="font-mono text-display-sm font-semibold tabular-nums tracking-tight text-foreground">
+            <span className="text-4xl font-bold tracking-tighter text-foreground">
               {value}
             </span>
-            {unit ? (
-              <span className="font-mono text-xl font-medium text-muted-foreground">{unit}</span>
-            ) : null}
+            {unit && (
+              <span className="text-lg font-medium text-muted-foreground">{unit}</span>
+            )}
           </>
         )}
       </div>
 
-      <div className="mt-1.5">
+      <div className="mt-2">
         {loading ? (
-          <div className="h-3 w-20 skeleton rounded" />
+          <div className="h-4 w-20 skeleton rounded bg-white/5" />
         ) : (
           <TrendIndicator deltaPct={deltaPct} higherIsBetter={higherIsBetter} hint={hint} />
         )}
       </div>
 
-      {hasSparkline ? (
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-10 opacity-70 transition-opacity group-hover:opacity-100", accentClassName)}>
+      {hasSparkline && (
+        <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none opacity-40 group-hover:opacity-60 transition-opacity">
           <Sparkline
             data={sparklineData}
-            strokeClassName="text-current"
-            fillClassName="text-current"
-            height={40}
+            strokeClassName={accentClassName}
+            fillClassName={accentClassName}
+            height={64}
           />
         </div>
-      ) : null}
-    </Card>
+      )}
+    </div>
   );
 }

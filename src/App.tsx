@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ThemeProvider } from "@/components/theme-provider";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
@@ -15,10 +16,11 @@ import OAuthComplete from "./pages/OAuthComplete.tsx";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <BrowserRouter>
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
+  <ThemeProvider defaultTheme="dark" storageKey="clickhero-theme" attribute="class">
+    <BrowserRouter>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <Routes>
@@ -49,6 +51,7 @@ const App = () => (
       </QueryClientProvider>
     </AuthProvider>
   </BrowserRouter>
+  </ThemeProvider>
 );
 
 export default App;

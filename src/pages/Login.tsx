@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { HexGrid } from '@/components/shared/HexGrid';
+import { Logo } from '@/components/shared/Logo';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalido'),
@@ -45,41 +48,42 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0c0d0a] p-4">
-      {/* Subtle radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(207,111,3,0.06)_0%,_transparent_70%)]" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 relative overflow-hidden transition-colors duration-500">
+      <HexGrid />
+      
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-8 right-8 z-20">
+        <ThemeToggle />
+      </div>
 
-      <div className="relative w-full max-w-sm fade-in">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src="/logo-dark.png" alt="ClickHero" className="h-7 w-auto" />
-        </div>
-
-        {/* Card */}
-        <div className="bg-[#161714]/80 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-7 shadow-2xl transition-shadow hover:shadow-[0_0_40px_-10px_rgba(207,111,3,0.12)]">
-          <div className="text-center mb-6">
-            <h1 className="text-xl font-semibold text-[#ecedef] tracking-tight">
-              Bem-vindo de volta
+      <div className="w-full max-w-md relative z-10 fade-in">
+        <div className="bento-card bg-card/80 backdrop-blur-xl border-border shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="mb-6 hover-lift cursor-pointer transition-all duration-500">
+              <Logo size="lg" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Acesse sua conta
             </h1>
-            <p className="text-sm text-[#ecedef]/50 mt-1.5">
-              Entre na sua conta para continuar
+            <p className="text-sm text-muted-foreground mt-2 text-center max-w-[280px]">
+              Gerencie suas campanhas e leads com inteligência artificial
             </p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 stagger-children">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Email</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="seu@email.com"
                         autoComplete="email"
-                        className="h-10 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-lg text-[13px] focus:border-primary/50 focus:ring-primary/20 transition-all"
+                        className="h-11 bg-background/50 border-border rounded-xl px-4 text-sm focus:ring-primary/20 focus:border-primary transition-all"
                         {...field}
                       />
                     </FormControl>
@@ -93,13 +97,13 @@ const Login = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[13px] font-medium text-[#ecedef]/70">Senha</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Senha</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="••••••••"
                         autoComplete="current-password"
-                        className="h-10 bg-white/[0.04] border-white/[0.08] text-[#ecedef] placeholder:text-[#ecedef]/25 rounded-lg text-[13px] focus:border-primary/50 focus:ring-primary/20 transition-all"
+                        className="h-11 bg-background/50 border-border rounded-xl px-4 text-sm focus:ring-primary/20 focus:border-primary transition-all"
                         {...field}
                       />
                     </FormControl>
@@ -110,23 +114,28 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-10 brand-gradient text-[13px] text-white font-medium rounded-lg hover:opacity-90 transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2"
                 disabled={isSubmitting}
               >
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
+                {isSubmitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  "Entrar na plataforma"
+                )}
               </Button>
             </form>
           </Form>
         </div>
 
         {/* Footer link */}
-        <p className="text-[13px] text-[#ecedef]/40 text-center mt-6">
-          Nao tem conta?{' '}
-          <Link to="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">
-            Criar conta
-          </Link>
-        </p>
+        <div className="text-center mt-8">
+          <p className="text-sm text-muted-foreground font-medium">
+            Não tem uma conta?{" "}
+            <Link to="/register" className="text-primary hover:underline font-bold transition-all">
+              Criar conta agora
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
