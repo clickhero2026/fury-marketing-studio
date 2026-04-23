@@ -23,6 +23,7 @@ import {
   Sparkles,
   Crown,
   Zap,
+  Rocket,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/shared/Logo';
@@ -662,6 +663,7 @@ const Register = () => {
           </Link>
         </p>
       </div>
+    </div>
     </div>
   );
 };
