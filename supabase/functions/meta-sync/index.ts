@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
 // ========== SYNC LOGIC ==========
 
 async function syncAccount(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   token: string,
   integrationId: string,
   companyId: string,
