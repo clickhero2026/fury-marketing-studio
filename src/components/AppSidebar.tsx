@@ -1,11 +1,13 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Logo } from "@/components/shared/Logo";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals";
 
 interface AppSidebarProps {
   currentView: View;
@@ -21,10 +23,44 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "fury", label: "FURY", icon: Zap },
   { id: "publisher", label: "Publicar", icon: Rocket },
   { id: "budget", label: "Orcamento Smart", icon: Wallet },
+  { id: "approvals", label: "Aprovacoes", icon: ShieldAlert },
 ];
+
+function usePendingApprovalsCount(): number {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCount = async () => {
+      const { count: c } = await supabase
+        .from('approvals' as never)
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      if (mounted) setCount(c ?? 0);
+    };
+    fetchCount();
+
+    const channel = supabase
+      .channel('approvals-badge')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'approvals' },
+        () => fetchCount()
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return count;
+}
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   const navigate = useNavigate();
+  const pendingApprovals = usePendingApprovalsCount();
 
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl md:w-[240px] xl:w-[260px]">
@@ -77,7 +113,12 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
                   )}
                 />
                 <span className="truncate">{item.label}</span>
-                {active && (
+                {item.id === "approvals" && pendingApprovals > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-semibold border border-amber-500/40">
+                    {pendingApprovals}
+                  </span>
+                )}
+                {active && !(item.id === "approvals" && pendingApprovals > 0) && (
                   <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
                 )}
               </button>

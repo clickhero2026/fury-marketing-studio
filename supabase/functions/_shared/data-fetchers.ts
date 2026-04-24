@@ -457,6 +457,153 @@ export async function getComplianceStatus(
 
 const GRAPH_VERSION_ACTIONS = 'v22.0';
 
+// ---------- PROPOSE actions (HITL — Sprint A1) ----------
+//
+// Em vez de executar Meta API direto, criam um row em `approvals` com status='pending'.
+// O usuario aprova/rejeita via ApprovalsView, que dispara a Edge Function `approval-action`.
+// approval-action eh quem chama Meta API de fato.
+
+async function findOneCampaignByName(
+  supabase: SupabaseClient,
+  companyId: string,
+  name: string
+): Promise<{ id: string; external_id: string | null; name: string; status: string } | string> {
+  const { data: campaigns } = await supabase
+    .from('campaigns')
+    .select('id, external_id, name, status')
+    .eq('company_id', companyId)
+    .ilike('name', `%${name}%`);
+
+  if (!campaigns || campaigns.length === 0) {
+    return `Nenhuma campanha encontrada com nome "${name}".`;
+  }
+  if (campaigns.length > 1) {
+    return `Encontrei ${campaigns.length} campanhas. Seja mais especifico:\n${campaigns.map((c) => `- ${c.name} (${c.status})`).join('\n')}`;
+  }
+  return campaigns[0];
+}
+
+export async function proposePauseCampaign(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { campaign_name: string },
+  conversationId: string | null
+): Promise<string> {
+  const result = await findOneCampaignByName(supabase, companyId, args.campaign_name);
+  if (typeof result === 'string') return result;
+
+  if (result.status === 'PAUSED') return `"${result.name}" ja esta pausada.`;
+  if (!result.external_id) return `"${result.name}" sem ID externo Meta — nao da pra pausar via API.`;
+
+  const human_summary = `Pausar campanha "${result.name}"`;
+  const { data: approval, error } = await supabase
+    .from('approvals')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      action_type: 'pause_campaign',
+      payload: {
+        campaign_id: result.id,
+        campaign_external_id: result.external_id,
+        campaign_name: result.name,
+      },
+      human_summary,
+    })
+    .select('id')
+    .single();
+
+  if (error || !approval) {
+    console.error('[propose] failed to insert approval:', error);
+    return `Falha ao criar solicitacao de aprovacao: ${error?.message ?? 'unknown'}`;
+  }
+
+  return `Solicitacao de aprovacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes nos proximos 5 minutos para que a acao seja executada.`;
+}
+
+export async function proposeReactivateCampaign(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { campaign_name: string },
+  conversationId: string | null
+): Promise<string> {
+  const result = await findOneCampaignByName(supabase, companyId, args.campaign_name);
+  if (typeof result === 'string') return result;
+
+  if (result.status === 'ACTIVE') return `"${result.name}" ja esta ativa.`;
+  if (!result.external_id) return `"${result.name}" sem ID externo Meta — nao da pra reativar via API.`;
+
+  const human_summary = `Reativar campanha "${result.name}"`;
+  const { data: approval, error } = await supabase
+    .from('approvals')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      action_type: 'reactivate_campaign',
+      payload: {
+        campaign_id: result.id,
+        campaign_external_id: result.external_id,
+        campaign_name: result.name,
+      },
+      human_summary,
+    })
+    .select('id')
+    .single();
+
+  if (error || !approval) {
+    console.error('[propose] failed to insert approval:', error);
+    return `Falha ao criar solicitacao de aprovacao: ${error?.message ?? 'unknown'}`;
+  }
+
+  return `Solicitacao de aprovacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes nos proximos 5 minutos para que a acao seja executada.`;
+}
+
+export async function proposeUpdateBudget(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { campaign_name: string; daily_budget_brl: number },
+  conversationId: string | null
+): Promise<string> {
+  if (typeof args.daily_budget_brl !== 'number' || args.daily_budget_brl <= 0) {
+    return `Valor de budget invalido: ${args.daily_budget_brl}. Deve ser numero positivo em BRL.`;
+  }
+
+  const result = await findOneCampaignByName(supabase, companyId, args.campaign_name);
+  if (typeof result === 'string') return result;
+  if (!result.external_id) return `"${result.name}" sem ID externo Meta.`;
+
+  const cents = Math.round(args.daily_budget_brl * 100);
+  const human_summary = `Alterar budget diario de "${result.name}" para R$ ${args.daily_budget_brl.toFixed(2)}`;
+
+  const { data: approval, error } = await supabase
+    .from('approvals')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      action_type: 'update_budget',
+      payload: {
+        campaign_id: result.id,
+        campaign_external_id: result.external_id,
+        campaign_name: result.name,
+        daily_budget_cents: cents,
+      },
+      human_summary,
+    })
+    .select('id')
+    .single();
+
+  if (error || !approval) {
+    console.error('[propose] failed to insert approval:', error);
+    return `Falha ao criar solicitacao de aprovacao: ${error?.message ?? 'unknown'}`;
+  }
+
+  return `Solicitacao de aprovacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes nos proximos 5 minutos.`;
+}
+
+// ---------- LEGACY actions (executam direto) ----------
+// Mantidas pra compatibilidade. NAO devem ser chamadas a partir do AI Chat —
+// use as funcoes propose* acima. Sao usadas internamente pela Edge Function
+// approval-action.
+
 export async function pauseCampaignAction(
   supabase: SupabaseClient,
   companyId: string,

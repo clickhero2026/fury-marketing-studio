@@ -1,112 +1,66 @@
-# Tasks — Multi-Agent Foundation
+# Tasks — Multi-Agent Foundation (CAMINHO A — incremental sobre OpenAI existente)
 
-> Sprints incrementais. Cada sprint termina com deploy no Lovable + Supabase.
-> Marca [x] conforme avanca.
+> Status: APROVADO usuario (auto mode)
+> Decisao: caminho A — manter `ai-chat` (OpenAI), expandir features faltantes
+> Premissa: o sistema ja roda com OpenAI GPT-4o-mini, `extract-memories` para profile,
+>   tabelas `chat_conversations`, `chat_messages`, `memories`, `fury_actions` existem.
 
-## Sprint 1 — Schema base + Orchestrator chat (sem agents ainda)
+## Mapeamento real (apos descoberta)
 
-Objetivo: chat funcional persistente com Sonnet, sem delegacao ainda. Caminho mais curto pra valor.
+| Componente | Estado |
+|---|---|
+| Edge Function chat | ✅ `ai-chat` (OpenAI + tools) |
+| Profiler/memorias | ✅ `extract-memories` (OpenAI + embeddings) |
+| Hook chat | ✅ `useChat` custom com SSE |
+| Tools Meta Ads | ✅ `_shared/data-fetchers.ts` (pause/reactivate executam direto, reversiveis 30min via `fury_actions`) |
+| Schema chat | ✅ `chat_conversations`, `chat_messages`, `memories` (criadas via Lovable, **nao em migration**) |
+| HITL approvals | ❌ **A FAZER** (Sprint A1) |
+| Reports multi-section | ❌ **A FAZER** (Sprint A2) |
+| Refinar profiler | ❌ **A FAZER** (Sprint A3) |
 
-- [ ] T1.1 — Migration `2026MMDD01_multi_agent_base.sql`:
-  - `conversations`, `messages`, `agent_runs`, `event_log`, `user_facts` (vazio)
+## Sprint A1 — HITL Approvals (em execucao)
+
+Objetivo: tools destrutivas (pause/reactivate, e futuramente budget) criam approval pending
+em vez de executar direto. Usuario aprova/rejeita via UI. Mantem reversao de 30min existente.
+
+- [ ] T1.1 — Migration `2026MMDD_approvals.sql`:
+  - tabela `approvals` (id, organization_id, conversation_id, action_type, payload, status, expires_at, approved_by, executed_at, result)
   - RLS por organization_id
-- [ ] T1.2 — Edge Function `agent-orchestrator` minimal:
-  - Recebe `{conversation_id, message}`
-  - Persiste user message
-  - Chama Sonnet 4.6 (sem tools ainda) com prompt caching
-  - Streaming SSE
-  - Persiste assistant message + agent_run
-- [ ] T1.3 — Frontend: substituir mock do `ChatView` por chamada real
-  - Hook `useConversation` (criar/listar)
-  - Vercel AI SDK `useChat` apontando para Edge Function
-  - UI de loading/streaming/error states
-- [ ] T1.4 — Hulk valida: build, types, fluxo manual de chat
-- [ ] T1.5 — Atualizar `.kiro/steering/implemented-features.md`
-
-## Sprint 2 — Meta Ads agent read-only + mirror
-
-- [ ] T2.1 — Migration `..._meta_mirror.sql`:
-  - `meta_campaigns_mirror`, `meta_insights_mirror` (deduzir colunas dos types existentes)
-  - Indices por organization_id + campaign_id
-- [ ] T2.2 — Edge Function `meta-sync-tick` (cron 30min):
-  - Le `ad_platform_connections` ativos
-  - Sincroniza campaigns + insights ultimos 7 dias para mirror
-- [ ] T2.3 — Edge Function `agent-meta-ads`:
-  - Tools read-only: `list_campaigns`, `get_insights`, `get_creative_performance`
-  - Le do mirror, nunca da Meta API direto
-- [ ] T2.4 — Adicionar tool `delegate_to_meta_ads` no orchestrator (com sub-call HTTP)
-- [ ] T2.5 — Hulk valida
-
-## Sprint 3 — Meta Ads write + HITL approvals
-
-- [ ] T3.1 — Migration `..._approvals.sql`:
-  - Tabela `approvals`
-  - Trigger pra notificar via Realtime (`pg_notify` ou Realtime channel)
-- [ ] T3.2 — Estender `agent-meta-ads` com tools write (criam approval, nao executam)
-- [ ] T3.3 — Edge Function `approval-action`:
+  - Realtime publication para subscribir mudancas
+- [ ] T1.2 — Edge Function `approval-action`:
+  - Recebe `{approval_id, decision: 'approve'|'reject'}`
   - Valida permissao (owner/admin)
-  - Executa Meta API real
-  - Posta system message no chat
-- [ ] T3.4 — Frontend `ApprovalsView`:
-  - Lista approvals pending (Realtime subscription)
-  - Botoes Approve/Reject com confirmacao
-  - Plan-mode UI: mostra todas as acoes do plano em conjunto
-- [ ] T3.5 — Captain America: review de RLS + permission checks
-- [ ] T3.6 — Cron job pra expirar approvals > 5min
-- [ ] T3.7 — Hulk valida fluxo end-to-end
+  - Se approve: executa Meta API real, atualiza status='executed', persiste resultado
+  - Se reject ou expired: status correspondente, sem executar
+  - Posta system message no `chat_messages` da conversa de origem
+- [ ] T1.3 — Modificar `pauseCampaignAction` e `reactivateCampaignAction`:
+  - Em vez de chamar Meta API, criar approval pending
+  - Retornar string explicando que aguarda aprovacao + ID
+- [ ] T1.4 — Frontend `ApprovalsView`:
+  - Realtime subscription a `approvals` table (filtro org)
+  - Cards de approval pending: action_type + payload + Approve / Reject
+  - Lista de approvals concluidas (collapsed)
+- [ ] T1.5 — Cron pra expirar approvals pendentes > 5min (sem isso ficam orfaos)
+- [ ] T1.6 — Build + deploy + push
 
-## Sprint 4 — Profiler
+## Sprint A2 — Reports
 
-- [ ] T4.1 — Migration `..._profiler_cron.sql`:
-  - Setup pg_cron + cron_secret config
-  - Schedule `profiler-tick-hourly`
-- [ ] T4.2 — Trigger em `messages`/eventos chave que insere em `event_log`
-- [ ] T4.3 — Edge Function `profiler-tick`:
-  - Le event_log nao processado
-  - Chama Haiku com structured output (Zod)
-  - Insere/upsert user_facts (com superseded_by chain)
-- [ ] T4.4 — Orchestrator inclui top 10 user_facts no system prompt cacheado
-- [ ] T4.5 — Hulk valida: profiler roda sem timeout para 500 events
+- [ ] T2.1 — Tool `generate_report` em `ai-chat`:
+  - Templates: weekly_performance, campaign_deep_dive
+  - Composicao: pega dados via tools existentes + escreve markdown multi-secao
+- [ ] T2.2 — UI: viewer markdown + botao quick "Gerar relatorio semanal"
+- [ ] T2.3 — Build + deploy
 
-## Sprint 5 — Memory/RAG
+## Sprint A3 — Refinar Profiler
 
-- [ ] T5.1 — Migration `..._embeddings.sql`:
-  - `message_embeddings` com pgvector(512)
-  - Indice ivfflat
-- [ ] T5.2 — Edge Function `embed-tick` (cron 5min):
-  - Le messages sem embedding
-  - Batch call Voyage API (voyage-3-lite)
-  - Insert em message_embeddings
-- [ ] T5.3 — Tool `search_memory` no orchestrator
-- [ ] T5.4 — Adicionar embeddings semanticos relevantes ao context window
-- [ ] T5.5 — Hulk valida
-
-## Sprint 6 — Reports
-
-- [ ] T6.1 — Tool `generate_report` no orchestrator
-- [ ] T6.2 — Sub-flow research (Meta Ads agent) → write (Opus 4.7) → review (Sonnet)
-- [ ] T6.3 — Templates: weekly_performance, campaign_deep_dive, creative_analysis
-- [ ] T6.4 — UI: botao "Gerar relatorio" + viewer markdown
-- [ ] T6.5 — Hulk valida qualidade de relatorios em 3 cenarios reais
-
-## Sprint 7+ — Creative agents (spec separada)
-
-Fica para `.kiro/specs/creative-agents/` quando chegar a hora.
+- [ ] T3.1 — Migration: adicionar `confidence`, `superseded_by`, `evidence_message_ids`, `source` em `memories`
+- [ ] T3.2 — Atualizar `extract-memories` pra preencher esses campos
+- [ ] T3.3 — Dedup melhor com superseded_by chain
+- [ ] T3.4 — Build + deploy
 
 ## Validacao geral
 
 - [ ] V1 — `npm run build` verde apos cada sprint
-- [ ] V2 — RLS audit por Captain America antes de merge pra main
-- [ ] V3 — Custo medido em `agent_runs.cost_usd` < $0.05 por conversa de 10 msgs
-- [ ] V4 — p95 time-to-first-token < 2s
-- [ ] V5 — Steering `implemented-features.md` atualizado por sprint
-
-## Definition of Done por sprint
-
-- Build verde
-- Edge Functions deployadas (`SUPABASE_ACCESS_TOKEN` no `.env.local`)
-- Migrations aplicadas (`supabase db push` ou via dashboard SQL editor)
-- RLS validada
-- Manual smoke test no Lovable preview
-- `implemented-features.md` atualizado
-- Resumo entregue ao usuario com links clicaveis
+- [ ] V2 — RLS audit (Captain America) antes de merge
+- [ ] V3 — Manual smoke test no Lovable preview
+- [ ] V4 — `implemented-features.md` atualizado por sprint

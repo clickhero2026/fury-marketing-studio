@@ -215,23 +215,22 @@ export const CHAT_TOOLS = [
       },
     },
   },
-  // ---- ACTION tools (execute changes) ----
+  // ---- PROPOSE tools (criam approval pendente — HITL) ----
+  // IMPORTANTE: estas tools NAO executam mudancas direto na Meta API.
+  // Elas criam um pedido de aprovacao na tabela `approvals` que o usuario
+  // precisa confirmar via UI nos proximos 5 minutos.
   {
     type: 'function' as const,
     function: {
       name: 'pause_campaign',
       description:
-        'Pausa uma campanha ou adset na Meta Ads API. Use quando o usuario pede explicitamente "pausa a campanha X", "desliga essa campanha", "para de rodar X".',
+        'Cria solicitacao de aprovacao para PAUSAR uma campanha. NAO executa direto — o usuario precisa aprovar via painel. Use quando o usuario pedir "pausa a campanha X", "desliga", "para de rodar X". Sempre informe que a acao foi enviada para aprovacao.',
       parameters: {
         type: 'object',
         properties: {
           campaign_name: {
             type: 'string',
             description: 'Nome (parcial) da campanha para pausar',
-          },
-          confirm: {
-            type: 'boolean',
-            description: 'Sempre pedir confirmacao do usuario antes (default true)',
           },
         },
         required: ['campaign_name'],
@@ -243,7 +242,7 @@ export const CHAT_TOOLS = [
     function: {
       name: 'reactivate_campaign',
       description:
-        'Reativa uma campanha pausada na Meta Ads API. Use quando o usuario pede "reativa", "liga de novo", "volta a campanha X".',
+        'Cria solicitacao de aprovacao para REATIVAR uma campanha pausada. NAO executa direto — o usuario precisa aprovar. Use quando o usuario pedir "reativa", "liga de novo", "volta a campanha X".',
       parameters: {
         type: 'object',
         properties: {
@@ -253,6 +252,28 @@ export const CHAT_TOOLS = [
           },
         },
         required: ['campaign_name'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'update_budget',
+      description:
+        'Cria solicitacao de aprovacao para ALTERAR o budget diario de uma campanha. NAO executa direto — o usuario precisa aprovar. Use quando o usuario pedir "muda o budget", "aumenta para R$ X", "diminui o orcamento".',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaign_name: {
+            type: 'string',
+            description: 'Nome (parcial) da campanha',
+          },
+          daily_budget_brl: {
+            type: 'number',
+            description: 'Novo budget diario em BRL (reais). Ex: 50 = R$ 50,00 por dia.',
+          },
+        },
+        required: ['campaign_name', 'daily_budget_brl'],
       },
     },
   },

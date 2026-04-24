@@ -13,8 +13,9 @@ import {
   getFuryActions,
   getFuryEvaluations,
   getComplianceStatus,
-  pauseCampaignAction,
-  reactivateCampaignAction,
+  proposePauseCampaign,
+  proposeReactivateCampaign,
+  proposeUpdateBudget,
 } from '../_shared/data-fetchers.ts';
 
 const MAX_HISTORY_MESSAGES = 20;
@@ -259,7 +260,7 @@ Deno.serve(async (req) => {
               for (const tc of toolCalls) {
                 let args: Record<string, unknown> = {};
                 try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
-                const result = await executeTool(tc.function.name, args, supabaseAdmin as any, companyId ?? '');
+                const result = await executeTool(tc.function.name, args, supabaseAdmin as any, companyId ?? '', convId ?? null);
                 toolResults.push({ tool_call_id: tc.id, role: 'tool', content: result });
               }
 
@@ -368,7 +369,8 @@ async function executeTool(
   name: string,
   args: Record<string, unknown>,
   supabase: ReturnType<typeof createClient>,
-  companyId: string
+  companyId: string,
+  convIdForTools: string | null
 ): Promise<string> {
   try {
     switch (name) {
@@ -391,9 +393,11 @@ async function executeTool(
       case 'get_compliance_status':
         return await getComplianceStatus(supabase, companyId, args as { health_filter?: string; include_violations?: boolean; limit?: number });
       case 'pause_campaign':
-        return await pauseCampaignAction(supabase, companyId, args as { campaign_name: string });
+        return await proposePauseCampaign(supabase, companyId, args as { campaign_name: string }, convIdForTools);
       case 'reactivate_campaign':
-        return await reactivateCampaignAction(supabase, companyId, args as { campaign_name: string });
+        return await proposeReactivateCampaign(supabase, companyId, args as { campaign_name: string }, convIdForTools);
+      case 'update_budget':
+        return await proposeUpdateBudget(supabase, companyId, args as { campaign_name: string; daily_budget_brl: number }, convIdForTools);
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }
