@@ -215,6 +215,36 @@ export const CHAT_TOOLS = [
       },
     },
   },
+  // ---- REPORT tools ----
+  {
+    type: 'function' as const,
+    function: {
+      name: 'generate_report',
+      description:
+        'Gera relatorio markdown estruturado multi-secao. Use quando o usuario pedir "relatorio", "report", "resumo da semana/mes", "analise completa", "deep dive na campanha X". Templates disponiveis: weekly_performance (visao geral 7 dias) e campaign_deep_dive (analise profunda de uma campanha). O retorno ja vem em markdown formatado, NAO refraseie — copie o conteudo direto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          template: {
+            type: 'string',
+            enum: ['weekly_performance', 'campaign_deep_dive'],
+            description:
+              'weekly_performance: visao geral de todas campanhas no periodo. campaign_deep_dive: analise profunda de uma campanha especifica (exige campaign_name).',
+          },
+          date_range: {
+            type: 'string',
+            enum: ['last_7_days', 'last_14_days', 'last_30_days', 'this_month'],
+            description: 'Periodo do relatorio. Default: last_7_days para weekly_performance, last_30_days para deep dive.',
+          },
+          campaign_name: {
+            type: 'string',
+            description: 'Nome (parcial) da campanha. Obrigatorio se template = campaign_deep_dive.',
+          },
+        },
+        required: ['template'],
+      },
+    },
+  },
   // ---- PROPOSE tools (criam approval pendente — HITL) ----
   // IMPORTANTE: estas tools NAO executam mudancas direto na Meta API.
   // Elas criam um pedido de aprovacao na tabela `approvals` que o usuario

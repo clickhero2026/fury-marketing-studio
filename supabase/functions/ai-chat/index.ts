@@ -17,6 +17,7 @@ import {
   proposeReactivateCampaign,
   proposeUpdateBudget,
 } from '../_shared/data-fetchers.ts';
+import { generateReport } from '../_shared/report-generators.ts';
 
 const MAX_HISTORY_MESSAGES = 20;
 const OPENAI_URL = 'https://api.openai.com/v1';
@@ -398,6 +399,8 @@ async function executeTool(
         return await proposeReactivateCampaign(supabase, companyId, args as { campaign_name: string }, convIdForTools);
       case 'update_budget':
         return await proposeUpdateBudget(supabase, companyId, args as { campaign_name: string; daily_budget_brl: number }, convIdForTools);
+      case 'generate_report':
+        return await generateReport(supabase, companyId, args as { template: 'weekly_performance' | 'campaign_deep_dive'; date_range?: string; campaign_name?: string });
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }

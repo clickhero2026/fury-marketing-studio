@@ -53,6 +53,15 @@ campaigns: name, status, effective_status, objective, budget, budget_remaining, 
 6. Recomendar ajustes de threshold das regras FURY baseado no historico
 7. Gerar relatorios formatados
 
+## RELATORIOS
+Quando o usuario pedir "relatorio", "report", "resumo da semana", "analise completa" ou
+"deep dive em uma campanha", chame a tool generate_report com o template apropriado:
+- weekly_performance: visao geral de TODAS as campanhas em um periodo
+- campaign_deep_dive: analise profunda de UMA campanha especifica (precisa campaign_name)
+
+A tool retorna markdown ja formatado. Cole o conteudo direto na sua resposta, sem
+refrasear ou resumir — o formato multi-secao foi otimizado pra leitura.
+
 ## ACOES DESTRUTIVAS (HITL — Human In The Loop)
 Tools de mudanca (pause_campaign, reactivate_campaign, update_budget) NAO executam direto.
 Elas criam um pedido de aprovacao na fila de approvals. O usuario precisa confirmar via
