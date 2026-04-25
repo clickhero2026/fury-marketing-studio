@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, ExternalLink, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle } from "lucide-react";
+import { ExternalLink, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { humanizeStatus } from "@/lib/meta-labels";
@@ -22,7 +22,16 @@ const AD_FORMATS = [
 
 function cleanName(raw: string | null): string {
   if (!raw) return "Sem nome";
-  return raw.replace(/\{\{[^}]+\}\}/g, "").trim() || "Sem nome";
+  let cleaned = raw
+    .replace(/\{\{[^}]+\}\}/g, "")           // {{product.name}}
+    // Hash hex longo apos uma data (ex: " 2025-04-24-61079e8e7c0d50b6e35dc070e538848f")
+    .replace(/\s+\d{4}-\d{2}-\d{2}-[a-f0-9]{8,}\b/gi, "")
+    // Hash hex longo solto no final
+    .replace(/\s+[a-f0-9]{16,}\b/gi, "")
+    .trim();
+  // Remove tracos/hifens orfaos no final
+  cleaned = cleaned.replace(/[\s-]+$/, "").trim();
+  return cleaned.length > 0 ? cleaned : "Sem nome";
 }
 
 export function CreativePreviewModal({ creative, onClose }: Props) {
@@ -93,33 +102,28 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 gap-0">
         {creative && (
           <>
-            <div className="flex items-start justify-between p-4 border-b border-border">
-              <div className="min-w-0 flex-1 pr-4">
-                <h2 className="text-base font-semibold text-foreground truncate">
-                  {cleanName(creative.name)}
-                </h2>
-                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  {isVideo ? <VideoIcon className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                  <span>{isVideo ? "Video" : "Imagem"}</span>
-                  {creative.campaign?.name && (
-                    <>
-                      <span className="opacity-50">·</span>
-                      <span className="truncate">{creative.campaign.name}</span>
-                    </>
-                  )}
-                  <span className={cn(
-                    "ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                    creative.status === "ACTIVE"
-                      ? "border-emerald-600/20 bg-emerald-500/10 text-emerald-500"
-                      : "border-border bg-secondary text-muted-foreground"
-                  )}>
-                    {humanizeStatus(creative.status)}
-                  </span>
-                </div>
+            <div className="p-4 pr-12 border-b border-border">
+              <h2 className="text-base font-semibold text-foreground truncate">
+                {cleanName(creative.name)}
+              </h2>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                {isVideo ? <VideoIcon className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                <span>{isVideo ? "Video" : "Imagem"}</span>
+                {creative.campaign?.name && (
+                  <>
+                    <span className="opacity-50">·</span>
+                    <span className="truncate">{creative.campaign.name}</span>
+                  </>
+                )}
+                <span className={cn(
+                  "ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                  creative.status === "ACTIVE"
+                    ? "border-emerald-600/20 bg-emerald-500/10 text-emerald-500"
+                    : "border-border bg-secondary text-muted-foreground"
+                )}>
+                  {humanizeStatus(creative.status)}
+                </span>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary" aria-label="Fechar">
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
             {/* Format selector */}
