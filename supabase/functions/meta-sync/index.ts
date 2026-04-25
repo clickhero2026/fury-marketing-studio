@@ -399,17 +399,28 @@ async function syncAccount(
       const internalCampaignId = ad.campaign_id ? campaignIdMap.get(ad.campaign_id) ?? null : null;
       const mediaType = ad.creative.video_id ? 'video' : ad.creative.image_url ? 'image' : 'unknown';
 
-      // Fallback: se video sem thumbnail_url, busca picture direto do video
+      // Fallback: se video sem thumbnail_url, busca a MAIOR thumbnail disponivel
+      // do video. Meta retorna varias resolucoes — picamos a de maior area pra
+      // evitar blur no card.
       let resolvedThumbnail = ad.creative.thumbnail_url ?? null;
-      if (!resolvedThumbnail && ad.creative.video_id) {
+      if (ad.creative.video_id) {
         try {
-          const vidUrl = `${GRAPH_BASE}/${ad.creative.video_id}?fields=picture,thumbnails{uri}&access_token=${token}`;
+          const vidUrl = `${GRAPH_BASE}/${ad.creative.video_id}?fields=thumbnails{uri,width,height,is_preferred},picture&access_token=${token}`;
           const vidResp = await fetch(vidUrl);
           const vidData = await vidResp.json();
           if (!vidData.error) {
-            resolvedThumbnail = vidData.picture
-              ?? vidData.thumbnails?.data?.[0]?.uri
-              ?? null;
+            type Thumb = { uri: string; width?: number; height?: number; is_preferred?: boolean };
+            const thumbs: Thumb[] = vidData.thumbnails?.data ?? [];
+            // Ordena por area decrescente, prefere is_preferred entre tamanhos iguais
+            const sorted = [...thumbs].sort((a, b) => {
+              const aArea = (a.width ?? 0) * (a.height ?? 0);
+              const bArea = (b.width ?? 0) * (b.height ?? 0);
+              if (bArea !== aArea) return bArea - aArea;
+              return (b.is_preferred ? 1 : 0) - (a.is_preferred ? 1 : 0);
+            });
+            const best = sorted[0]?.uri ?? null;
+            // Sobrescreve mesmo se thumbnail_url ja tinha valor — best e maior res
+            resolvedThumbnail = best ?? resolvedThumbnail ?? vidData.picture ?? null;
           }
         } catch (err) {
           console.warn(`[sync] thumbnail fallback failed for ${ad.creative.video_id}:`, err);
