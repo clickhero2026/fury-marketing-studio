@@ -1,7 +1,52 @@
 # Implemented Features (Steering — As-Built State)
 
-> Atualizado: 2026-04-06
+> Atualizado: 2026-04-25
 > Este documento reflete o estado REAL do projeto. Sempre que uma feature for completada, atualize aqui.
+
+## Multi-Agent Foundation (Sprints A1-A4 + B1-B5)
+
+> Spec: `.kiro/specs/multi-agent-foundation/`
+
+| Sprint | Status | Entrega |
+|--------|--------|---------|
+| A1 | DONE | HITL Approvals + edge `approval-action` + ApprovalsView |
+| A2 | DONE | Reports (weekly + deep-dive) tool generate_report |
+| A3 | DONE | Memories refinement (confidence, source, superseded_by, evidence_message_ids) |
+| A4 | DONE | Cron auto-expire approvals + bug fixes |
+| B1 | DONE | `agent_runs` + RPC get_ai_health_summary + view Saude do AI |
+| B2 | DONE | `plans` table + edge plan-action + tool propose_plan + UI batch approve |
+| B3 | DONE | RPC get_proactive_briefing + ProactiveBanner (zero-cost) |
+| B4 | DONE | Approvals inline no chat (InlineApprovalCards + use-conversation-actions) |
+| B5 | DONE | Sub-agente meta-ads-specialist + tool delegate_to_meta_specialist |
+
+### Novas tabelas (B-sprints)
+- `approvals` (A1) — `plan_id`, `plan_step_order` adicionados em B2
+- `plans` (B2) — multi-step
+- `agent_runs` (B1) — telemetria com parent_run_id em metadata pra B5
+
+### Novas Edge Functions
+- `approval-action` (A1)
+- `plan-action` (B2) — service via user auth, executa todos os steps em ordem
+- `meta-ads-specialist` (B5) — service-role only, chamado pelo orchestrator
+
+### Cron jobs ativos
+- `expire-pending-approvals` (A4) — 1min
+- `expire-pending-plans` (B2) — 1min
+
+### Migrations aplicadas
+- `20260424000001_approvals.sql`
+- `20260424000002_memories_refinement.sql`
+- `20260424000003_approvals_expire_cron.sql`
+- `20260424000004_agent_runs.sql` — APLICAR
+- `20260424000005_plans.sql` — APLICAR
+- `20260424000006_proactive_briefing.sql` — APLICAR
+
+### Edge Functions a deployar
+- `approval-action` (re-deploy: HTTP status fix em B1)
+- `plan-action` (NOVA — B2)
+- `meta-ads-specialist` (NOVA — B5)
+- `ai-chat` (re-deploy: instrumentacao + delegate + propose_plan)
+
 
 ## Specs Existentes
 

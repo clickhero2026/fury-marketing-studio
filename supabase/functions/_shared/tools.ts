@@ -245,6 +245,29 @@ export const CHAT_TOOLS = [
       },
     },
   },
+  // ---- DELEGATION tool (multi-agent, B5) ----
+  {
+    type: 'function' as const,
+    function: {
+      name: 'delegate_to_meta_specialist',
+      description:
+        'Delega uma analise complexa de Meta Ads para um sub-agente especialista. Use quando a pergunta exige diagnostico profundo, hipoteses sobre causas, ou recomendacoes detalhadas (ex: "por que minha campanha X esta com CPA alto?", "o que esta freando minhas conversoes?", "analise a tendencia de ROAS"). NAO use para perguntas factuais simples (ex: "qual o gasto?", "lista campanhas") — para essas use as tools diretas. O specialist tem acesso a metricas e devolve markdown estruturado. Voce DEVE incluir o markdown retornado integralmente na sua resposta ao usuario.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'Pergunta especifica e focada para o specialist responder. Ex: "Por que a campanha Black Friday tem CPA 40% acima da media?"',
+          },
+          context: {
+            type: 'string',
+            description: 'Contexto opcional: dados que voce ja coletou nas tools anteriores e quer passar para o specialist (resumido).',
+          },
+        },
+        required: ['question'],
+      },
+    },
+  },
   // ---- PROPOSE tools (criam approval pendente — HITL) ----
   // IMPORTANTE: estas tools NAO executam mudancas direto na Meta API.
   // Elas criam um pedido de aprovacao na tabela `approvals` que o usuario
@@ -282,6 +305,49 @@ export const CHAT_TOOLS = [
           },
         },
         required: ['campaign_name'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'propose_plan',
+      description:
+        'Cria um PLANO multi-step com 2+ acoes destrutivas agrupadas (B2). NAO executa direto. Usuario aprova/rejeita TODAS em batch. Use quando o usuario pedir multiplas acoes ao mesmo tempo: "pausa essas 3 campanhas", "ajusta budget de A e B e pausa C", "reativa todas paradas". Para acao unica, use pause_campaign / reactivate_campaign / update_budget direto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          summary: {
+            type: 'string',
+            description: 'Resumo curto (1 linha) do plano. Ex: "Pausar 3 campanhas com CPA alto e ajustar budget"',
+          },
+          rationale: {
+            type: 'string',
+            description: 'Justificativa opcional do AI explicando o porque do plano (analise + decisao).',
+          },
+          steps: {
+            type: 'array',
+            description: 'Lista de 2 a 20 acoes a serem executadas em batch.',
+            minItems: 2,
+            maxItems: 20,
+            items: {
+              type: 'object',
+              properties: {
+                action_type: {
+                  type: 'string',
+                  enum: ['pause_campaign', 'reactivate_campaign', 'update_budget'],
+                },
+                campaign_name: { type: 'string', description: 'Nome (parcial) da campanha alvo' },
+                daily_budget_brl: {
+                  type: 'number',
+                  description: 'Novo budget em BRL (so quando action_type = update_budget)',
+                },
+              },
+              required: ['action_type', 'campaign_name'],
+            },
+          },
+        },
+        required: ['summary', 'steps'],
       },
     },
   },

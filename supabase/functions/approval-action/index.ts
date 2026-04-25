@@ -152,7 +152,10 @@ Deno.serve(async (req) => {
       : `Acao executada com sucesso: ${a.human_summary}`;
     await postSystemMessage(supabaseAdmin, a, userMsg);
 
-    return jsonResponse(executionError ? 500 : 200, {
+    // HTTP 200 mesmo com executionError: o approval foi processado com sucesso,
+    // a falha de execucao ja esta refletida em status='failed' + execution_error.
+    // Frontend distingue via body.error / body.status.
+    return jsonResponse(200, {
       ok: !executionError,
       status: finalStatus,
       result: executionResult,

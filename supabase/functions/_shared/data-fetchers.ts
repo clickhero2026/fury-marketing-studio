@@ -599,6 +599,135 @@ export async function proposeUpdateBudget(
   return `Solicitacao de aprovacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes nos proximos 5 minutos.`;
 }
 
+// ---------- B2: PROPOSE PLAN (multi-step batch) ----------
+
+interface PlanStepInput {
+  action_type: 'pause_campaign' | 'reactivate_campaign' | 'update_budget';
+  campaign_name: string;
+  daily_budget_brl?: number;
+}
+
+export async function proposePlan(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { steps: PlanStepInput[]; summary?: string; rationale?: string },
+  conversationId: string | null
+): Promise<string> {
+  const steps = Array.isArray(args.steps) ? args.steps : [];
+  if (steps.length < 2) {
+    return 'propose_plan requer ao menos 2 acoes. Para uma unica acao, use pause_campaign / reactivate_campaign / update_budget direto.';
+  }
+  if (steps.length > 20) {
+    return 'Plano com mais de 20 passos rejeitado por seguranca.';
+  }
+
+  // Resolver cada passo: encontrar campanha + montar payload
+  const resolved: Array<{
+    action_type: string;
+    payload: Record<string, unknown>;
+    human_summary: string;
+  }> = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const found = await findOneCampaignByName(supabase, companyId, step.campaign_name);
+    if (typeof found === 'string') {
+      errors.push(`Passo ${i + 1}: ${found}`);
+      continue;
+    }
+    if (!found.external_id) {
+      errors.push(`Passo ${i + 1}: "${found.name}" sem ID externo Meta.`);
+      continue;
+    }
+
+    if (step.action_type === 'pause_campaign') {
+      if (found.status === 'PAUSED') {
+        errors.push(`Passo ${i + 1}: "${found.name}" ja esta pausada (skip).`);
+        continue;
+      }
+      resolved.push({
+        action_type: 'pause_campaign',
+        payload: { campaign_id: found.id, campaign_external_id: found.external_id, campaign_name: found.name },
+        human_summary: `Pausar "${found.name}"`,
+      });
+    } else if (step.action_type === 'reactivate_campaign') {
+      if (found.status === 'ACTIVE') {
+        errors.push(`Passo ${i + 1}: "${found.name}" ja esta ativa (skip).`);
+        continue;
+      }
+      resolved.push({
+        action_type: 'reactivate_campaign',
+        payload: { campaign_id: found.id, campaign_external_id: found.external_id, campaign_name: found.name },
+        human_summary: `Reativar "${found.name}"`,
+      });
+    } else if (step.action_type === 'update_budget') {
+      if (typeof step.daily_budget_brl !== 'number' || step.daily_budget_brl <= 0) {
+        errors.push(`Passo ${i + 1}: budget invalido (${step.daily_budget_brl}).`);
+        continue;
+      }
+      const cents = Math.round(step.daily_budget_brl * 100);
+      resolved.push({
+        action_type: 'update_budget',
+        payload: {
+          campaign_id: found.id,
+          campaign_external_id: found.external_id,
+          campaign_name: found.name,
+          daily_budget_cents: cents,
+        },
+        human_summary: `Budget de "${found.name}" -> R$ ${step.daily_budget_brl.toFixed(2)}`,
+      });
+    } else {
+      errors.push(`Passo ${i + 1}: action_type invalido (${step.action_type}).`);
+    }
+  }
+
+  if (resolved.length === 0) {
+    return `Nenhum passo valido no plano. Erros:\n${errors.join('\n')}`;
+  }
+
+  const summary = args.summary || `Plano com ${resolved.length} acoes`;
+
+  // Criar plan
+  const { data: plan, error: planErr } = await supabase
+    .from('plans')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      human_summary: summary,
+      rationale: args.rationale ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (planErr || !plan) {
+    return `Falha ao criar plano: ${planErr?.message ?? 'unknown'}`;
+  }
+
+  // Criar approvals filhas
+  const rows = resolved.map((r, idx) => ({
+    company_id: companyId,
+    conversation_id: conversationId,
+    plan_id: plan.id,
+    plan_step_order: idx,
+    action_type: r.action_type,
+    payload: r.payload,
+    human_summary: r.human_summary,
+  }));
+
+  const { error: insErr } = await supabase.from('approvals').insert(rows);
+  if (insErr) {
+    // Rollback do plan
+    await supabase.from('plans').delete().eq('id', plan.id);
+    return `Falha ao criar passos do plano: ${insErr.message}`;
+  }
+
+  const stepsList = resolved.map((r, i) => `${i + 1}. ${r.human_summary}`).join('\n');
+  const errorBlock = errors.length > 0 ? `\n\n_Avisos:_\n${errors.join('\n')}` : '';
+
+  return `Plano criado (ID: ${plan.id}) com ${resolved.length} acoes.\n\n**${summary}**\n\n${stepsList}${errorBlock}\n\nO usuario aprova/rejeita TODAS as acoes em batch via painel de aprovacoes (expira em 5 min).`;
+}
+
 // ---------- LEGACY actions (executam direto) ----------
 // Mantidas pra compatibilidade. NAO devem ser chamadas a partir do AI Chat —
 // use as funcoes propose* acima. Sao usadas internamente pela Edge Function

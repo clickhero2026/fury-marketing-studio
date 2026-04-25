@@ -28,6 +28,8 @@ export interface Approval {
   executed_at: string | null;
   execution_result: Record<string, unknown> | null;
   execution_error: string | null;
+  plan_id: string | null;
+  plan_step_order: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,9 +44,12 @@ export function useApprovals() {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      // Apenas approvals AVULSOS (sem plan_id) — os com plan_id sao renderizados
+      // dentro do PlanCard via use-plans.
       const { data, error } = await supabase
         .from('approvals' as never)
         .select('*')
+        .is('plan_id', null)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -69,14 +74,17 @@ export function useApprovals() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'approvals' },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setApprovals((prev) => [payload.new as Approval, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
+          // Ignorar eventos de approvals com plan_id (esses sao geridos por use-plans)
+          const newRow = payload.new as Approval | undefined;
+          const oldRow = payload.old as Approval | undefined;
+          if (payload.eventType === 'INSERT' && newRow?.plan_id == null) {
+            setApprovals((prev) => [newRow, ...prev]);
+          } else if (payload.eventType === 'UPDATE' && newRow?.plan_id == null) {
             setApprovals((prev) =>
-              prev.map((a) => (a.id === payload.new.id ? (payload.new as Approval) : a))
+              prev.map((a) => (a.id === newRow.id ? newRow : a))
             );
-          } else if (payload.eventType === 'DELETE') {
-            setApprovals((prev) => prev.filter((a) => a.id !== payload.old.id));
+          } else if (payload.eventType === 'DELETE' && oldRow?.plan_id == null) {
+            setApprovals((prev) => prev.filter((a) => a.id !== oldRow.id));
           }
         }
       )
@@ -114,15 +122,19 @@ export function useApprovals() {
           throw new Error(body.error || `HTTP ${res.status}`);
         }
 
+        const hasExecError = decision === 'approve' && !!body.error;
         toast({
-          title: decision === 'approve' ? 'Acao aprovada' : 'Acao rejeitada',
-          description:
-            decision === 'approve'
-              ? body.error
-                ? `Aprovado mas falhou: ${body.error}`
-                : 'Executada com sucesso'
+          title: hasExecError
+            ? 'Aprovado mas falhou'
+            : decision === 'approve'
+              ? 'Acao aprovada'
+              : 'Acao rejeitada',
+          description: hasExecError
+            ? String(body.error).substring(0, 200)
+            : decision === 'approve'
+              ? 'Executada com sucesso'
               : 'Acao cancelada',
-          variant: body.error ? 'destructive' : 'default',
+          variant: hasExecError ? 'destructive' : 'default',
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Erro desconhecido';

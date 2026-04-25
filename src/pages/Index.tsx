@@ -9,9 +9,10 @@ import FuryView from "@/components/fury/FuryView";
 import CampaignPublisherView from "@/components/publisher/CampaignPublisherView";
 import BudgetSmartView from "@/components/budget/BudgetSmartView";
 import ApprovalsView from "@/components/ApprovalsView";
+import AiHealthView from "@/components/AiHealthView";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health";
 
 const viewTitles: Record<View, string> = {
   chat: "Assistente IA",
@@ -23,6 +24,7 @@ const viewTitles: Record<View, string> = {
   publisher: "Publicar Campanha",
   budget: "Orcamento Smart",
   approvals: "Aprovacoes",
+  "ai-health": "Saude do AI",
 };
 
 const Index = () => {
@@ -58,6 +60,7 @@ const Index = () => {
             {currentView === "publisher" && <CampaignPublisherView />}
             {currentView === "budget" && <BudgetSmartView />}
             {currentView === "approvals" && <ApprovalsView />}
+            {currentView === "ai-health" && <AiHealthView />}
           </div>
         </div>
       </main>

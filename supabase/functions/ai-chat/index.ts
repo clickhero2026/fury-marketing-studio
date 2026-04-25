@@ -16,11 +16,22 @@ import {
   proposePauseCampaign,
   proposeReactivateCampaign,
   proposeUpdateBudget,
+  proposePlan,
 } from '../_shared/data-fetchers.ts';
 import { generateReport } from '../_shared/report-generators.ts';
 
 const MAX_HISTORY_MESSAGES = 20;
 const OPENAI_URL = 'https://api.openai.com/v1';
+const MODEL_NAME = 'gpt-4o';
+
+// Pricing GPT-4o (USD per 1M tokens) — atualizar se mudar
+const COST_PER_1M_INPUT = 2.50;
+const COST_PER_1M_OUTPUT = 10.00;
+
+function calcCost(promptTokens: number, completionTokens: number): number {
+  const cost = (promptTokens * COST_PER_1M_INPUT + completionTokens * COST_PER_1M_OUTPUT) / 1_000_000;
+  return Math.round(cost * 1_000_000) / 1_000_000;  // 6 casas decimais
+}
 
 Deno.serve(async (req) => {
   const cors = getCorsHeaders(req);
@@ -216,17 +227,45 @@ Deno.serve(async (req) => {
       { role: 'user', content: message },
     ];
 
+    // ============ AGENT RUN TELEMETRY (B1) ============
+    const runStart = Date.now();
+    let runId: string | null = null;
+    try {
+      const { data: runRow } = await supabaseAdmin
+        .from('agent_runs')
+        .insert({
+          company_id: companyId,
+          user_id: user.id,
+          agent_name: 'ai-chat',
+          conversation_id: convId ?? null,
+          status: 'running',
+          model: MODEL_NAME,
+          started_at: new Date(runStart).toISOString(),
+        })
+        .select('id')
+        .single();
+      runId = runRow?.id ?? null;
+    } catch (telErr) {
+      console.warn('[ai-chat] failed to create agent_run (non-blocking):', telErr);
+    }
+
+    const toolsUsed: string[] = [];
+    let promptTokens = 0;
+    let completionTokens = 0;
+    let totalTokens = 0;
+
     // ============ OPENAI STREAMING + FUNCTION CALLING ============
 
     const openai = new OpenAI({ apiKey: openaiKey });
 
     const firstResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: MODEL_NAME,
       messages: openaiMessages,
       tools: CHAT_TOOLS,
       temperature: 0.4,
       max_tokens: 2000,
       stream: true,
+      stream_options: { include_usage: true },
     });
 
     const encoder = new TextEncoder();
@@ -239,6 +278,13 @@ Deno.serve(async (req) => {
           let hasToolCalls = false;
 
           for await (const chunk of firstResponse) {
+            // Capturar usage tokens (vem no chunk final quando include_usage=true)
+            if (chunk.usage) {
+              promptTokens += chunk.usage.prompt_tokens ?? 0;
+              completionTokens += chunk.usage.completion_tokens ?? 0;
+              totalTokens += chunk.usage.total_tokens ?? 0;
+            }
+
             const delta = chunk.choices[0]?.delta;
             const finishReason = chunk.choices[0]?.finish_reason;
 
@@ -261,6 +307,7 @@ Deno.serve(async (req) => {
               for (const tc of toolCalls) {
                 let args: Record<string, unknown> = {};
                 try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
+                if (tc.function.name) toolsUsed.push(tc.function.name);
                 const result = await executeTool(tc.function.name, args, supabaseAdmin as any, companyId ?? '', convId ?? null);
                 toolResults.push({ tool_call_id: tc.id, role: 'tool', content: result });
               }
@@ -280,15 +327,21 @@ Deno.serve(async (req) => {
               ];
 
               const secondResponse = await openai.chat.completions.create({
-                model: 'gpt-4o',
+                model: MODEL_NAME,
                 // deno-lint-ignore no-explicit-any
                 messages: secondMessages as any,
                 temperature: 0.4,
                 max_tokens: 2000,
                 stream: true,
+                stream_options: { include_usage: true },
               });
 
               for await (const chunk2 of secondResponse) {
+                if (chunk2.usage) {
+                  promptTokens += chunk2.usage.prompt_tokens ?? 0;
+                  completionTokens += chunk2.usage.completion_tokens ?? 0;
+                  totalTokens += chunk2.usage.total_tokens ?? 0;
+                }
                 const content = chunk2.choices[0]?.delta?.content;
                 if (content) {
                   assistantContent += content;
@@ -337,10 +390,49 @@ Deno.serve(async (req) => {
             ).catch((err) => console.warn('Memory extraction trigger failed:', err));
           }
 
+          // Finaliza agent_run com sucesso
+          if (runId) {
+            const finishedAt = Date.now();
+            const latencyMs = finishedAt - runStart;
+            const costUsd = calcCost(promptTokens, completionTokens);
+            await supabaseAdmin
+              .from('agent_runs')
+              .update({
+                status: 'success',
+                finished_at: new Date(finishedAt).toISOString(),
+                latency_ms: latencyMs,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                total_tokens: totalTokens,
+                cost_usd: costUsd,
+                tools_used: toolsUsed,
+              })
+              .eq('id', runId);
+          }
+
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', conversation_id: convId })}\n\n`));
           controller.close();
         } catch (streamError) {
           console.error('Stream error:', streamError);
+          // Marca agent_run como erro
+          if (runId) {
+            const finishedAt = Date.now();
+            const errMsg = streamError instanceof Error ? streamError.message : String(streamError);
+            await supabaseAdmin
+              .from('agent_runs')
+              .update({
+                status: 'error',
+                finished_at: new Date(finishedAt).toISOString(),
+                latency_ms: finishedAt - runStart,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                total_tokens: totalTokens,
+                cost_usd: calcCost(promptTokens, completionTokens),
+                tools_used: toolsUsed,
+                error_message: errMsg.substring(0, 500),
+              })
+              .eq('id', runId);
+          }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', content: 'Erro ao processar resposta' })}\n\n`));
           controller.close();
         }
@@ -399,6 +491,10 @@ async function executeTool(
         return await proposeReactivateCampaign(supabase, companyId, args as { campaign_name: string }, convIdForTools);
       case 'update_budget':
         return await proposeUpdateBudget(supabase, companyId, args as { campaign_name: string; daily_budget_brl: number }, convIdForTools);
+      case 'propose_plan':
+        return await proposePlan(supabase, companyId, args as never, convIdForTools);
+      case 'delegate_to_meta_specialist':
+        return await delegateToSpecialist(args as { question: string; context?: string }, companyId, convIdForTools);
       case 'generate_report':
         return await generateReport(supabase, companyId, args as { template: 'weekly_performance' | 'campaign_deep_dive'; date_range?: string; campaign_name?: string });
       default:
@@ -407,6 +503,43 @@ async function executeTool(
   } catch (error) {
     console.error(`Tool execution error (${name}):`, error);
     return `Erro ao executar ${name}: ${(error as Error).message}`;
+  }
+}
+
+// B5: Delega para meta-ads-specialist (sub-agente isolado)
+async function delegateToSpecialist(
+  args: { question: string; context?: string },
+  companyId: string,
+  conversationId: string | null
+): Promise<string> {
+  if (!args.question || args.question.length < 5) {
+    return 'Pergunta muito curta para delegar. Forneca uma pergunta especifica.';
+  }
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!supabaseUrl || !serviceKey) return 'Falha na configuracao de delegacao.';
+
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/meta-ads-specialist`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: args.question,
+        context: args.context ?? null,
+        company_id: companyId,
+        conversation_id: conversationId,
+      }),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.ok) {
+      return `Specialist falhou: ${body.error ?? 'unknown'}. Continue com tools diretas.`;
+    }
+    return `[Resposta do Meta Ads Specialist — tokens: ${body.tokens}, custo: US$ ${Number(body.cost_usd ?? 0).toFixed(4)}]\n\n${body.answer}`;
+  } catch (err) {
+    return `Falha ao delegar: ${err instanceof Error ? err.message : String(err)}`;
   }
 }
 

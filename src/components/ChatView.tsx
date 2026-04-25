@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Paperclip, Sparkles, Square, Search, FileBarChart, Telescope } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/hooks/use-chat";
+import { ProactiveBanner } from "@/components/chat/ProactiveBanner";
+import { InlineApprovalCards } from "@/components/chat/InlineApprovalCard";
 
 const suggestions = [
   "Qual o desempenho das minhas campanhas nos ultimos 7 dias?",
@@ -30,6 +32,7 @@ const ChatView = () => {
     messages,
     isStreaming,
     status,
+    conversationId,
     sendMessage,
     stopStreaming,
     newConversation,
@@ -45,18 +48,11 @@ const ChatView = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
 
-  // B4: Carrega insights proativos uma vez por sessao do browser (sobrevive remount do ChatView)
-  useEffect(() => {
-    const SESSION_KEY = 'fury_proactive_loaded';
-    if (proactiveLoaded.current) return;
-    if (sessionStorage.getItem(SESSION_KEY) === '1') {
-      proactiveLoaded.current = true;
-      return;
-    }
-    proactiveLoaded.current = true;
-    sessionStorage.setItem(SESSION_KEY, '1');
-    loadProactiveInsights();
-  }, [loadProactiveInsights]);
+  // B3: O auto-greeting LLM foi substituido pelo <ProactiveBanner /> (zero-cost,
+  // baseado em RPC get_proactive_briefing). Mantemos a funcao loadProactiveInsights
+  // disponivel pra fallback / botao manual, mas nao chamamos automaticamente.
+  void loadProactiveInsights;
+  void proactiveLoaded;
 
   const handleSend = () => {
     if (!input.trim() || isStreaming) return;
@@ -227,6 +223,10 @@ const ChatView = () => {
                 Seu co-piloto de Meta Ads com dados em tempo real das suas campanhas
               </p>
             </div>
+
+            {/* B3: Briefing proativo (insights baseados em memorias + metricas) */}
+            <ProactiveBanner onAsk={(p) => sendMessage(p)} />
+
             <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
               {suggestions.map((s) => (
                 <button
@@ -302,6 +302,9 @@ const ChatView = () => {
             </div>
           </div>
         ))}
+
+        {/* B4: Approvals/plans inline da conversation atual */}
+        <InlineApprovalCards conversationId={conversationId} />
 
         {/* Status indicator (e.g., "Buscando dados...") */}
         {status && (

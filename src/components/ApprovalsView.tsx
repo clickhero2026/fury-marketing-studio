@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Check, X, Clock, ShieldAlert, Pause, Play, DollarSign, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, X, Clock, ShieldAlert, Pause, Play, DollarSign, Loader2, CheckCircle2, AlertCircle, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useApprovals, type Approval, type ApprovalActionType } from '@/hooks/use-approvals';
+import { usePlans, type PlanWithSteps } from '@/hooks/use-plans';
 
 const ACTION_META: Record<
   ApprovalActionType,
@@ -24,6 +25,13 @@ const STATUS_META: Record<string, { color: string; label: string }> = {
 
 const ApprovalsView = () => {
   const { pending, history, isLoading, decidingId, decide } = useApprovals();
+  const {
+    pending: pendingPlans,
+    history: historyPlans,
+    isLoading: plansLoading,
+    decidingId: planDecidingId,
+    decide: decidePlan,
+  } = usePlans();
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
@@ -37,16 +45,35 @@ const ApprovalsView = () => {
         </p>
       </div>
 
-      {isLoading ? (
+      {isLoading || plansLoading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin mr-2" />
           Carregando...
         </div>
       ) : (
         <>
+          {pendingPlans.length > 0 && (
+            <Section
+              title={`Planos pendentes (${pendingPlans.length})`}
+              empty="Sem planos pendentes."
+            >
+              <div className="space-y-3">
+                {pendingPlans.map((p) => (
+                  <PendingPlanCard
+                    key={p.id}
+                    plan={p}
+                    isDeciding={planDecidingId === p.id}
+                    onDecide={decidePlan}
+                  />
+                ))}
+              </div>
+            </Section>
+          )}
+
           <Section
             title={`Pendentes (${pending.length})`}
             empty="Nenhuma acao aguardando aprovacao."
+            className={pendingPlans.length > 0 ? 'mt-6' : undefined}
           >
             <div className="space-y-3">
               {pending.map((a) => (
@@ -59,6 +86,20 @@ const ApprovalsView = () => {
               ))}
             </div>
           </Section>
+
+          {historyPlans.length > 0 && (
+            <Section
+              title={`Historico de planos (${historyPlans.length})`}
+              empty="Sem planos anteriores."
+              className="mt-8"
+            >
+              <div className="space-y-2">
+                {historyPlans.slice(0, 15).map((p) => (
+                  <PlanHistoryRow key={p.id} plan={p} />
+                ))}
+              </div>
+            </Section>
+          )}
 
           <Section title={`Historico (${history.length})`} empty="Sem acoes anteriores." className="mt-8">
             <div className="space-y-2">
@@ -237,6 +278,129 @@ function HistoryRow({ approval }: { approval: Approval }) {
       </span>
       <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
         {timeAgo(approval.decided_at ?? approval.created_at)}
+      </span>
+    </div>
+  );
+}
+
+function PendingPlanCard({
+  plan,
+  isDeciding,
+  onDecide,
+}: {
+  plan: PlanWithSteps;
+  isDeciding: boolean;
+  onDecide: (id: string, decision: 'approve' | 'reject') => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const remainingMs = new Date(plan.expires_at).getTime() - Date.now();
+  const expired = remainingMs <= 0;
+
+  return (
+    <div className="bg-card border border-primary/30 rounded-xl p-4 hover:bg-card/80 transition-colors">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+            <Layers className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-primary">
+              Plano multi-step ({plan.steps.length} acoes)
+            </div>
+            <div className="text-sm font-medium text-foreground mt-0.5">
+              {plan.human_summary}
+            </div>
+            {plan.rationale && (
+              <p className="text-xs text-muted-foreground mt-1.5 italic">"{plan.rationale}"</p>
+            )}
+            <CountdownBadge expiresAt={plan.expires_at} />
+
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              {expanded ? 'Esconder' : 'Mostrar'} passos
+            </button>
+
+            {expanded && (
+              <ol className="mt-2 space-y-1.5 list-none">
+                {plan.steps.map((step, i) => {
+                  const meta = ACTION_META[step.action_type] ?? {
+                    icon: ShieldAlert,
+                    color: 'text-foreground',
+                    label: step.action_type,
+                  };
+                  const Icon = meta.icon;
+                  return (
+                    <li key={step.id} className="flex items-center gap-2 text-xs text-foreground/80">
+                      <span className="text-muted-foreground font-mono w-4">{i + 1}.</span>
+                      <Icon className={cn('h-3 w-3 shrink-0', meta.color)} />
+                      <span className="truncate">{step.human_summary}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isDeciding || expired}
+            onClick={() => onDecide(plan.id, 'reject')}
+            className="border-border hover:bg-destructive/10 hover:text-destructive"
+          >
+            <X className="h-3.5 w-3.5" />
+            Rejeitar tudo
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isDeciding || expired}
+            onClick={() => onDecide(plan.id, 'approve')}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            {isDeciding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            Aprovar plano
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanHistoryRow({ plan }: { plan: PlanWithSteps }) {
+  const planStatusMeta: Record<string, { color: string; label: string }> = {
+    rejected: STATUS_META.rejected,
+    expired: STATUS_META.expired,
+    executed: { color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', label: 'Executado' },
+    partial: { color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', label: 'Parcial' },
+    failed: { color: 'bg-red-500/15 text-red-400 border-red-500/30', label: 'Falhou' },
+    approved: STATUS_META.approved,
+  };
+  const status = planStatusMeta[plan.status] ?? STATUS_META.expired;
+
+  return (
+    <div className="bg-card/50 border border-border/60 rounded-lg px-3 py-2 flex items-center gap-3">
+      <Layers className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+      <div className="text-sm text-foreground/80 truncate flex-1">
+        {plan.human_summary}
+        <span className="ml-2 text-[11px] text-muted-foreground">({plan.steps.length} acoes)</span>
+      </div>
+      <span
+        className={cn(
+          'text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full border whitespace-nowrap',
+          status.color
+        )}
+      >
+        {status.label}
+      </span>
+      <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
+        {timeAgo(plan.decided_at ?? plan.created_at)}
       </span>
     </div>
   );

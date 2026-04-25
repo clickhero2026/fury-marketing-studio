@@ -1,4 +1,4 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Logo } from "@/components/shared/Logo";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals";
+type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health";
 
 interface AppSidebarProps {
   currentView: View;
@@ -24,6 +24,7 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "publisher", label: "Publicar", icon: Rocket },
   { id: "budget", label: "Orcamento Smart", icon: Wallet },
   { id: "approvals", label: "Aprovacoes", icon: ShieldAlert },
+  { id: "ai-health", label: "Saude do AI", icon: Activity },
 ];
 
 function usePendingApprovalsCount(): number {

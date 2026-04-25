@@ -60,7 +60,42 @@ em vez de executar direto. Usuario aprova/rejeita via UI. Mantem reversao de 30m
 
 ## Validacao geral
 
-- [ ] V1 — `npm run build` verde apos cada sprint
+- [x] V1 — `npm run build` verde apos cada sprint (B1-B5)
 - [ ] V2 — RLS audit (Captain America) antes de merge
 - [ ] V3 — Manual smoke test no Lovable preview
-- [ ] V4 — `implemented-features.md` atualizado por sprint
+- [x] V4 — `implemented-features.md` atualizado (2026-04-25)
+
+---
+
+## Sprint B1 — Agent Observability (AS-BUILT 2026-04-25)
+
+- [x] B1.1 — Migration `20260424000004_agent_runs.sql` (table + RPC `get_ai_health_summary`)
+- [x] B1.2 — Instrumentacao ai-chat (insert running -> update success/error com tokens/cost/latencia/tools)
+- [x] B1.3 — Hook `useAiHealth` + view `AiHealthView` (KPIs + line/bar charts + top tools + erros)
+- [x] B1.4 — Sidebar nav "Saude do AI"
+- [x] B1.5 — Bug fixes: HTTP 200 em approval-action mesmo com execution error; toast logic em use-approvals
+
+## Sprint B2 — Multi-step Plan Mode (AS-BUILT 2026-04-25)
+
+- [x] B2.1 — Migration `20260424000005_plans.sql` (plans + plan_id em approvals + cron expire)
+- [x] B2.2 — `proposePlan()` + tool `propose_plan` (cria 1 plan + N approvals filhas)
+- [x] B2.3 — Edge `plan-action` (executa steps em ordem; status executed/partial/failed)
+- [x] B2.4 — Hook `usePlans` + UI ApprovalsView (PendingPlanCard expansivel + PlanHistoryRow)
+
+## Sprint B3 — Profiler Proativo (AS-BUILT 2026-04-25)
+
+- [x] B3.1 — Migration `20260424000006_proactive_briefing.sql` (RPC `get_proactive_briefing`)
+- [x] B3.2 — Hook `useProactiveBriefing` (transforma RPC em insights ranqueados)
+- [x] B3.3 — `ProactiveBanner` clicavel (zero-cost; substitui auto-greeting LLM)
+
+## Sprint B4 — Approval Inline no Chat (AS-BUILT 2026-04-25)
+
+- [x] B4.1 — Hook `useConversationActions(conversationId)` (filter por conversation + realtime)
+- [x] B4.2 — `InlineApprovalCards` — pending plans (expansivel) + approvals avulsas com botoes
+- [x] B4.3 — Integracao no ChatView entre mensagens e status indicator
+
+## Sprint B5 — Multi-Agent Real (AS-BUILT 2026-04-25)
+
+- [x] B5.1 — Edge `meta-ads-specialist` (service-role only, prompt focado, tools analiticas)
+- [x] B5.2 — Tool `delegate_to_meta_specialist` no orchestrator
+- [x] B5.3 — agent_runs com `metadata.parent_run_id` correlacionando sub-agente
