@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ImagePlus, MoreHorizontal, Loader2, Video as VideoIcon, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreatives, type CreativeRow } from "@/hooks/use-campaigns";
 import { humanizeStatus } from "@/lib/meta-labels";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
+
+type StatusFilter = "all" | "active" | "paused";
+
+function cleanName(raw: string | null): string {
+  if (!raw) return "Sem nome";
+  // Remove placeholders Meta nao substituidos tipo "{{product.name}} 2025-04-03-..."
+  const cleaned = raw.replace(/\{\{[^}]+\}\}/g, "").trim();
+  return cleaned.length > 0 ? cleaned : "Sem nome";
+}
 
 // Subcomponente com error state proprio — evita DOM manipulation imperativa
 function CreativeImage({ src, alt, isVideo }: { src: string | null; alt: string; isVideo: boolean }) {
@@ -38,8 +47,9 @@ function statusBadgeClass(raw: string | null): string {
 
 function CreativeCard({ c }: { c: CreativeRow }) {
   const isVideo = c.detected_media_type === "video" || c.type === "video";
-  const subtitle = (c.headline && c.headline.trim()) || c.detected_media_type || "—";
-  const displayName = (c.name && c.name.trim()) || "Sem nome";
+  const mediaTypeLabel = isVideo ? "video" : c.detected_media_type === "image" ? "imagem" : null;
+  const subtitle = (c.headline && c.headline.trim()) || mediaTypeLabel || "—";
+  const displayName = cleanName(c.name);
 
   return (
     <div className="group overflow-hidden rounded-xl border border-border/60 bg-card shadow-e1 transition-all duration-base ease-smooth hover:-translate-y-0.5 hover:shadow-e3 animate-slide-up">
@@ -76,6 +86,23 @@ function CreativeCard({ c }: { c: CreativeRow }) {
 
 const CreativesView = () => {
   const { data: creatives = [], isLoading, isError, error, refetch } = useCreatives();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+
+  const counts = useMemo(() => {
+    let active = 0;
+    let paused = 0;
+    for (const c of creatives) {
+      if (c.status === "ACTIVE") active++;
+      else paused++;
+    }
+    return { all: creatives.length, active, paused };
+  }, [creatives]);
+
+  const filtered = useMemo(() => {
+    if (statusFilter === "all") return creatives;
+    if (statusFilter === "active") return creatives.filter((c) => c.status === "ACTIVE");
+    return creatives.filter((c) => c.status !== "ACTIVE");
+  }, [creatives, statusFilter]);
 
   return (
     <div className="mx-auto h-full max-w-[1600px] animate-fade-in space-y-6 overflow-y-auto p-4 md:p-6 xl:p-8">
@@ -85,11 +112,35 @@ const CreativesView = () => {
         badge={
           !isLoading && !isError ? (
             <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 font-mono text-xs font-medium text-muted-foreground tabular-nums">
-              {creatives.length}
+              {filtered.length}{statusFilter !== "all" ? ` / ${counts.all}` : ""}
             </span>
           ) : null
         }
       />
+
+      {/* Status filter toggle */}
+      {!isLoading && !isError && creatives.length > 0 && (
+        <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+          {([
+            { key: "active", label: `Ativos (${counts.active})` },
+            { key: "paused", label: `Pausados (${counts.paused})` },
+            { key: "all", label: `Todos (${counts.all})` },
+          ] as Array<{ key: StatusFilter; label: string }>).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setStatusFilter(opt.key)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                statusFilter === opt.key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isError ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border/60 bg-card p-12 text-center shadow-e1">
@@ -112,9 +163,15 @@ const CreativesView = () => {
             Nenhum criativo sincronizado. Va em Integracoes e clique em Sincronizar.
           </p>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border bg-card/50 p-12 text-center">
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum criativo {statusFilter === "active" ? "ativo" : "pausado"} no momento.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {creatives.map((c) => (
+          {filtered.map((c) => (
             <CreativeCard key={c.id} c={c} />
           ))}
         </div>
