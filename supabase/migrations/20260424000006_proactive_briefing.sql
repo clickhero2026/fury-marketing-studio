@@ -57,27 +57,25 @@ BEGIN
   -- Mudancas em metricas (last 7d vs previous 7d) — apenas se ha company
   last_7 AS (
     SELECT
-      coalesce(sum(spend), 0)::numeric AS spend,
-      coalesce(sum(impressions), 0)::bigint AS impressions,
-      coalesce(sum(clicks), 0)::bigint AS clicks,
-      coalesce(sum(conversions), 0)::numeric AS conversions
-    FROM public.campaign_metrics cm
-    JOIN public.campaigns c ON c.id = cm.campaign_id
-    WHERE c.company_id = v_company_id
-      AND cm.date >= (now() - interval '7 days')::date
-      AND cm.date <= now()::date
+      coalesce(sum(investimento), 0)::numeric AS spend,
+      coalesce(sum(impressoes), 0)::bigint AS impressions,
+      coalesce(sum(cliques), 0)::bigint AS clicks,
+      coalesce(sum(conversas_iniciadas), 0)::numeric AS conversions
+    FROM public.campaign_metrics
+    WHERE company_id = v_company_id
+      AND data >= (now() - interval '7 days')::date
+      AND data <= now()::date
   ),
   prev_7 AS (
     SELECT
-      coalesce(sum(spend), 0)::numeric AS spend,
-      coalesce(sum(impressions), 0)::bigint AS impressions,
-      coalesce(sum(clicks), 0)::bigint AS clicks,
-      coalesce(sum(conversions), 0)::numeric AS conversions
-    FROM public.campaign_metrics cm
-    JOIN public.campaigns c ON c.id = cm.campaign_id
-    WHERE c.company_id = v_company_id
-      AND cm.date >= (now() - interval '14 days')::date
-      AND cm.date < (now() - interval '7 days')::date
+      coalesce(sum(investimento), 0)::numeric AS spend,
+      coalesce(sum(impressoes), 0)::bigint AS impressions,
+      coalesce(sum(cliques), 0)::bigint AS clicks,
+      coalesce(sum(conversas_iniciadas), 0)::numeric AS conversions
+    FROM public.campaign_metrics
+    WHERE company_id = v_company_id
+      AND data >= (now() - interval '14 days')::date
+      AND data < (now() - interval '7 days')::date
   ),
   metric_diff AS (
     SELECT
@@ -85,7 +83,7 @@ BEGIN
       l.impressions AS impr_now, p.impressions AS impr_prev,
       l.clicks AS clicks_now, p.clicks AS clicks_prev,
       l.conversions AS conv_now, p.conversions AS conv_prev,
-      CASE WHEN p.impressions > 0 THEN (l.clicks::numeric / NULLIF(l.impressions, 0)) END AS ctr_now,
+      CASE WHEN l.impressions > 0 THEN (l.clicks::numeric / NULLIF(l.impressions, 0)) END AS ctr_now,
       CASE WHEN p.impressions > 0 THEN (p.clicks::numeric / NULLIF(p.impressions, 0)) END AS ctr_prev,
       CASE WHEN p.spend > 0 THEN (l.spend - p.spend) / p.spend * 100 END AS spend_change_pct,
       CASE WHEN p.conversions > 0 THEN (l.conversions - p.conversions) / p.conversions * 100 END AS conv_change_pct
