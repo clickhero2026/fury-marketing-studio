@@ -11,8 +11,12 @@ type StatusFilter = "all" | "active" | "paused";
 
 function cleanName(raw: string | null): string {
   if (!raw) return "Sem nome";
-  // Remove placeholders Meta nao substituidos tipo "{{product.name}} 2025-04-03-..."
-  const cleaned = raw.replace(/\{\{[^}]+\}\}/g, "").trim();
+  let cleaned = raw
+    .replace(/\{\{[^}]+\}\}/g, "")
+    .replace(/\s+\d{4}-\d{2}-\d{2}-[a-f0-9]{8,}\b/gi, "")
+    .replace(/\s+[a-f0-9]{16,}\b/gi, "")
+    .trim();
+  cleaned = cleaned.replace(/[\s-]+$/, "").trim();
   return cleaned.length > 0 ? cleaned : "Sem nome";
 }
 
