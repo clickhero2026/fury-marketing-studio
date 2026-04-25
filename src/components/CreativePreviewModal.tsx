@@ -13,11 +13,11 @@ interface Props {
 }
 
 const AD_FORMATS = [
-  { value: "DESKTOP_FEED_STANDARD", label: "Feed Desktop" },
-  { value: "MOBILE_FEED_STANDARD", label: "Feed Mobile" },
-  { value: "INSTAGRAM_STANDARD", label: "Instagram Feed" },
-  { value: "INSTAGRAM_STORY", label: "IG Story" },
-  { value: "INSTAGRAM_REELS", label: "Reels" },
+  { value: "DESKTOP_FEED_STANDARD", label: "Feed Desktop", w: 540, h: 720 },
+  { value: "MOBILE_FEED_STANDARD", label: "Feed Mobile", w: 320, h: 640 },
+  { value: "INSTAGRAM_STANDARD", label: "Instagram Feed", w: 500, h: 720 },
+  { value: "INSTAGRAM_STORY", label: "IG Story", w: 360, h: 640 },
+  { value: "INSTAGRAM_REELS", label: "Reels", w: 360, h: 640 },
 ];
 
 function cleanName(raw: string | null): string {
@@ -145,7 +145,10 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
               </div>
             </div>
 
-            {/* Preview area — iframe da Meta Ad Preview API */}
+            {/* Preview area — iframe da Meta Ad Preview API.
+                Usa dims nativos de cada formato (sem stretch) pra evitar pixelado.
+                URLs da Meta tem token e podem expirar — se nao carregar, troca o
+                formato ou abre o link direto via "Abrir iframe Meta". */}
             <div className="bg-black/40 p-4 flex items-center justify-center min-h-[500px]">
               {loading ? (
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -171,12 +174,22 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
                   )}
                 </div>
               ) : iframeUrl ? (
-                <iframe
-                  src={iframeUrl}
-                  className="w-full max-w-[540px] h-[600px] rounded-lg border-0 bg-white"
-                  allow="encrypted-media; autoplay"
-                  title={cleanName(creative.name)}
-                />
+                (() => {
+                  const fmt = AD_FORMATS.find((f) => f.value === adFormat) ?? AD_FORMATS[0];
+                  return (
+                    <iframe
+                      key={iframeUrl}
+                      src={iframeUrl}
+                      width={fmt.w}
+                      height={fmt.h}
+                      className="rounded-lg border-0 bg-white shadow-lg"
+                      style={{ width: `${fmt.w}px`, height: `${fmt.h}px`, maxWidth: '100%' }}
+                      allow="encrypted-media; autoplay; clipboard-write"
+                      sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+                      title={cleanName(creative.name)}
+                    />
+                  );
+                })()
               ) : (
                 <div className="text-center text-muted-foreground py-12">
                   <ImageIcon className="h-10 w-10 mx-auto mb-2 opacity-40" />
@@ -213,6 +226,20 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
                   </span>
                 </div>
               )}
+              {iframeUrl && (
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(iframeUrl, "_blank", "noopener,noreferrer")}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Abrir preview Meta em nova aba
+                  </Button>
+                </div>
+              )}
+
               <div className="text-[10px] text-muted-foreground/60 pt-2 border-t border-border/40 font-mono">
                 Creative ID: {creative.external_id}
               </div>
