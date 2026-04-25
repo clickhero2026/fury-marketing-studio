@@ -402,6 +402,7 @@ async function syncAccount(
       await supabase.from('creatives').upsert(
         {
           external_id: ad.creative.id,
+          ad_external_id: ad.id,  // ad.id (parent do creative) — usado pra Ad Preview API
           name: ad.creative.name ?? ad.name,
           type: mediaType,
           image_url: ad.creative.image_url ?? null,

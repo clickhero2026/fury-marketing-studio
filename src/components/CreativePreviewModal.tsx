@@ -1,14 +1,24 @@
-import { X, ExternalLink, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, ExternalLink, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { humanizeStatus } from "@/lib/meta-labels";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import type { CreativeRow } from "@/hooks/use-campaigns";
 
 interface Props {
   creative: CreativeRow | null;
   onClose: () => void;
 }
+
+const AD_FORMATS = [
+  { value: "DESKTOP_FEED_STANDARD", label: "Feed Desktop" },
+  { value: "MOBILE_FEED_STANDARD", label: "Feed Mobile" },
+  { value: "INSTAGRAM_STANDARD", label: "Instagram Feed" },
+  { value: "INSTAGRAM_STORY", label: "IG Story" },
+  { value: "INSTAGRAM_REELS", label: "Reels" },
+];
 
 function cleanName(raw: string | null): string {
   if (!raw) return "Sem nome";
@@ -17,25 +27,70 @@ function cleanName(raw: string | null): string {
 
 export function CreativePreviewModal({ creative, onClose }: Props) {
   const open = creative !== null;
+  const [adFormat, setAdFormat] = useState<string>(AD_FORMATS[0].value);
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isVideo = creative?.detected_media_type === "video" || creative?.type === "video";
-  const previewUrl = creative?.thumbnail_url || creative?.image_url || null;
 
-  // Embed Facebook plugin para video — funciona se a page do post for publica
-  const embedUrl = creative?.effective_object_story_id
-    ? `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(
-        `https://www.facebook.com/${creative.effective_object_story_id.replace('_', '/posts/')}`
-      )}&show_text=true&width=500`
-    : null;
+  useEffect(() => {
+    if (!creative) {
+      setIframeUrl(null);
+      setError(null);
+      return;
+    }
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    setIframeUrl(null);
 
-  // Link direto pro post (abre em nova aba)
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Nao autenticado");
+
+        const url = import.meta.env.VITE_SUPABASE_URL as string;
+        const apikey =
+          (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
+          (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string);
+
+        const res = await fetch(`${url}/functions/v1/meta-creative-preview`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ creative_id: creative.id, ad_format: adFormat }),
+        });
+        const body = await res.json();
+        if (!mounted) return;
+        if (!res.ok || !body.ok) {
+          throw new Error(body.error || `HTTP ${res.status}`);
+        }
+        setIframeUrl(body.iframe_url);
+      } catch (e) {
+        if (!mounted) return;
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [creative, adFormat]);
+
+  // Link direto pro post se tiver effective_object_story_id
   const externalUrl = creative?.effective_object_story_id
-    ? `https://www.facebook.com/${creative.effective_object_story_id.replace('_', '/posts/')}`
+    ? `https://www.facebook.com/${creative.effective_object_story_id.replace("_", "/posts/")}`
     : null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 gap-0">
         {creative && (
           <>
             <div className="flex items-start justify-between p-4 border-b border-border">
@@ -62,40 +117,70 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="rounded-lg p-1.5 hover:bg-secondary"
-                aria-label="Fechar"
-              >
+              <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary" aria-label="Fechar">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Preview area */}
-            <div className="bg-black/40 p-4 flex items-center justify-center min-h-[300px]">
-              {isVideo && embedUrl ? (
+            {/* Format selector */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Formato:
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {AD_FORMATS.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setAdFormat(f.value)}
+                    className={cn(
+                      "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors",
+                      adFormat === f.value
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview area — iframe da Meta Ad Preview API */}
+            <div className="bg-black/40 p-4 flex items-center justify-center min-h-[500px]">
+              {loading ? (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="text-xs">Carregando preview da Meta...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center text-muted-foreground py-8 max-w-md">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-400" />
+                  <p className="text-sm font-medium text-foreground mb-1">Falha ao carregar preview</p>
+                  <p className="text-xs opacity-70">{error}</p>
+                  {externalUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => window.open(externalUrl, "_blank", "noopener,noreferrer")}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Abrir no Facebook
+                    </Button>
+                  )}
+                </div>
+              ) : iframeUrl ? (
                 <iframe
-                  src={embedUrl}
-                  className="w-full h-[500px] rounded-lg border-0"
-                  allow="encrypted-media"
-                  scrolling="no"
+                  src={iframeUrl}
+                  className="w-full max-w-[540px] h-[600px] rounded-lg border-0 bg-white"
+                  allow="encrypted-media; autoplay"
                   title={cleanName(creative.name)}
-                />
-              ) : previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt={cleanName(creative.name)}
-                  className="max-w-full max-h-[500px] object-contain rounded-lg"
                 />
               ) : (
                 <div className="text-center text-muted-foreground py-12">
                   <ImageIcon className="h-10 w-10 mx-auto mb-2 opacity-40" />
                   <p className="text-sm">Sem preview disponivel</p>
-                  <p className="text-xs opacity-60 mt-1">
-                    {isVideo
-                      ? "Video sem thumbnail e sem post publico — abra na Meta Ads Manager"
-                      : "Criativo dinamico (sem image_url unico)"}
-                  </p>
                 </div>
               )}
             </div>
@@ -128,34 +213,8 @@ export function CreativePreviewModal({ creative, onClose }: Props) {
                   </span>
                 </div>
               )}
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                {externalUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(externalUrl, '_blank', 'noopener,noreferrer')}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Abrir post no Facebook
-                  </Button>
-                )}
-                {creative.video_id && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`https://business.facebook.com/ads/manager/manage/ads?act=${creative.ad_account_id?.replace('act_', '')}`, '_blank', 'noopener,noreferrer')}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Abrir no Ads Manager
-                  </Button>
-                )}
-              </div>
-
               <div className="text-[10px] text-muted-foreground/60 pt-2 border-t border-border/40 font-mono">
-                ID: {creative.external_id}
+                Creative ID: {creative.external_id}
               </div>
             </div>
           </>
