@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/AppSidebar";
 import ChatView from "@/components/ChatView";
 import DashboardView from "@/components/DashboardView";
@@ -27,8 +27,25 @@ const viewTitles: Record<View, string> = {
   "ai-health": "Saude do AI",
 };
 
+const VIEW_STORAGE_KEY = "clickhero:currentView";
+const VALID_VIEWS: View[] = ["chat", "dashboard", "creatives", "analysis", "compliance", "fury", "publisher", "budget", "approvals", "ai-health"];
+
+function loadInitialView(): View {
+  try {
+    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (saved && VALID_VIEWS.includes(saved as View)) return saved as View;
+  } catch { /* ignore — SSR/private mode */ }
+  return "chat";
+}
+
 const Index = () => {
-  const [currentView, setCurrentView] = useState<View>("chat");
+  const [currentView, setCurrentView] = useState<View>(loadInitialView);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, currentView);
+    } catch { /* ignore */ }
+  }, [currentView]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
