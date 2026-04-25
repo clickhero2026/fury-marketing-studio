@@ -399,6 +399,23 @@ async function syncAccount(
       const internalCampaignId = ad.campaign_id ? campaignIdMap.get(ad.campaign_id) ?? null : null;
       const mediaType = ad.creative.video_id ? 'video' : ad.creative.image_url ? 'image' : 'unknown';
 
+      // Fallback: se video sem thumbnail_url, busca picture direto do video
+      let resolvedThumbnail = ad.creative.thumbnail_url ?? null;
+      if (!resolvedThumbnail && ad.creative.video_id) {
+        try {
+          const vidUrl = `${GRAPH_BASE}/${ad.creative.video_id}?fields=picture,thumbnails{uri}&access_token=${token}`;
+          const vidResp = await fetch(vidUrl);
+          const vidData = await vidResp.json();
+          if (!vidData.error) {
+            resolvedThumbnail = vidData.picture
+              ?? vidData.thumbnails?.data?.[0]?.uri
+              ?? null;
+          }
+        } catch (err) {
+          console.warn(`[sync] thumbnail fallback failed for ${ad.creative.video_id}:`, err);
+        }
+      }
+
       await supabase.from('creatives').upsert(
         {
           external_id: ad.creative.id,
@@ -406,7 +423,7 @@ async function syncAccount(
           name: ad.creative.name ?? ad.name,
           type: mediaType,
           image_url: ad.creative.image_url ?? null,
-          thumbnail_url: ad.creative.thumbnail_url ?? null,
+          thumbnail_url: resolvedThumbnail,
           video_id: ad.creative.video_id ?? null,
           effective_object_story_id: ad.creative.effective_object_story_id ?? null,
           headline: ad.creative.title ?? null,
