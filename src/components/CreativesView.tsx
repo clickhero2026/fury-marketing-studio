@@ -15,6 +15,19 @@ function cleanName(raw: string | null): string {
   return cleaned.length > 0 ? cleaned : "Sem nome";
 }
 
+// Criativo so e considerado "ativo" quando o ad E a campanha pai estao ambos ativos.
+// Sem isso, ads de campanhas pausadas aparecem como ativos (Meta nao desliga
+// auto o status do ad quando a campanha pausa).
+function isCreativeTrulyActive(c: CreativeRow): boolean {
+  if (c.status !== "ACTIVE") return false;
+  const camp = c.campaign;
+  if (!camp) return false;  // sem campanha vinculada — nao da pra confirmar
+  // effective_status reflete o estado real considerando hierarquia (campaign/account/etc)
+  // Se nao tiver effective_status, cai no status simples
+  const effective = camp.effective_status ?? camp.status;
+  return effective === "ACTIVE";
+}
+
 // Subcomponente com error state proprio — evita DOM manipulation imperativa
 function CreativeImage({ src, alt, isVideo }: { src: string | null; alt: string; isVideo: boolean }) {
   const [failed, setFailed] = useState(false);
@@ -48,7 +61,8 @@ function statusBadgeClass(raw: string | null): string {
 function CreativeCard({ c }: { c: CreativeRow }) {
   const isVideo = c.detected_media_type === "video" || c.type === "video";
   const mediaTypeLabel = isVideo ? "video" : c.detected_media_type === "image" ? "imagem" : null;
-  const subtitle = (c.headline && c.headline.trim()) || mediaTypeLabel || "—";
+  const campaignName = c.campaign?.name ?? null;
+  const subtitle = campaignName || (c.headline && c.headline.trim()) || mediaTypeLabel || "—";
   const displayName = cleanName(c.name);
 
   return (
@@ -92,7 +106,7 @@ const CreativesView = () => {
     let active = 0;
     let paused = 0;
     for (const c of creatives) {
-      if (c.status === "ACTIVE") active++;
+      if (isCreativeTrulyActive(c)) active++;
       else paused++;
     }
     return { all: creatives.length, active, paused };
@@ -100,8 +114,8 @@ const CreativesView = () => {
 
   const filtered = useMemo(() => {
     if (statusFilter === "all") return creatives;
-    if (statusFilter === "active") return creatives.filter((c) => c.status === "ACTIVE");
-    return creatives.filter((c) => c.status !== "ACTIVE");
+    if (statusFilter === "active") return creatives.filter(isCreativeTrulyActive);
+    return creatives.filter((c) => !isCreativeTrulyActive(c));
   }, [creatives, statusFilter]);
 
   return (
