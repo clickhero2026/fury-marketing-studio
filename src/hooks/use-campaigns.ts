@@ -37,6 +37,9 @@ export interface CreativeRow {
   status: string | null;
   detected_media_type: string | null;
   ad_account_id?: string | null;
+  thumbnail_url?: string | null;
+  video_id?: string | null;
+  effective_object_story_id?: string | null;
   campaign?: { status: string | null; effective_status: string | null; name: string | null } | null;
 }
 
@@ -95,7 +98,7 @@ export function useCreatives() {
 
       let query = supabase
         .from('creatives')
-        .select('id, external_id, name, type, image_url, headline, text, call_to_action, status, detected_media_type, ad_account_id, campaign:campaigns(status, effective_status, name)')
+        .select('id, external_id, name, type, image_url, thumbnail_url, video_id, effective_object_story_id, headline, text, call_to_action, status, detected_media_type, ad_account_id, campaign:campaigns(status, effective_status, name)')
         .eq('platform', 'meta')
         .order('updated_at', { ascending: false })
         .limit(500);

@@ -41,5 +41,9 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:developers.facebook.com)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }

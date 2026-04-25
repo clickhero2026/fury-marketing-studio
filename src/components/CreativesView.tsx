@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { ImagePlus, MoreHorizontal, Loader2, Video as VideoIcon, AlertCircle } from "lucide-react";
+import { ImagePlus, MoreHorizontal, Loader2, Video as VideoIcon, AlertCircle, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreatives, type CreativeRow } from "@/hooks/use-campaigns";
 import { humanizeStatus } from "@/lib/meta-labels";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { CreativePreviewModal } from "@/components/CreativePreviewModal";
 
 type StatusFilter = "all" | "active" | "paused";
 
@@ -41,13 +42,22 @@ function CreativeImage({ src, alt, isVideo }: { src: string | null; alt: string;
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      className="w-full h-full object-cover"
-      onError={() => setFailed(true)}
-    />
+    <>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className="w-full h-full object-cover"
+        onError={() => setFailed(true)}
+      />
+      {isVideo && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity group-hover:bg-black/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+            <Play className="h-5 w-5 text-black fill-black translate-x-0.5" />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -58,24 +68,26 @@ function statusBadgeClass(raw: string | null): string {
   return "border-amber-600/10 bg-amber-50 text-amber-700";
 }
 
-function CreativeCard({ c }: { c: CreativeRow }) {
+function CreativeCard({ c, onClick }: { c: CreativeRow; onClick: () => void }) {
   const isVideo = c.detected_media_type === "video" || c.type === "video";
   const mediaTypeLabel = isVideo ? "video" : c.detected_media_type === "image" ? "imagem" : null;
   const campaignName = c.campaign?.name ?? null;
   const subtitle = campaignName || (c.headline && c.headline.trim()) || mediaTypeLabel || "—";
   const displayName = cleanName(c.name);
+  // Usa thumbnail_url (preview de video) com fallback para image_url
+  const previewSrc = c.thumbnail_url || c.image_url || null;
 
   return (
-    <div className="group overflow-hidden rounded-xl border border-border/60 bg-card shadow-e1 transition-all duration-base ease-smooth hover:-translate-y-0.5 hover:shadow-e3 animate-slide-up">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left overflow-hidden rounded-xl border border-border/60 bg-card shadow-e1 transition-all duration-base ease-smooth hover:-translate-y-0.5 hover:shadow-e3 hover:border-primary/30 animate-slide-up"
+    >
       <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-        <CreativeImage src={c.image_url} alt={displayName} isVideo={isVideo} />
-        <button
-          type="button"
-          aria-label={`Acoes do criativo ${displayName}`}
-          className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-black/40 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100"
-        >
+        <CreativeImage src={previewSrc} alt={displayName} isVideo={isVideo} />
+        <div className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-black/40 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
           <MoreHorizontal className="h-4 w-4 text-white" />
-        </button>
+        </div>
       </div>
       <div className="space-y-3 p-4">
         <div className="flex items-start justify-between gap-2">
@@ -94,13 +106,14 @@ function CreativeCard({ c }: { c: CreativeRow }) {
           <div className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{c.call_to_action}</div>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
 const CreativesView = () => {
   const { data: creatives = [], isLoading, isError, error, refetch } = useCreatives();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [selected, setSelected] = useState<CreativeRow | null>(null);
 
   const counts = useMemo(() => {
     let active = 0;
@@ -186,10 +199,12 @@ const CreativesView = () => {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((c) => (
-            <CreativeCard key={c.id} c={c} />
+            <CreativeCard key={c.id} c={c} onClick={() => setSelected(c)} />
           ))}
         </div>
       )}
+
+      <CreativePreviewModal creative={selected} onClose={() => setSelected(null)} />
     </div>
   );
 };

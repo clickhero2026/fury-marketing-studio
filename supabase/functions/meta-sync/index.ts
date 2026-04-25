@@ -61,9 +61,11 @@ interface MetaAd {
     title?: string;
     body?: string;
     image_url?: string;
+    thumbnail_url?: string;
     video_id?: string;
     call_to_action_type?: string;
     object_type?: string;
+    effective_object_story_id?: string;
   };
 }
 
@@ -382,7 +384,7 @@ async function syncAccount(
   // ===== 3. Sync ads + creatives =====
   const adsUrl =
     `${GRAPH_BASE}/${actId}/ads` +
-    `?fields=id,name,status,campaign_id,adset_id,creative{id,name,title,body,image_url,video_id,call_to_action_type,object_type}` +
+    `?fields=id,name,status,campaign_id,adset_id,creative{id,name,title,body,image_url,thumbnail_url,video_id,call_to_action_type,object_type,effective_object_story_id}` +
     `&limit=100&access_token=${token}`;
 
   const adsResp = await fetch(adsUrl);
@@ -403,6 +405,9 @@ async function syncAccount(
           name: ad.creative.name ?? ad.name,
           type: mediaType,
           image_url: ad.creative.image_url ?? null,
+          thumbnail_url: ad.creative.thumbnail_url ?? null,
+          video_id: ad.creative.video_id ?? null,
+          effective_object_story_id: ad.creative.effective_object_story_id ?? null,
           headline: ad.creative.title ?? null,
           text: ad.creative.body ?? null,
           call_to_action: ad.creative.call_to_action_type ?? null,
