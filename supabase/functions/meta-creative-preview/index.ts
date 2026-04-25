@@ -115,21 +115,31 @@ Deno.serve(async (req) => {
       }, cors);
     }
 
-    // Extrair src do iframe retornado pela Meta
+    // Extrair src do iframe retornado pela Meta + decodificar HTML entities
+    // (Meta retorna &amp; em vez de & dentro do HTML)
     const srcMatch = previewBody.match(/src=["']([^"']+)["']/);
-    const iframeUrl = srcMatch?.[1] ?? null;
+    const rawUrl = srcMatch?.[1] ?? null;
 
-    if (!iframeUrl) {
+    if (!rawUrl) {
       return jsonResponse(500, {
         error: 'Falha ao extrair iframe URL da resposta Meta',
         raw: previewBody.substring(0, 500),
       }, cors);
     }
 
+    // Decode HTML entities (Meta sempre retorna &amp; etc)
+    const iframeUrl = rawUrl
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+
     return jsonResponse(200, {
       ok: true,
       iframe_url: iframeUrl,
       ad_format: adFormat,
+      raw_html_length: previewBody.length,
     }, cors);
   } catch (err) {
     console.error('[meta-creative-preview] unexpected:', err);
