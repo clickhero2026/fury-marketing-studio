@@ -69,13 +69,16 @@ Deno.serve(async (req) => {
 
     const { data: messages } = await supabase
       .from('chat_messages')
-      .select('role, content')
+      .select('id, role, content')
       .eq('conversation_id', conversation_id)
       .order('created_at', { ascending: true });
 
     if (!messages || messages.length < 2) {
       return new Response(JSON.stringify({ extracted: 0, reason: 'too few messages' }));
     }
+
+    // Sprint A3: capturamos os IDs pra evidence trail
+    const evidenceMessageIds: string[] = (messages as Array<{ id: string }>).map((m) => m.id);
 
     // 2. Buscar memórias existentes para dedup
     const { data: existingMemories } = await supabase
@@ -141,14 +144,24 @@ Deno.serve(async (req) => {
       const embedding = embResult.data?.[0]?.embedding;
       if (!embedding) continue;
 
-      // Desativar memória superseded
+      // Sprint A3: localizar memorias supersededas (antes de desativar)
+      // pra depois setar superseded_by = id_da_nova
+      let supersededIds: string[] = [];
       if (mem.supersedes_content) {
-        await supabase
+        const { data: oldOnes } = await supabase
           .from('memories')
-          .update({ is_active: false })
+          .select('id')
           .eq('user_id', conversation.user_id)
           .eq('is_active', true)
           .ilike('content', `%${mem.supersedes_content.substring(0, 40)}%`);
+        supersededIds = (oldOnes ?? []).map((o: { id: string }) => o.id);
+
+        if (supersededIds.length > 0) {
+          await supabase
+            .from('memories')
+            .update({ is_active: false })
+            .in('id', supersededIds);
+        }
       }
 
       // Verificar duplicata por similaridade (threshold 0.92)
@@ -169,17 +182,31 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Inserir nova memória
-      await supabase.from('memories').insert({
+      // Inserir nova memória (Sprint A3: confidence + source + evidence)
+      const importance = mem.importance ?? 5;
+      const confidence = Math.max(0, Math.min(1, importance / 10));
+      const { data: inserted } = await supabase.from('memories').insert({
         user_id: conversation.user_id,
         company_id: conversation.company_id,
         memory_type: mem.memory_type,
         content: mem.content,
         content_embedding: embedding,
         category: mem.category ?? null,
-        importance: mem.importance ?? 5,
+        importance,
         source_conversation_id: conversation_id,
-      });
+        confidence,
+        source: 'observed',
+        evidence_message_ids: evidenceMessageIds,
+      }).select('id').single();
+
+      // Sprint A3: superseded_by chain — apontar memorias antigas para a nova
+      if (inserted?.id && supersededIds.length > 0) {
+        await supabase
+          .from('memories')
+          .update({ superseded_by: inserted.id })
+          .in('id', supersededIds);
+      }
+
       savedCount++;
     }
 
