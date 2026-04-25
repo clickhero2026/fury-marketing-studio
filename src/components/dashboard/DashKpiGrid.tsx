@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TrendingUp, DollarSign, Wallet, Target, Receipt, Percent } from 'lucide-react';
+import { MousePointerClick, Wallet, Target, Receipt, Eye, Percent } from 'lucide-react';
 import { KpiCard } from '@/components/shared/KpiCard';
 import { KpiCardCompact } from '@/components/shared/KpiCardCompact';
 import { fmtBRL } from '@/lib/meta-labels';
@@ -9,6 +9,8 @@ export interface MetricRow {
   campanha: string | null;
   investimento: number | null;
   conversas_iniciadas: number | null;
+  impressoes: number | null;
+  cliques: number | null;
   website_purchase_roas: number | null;
 }
 
@@ -23,18 +25,24 @@ interface Totals {
   conversas: number;
   receita: number;
   lucro: number;
-  roi: number | null;
+  impressoes: number;
+  cliques: number;
   cpl: number | null;
-  roas: number | null;
+  ctr: number | null;          // cliques / impressoes
+  cpc: number | null;          // investimento / cliques
+  cpm: number | null;          // investimento / impressoes * 1000
+  conv_rate: number | null;    // conversas / cliques
 }
 
 function computeTotals(metrics: MetricRow[]): Totals {
-  let investimento = 0, conversas = 0, receita = 0;
+  let investimento = 0, conversas = 0, receita = 0, impressoes = 0, cliques = 0;
   for (const m of metrics) {
     const spend = Number(m.investimento) || 0;
     const roas = Number(m.website_purchase_roas) || 0;
     investimento += spend;
     conversas += Number(m.conversas_iniciadas) || 0;
+    impressoes += Number(m.impressoes) || 0;
+    cliques += Number(m.cliques) || 0;
     receita += spend * roas;
   }
   const lucro = receita - investimento;
@@ -43,9 +51,13 @@ function computeTotals(metrics: MetricRow[]): Totals {
     conversas,
     receita,
     lucro,
-    roi: investimento > 0 ? (lucro / investimento) * 100 : null,
+    impressoes,
+    cliques,
     cpl: conversas > 0 ? investimento / conversas : null,
-    roas: investimento > 0 ? receita / investimento : null,
+    ctr: impressoes > 0 ? (cliques / impressoes) * 100 : null,
+    cpc: cliques > 0 ? investimento / cliques : null,
+    cpm: impressoes > 0 ? (investimento / impressoes) * 1000 : null,
+    conv_rate: cliques > 0 ? (conversas / cliques) * 100 : null,
   };
 }
 
@@ -80,32 +92,14 @@ export function DashKpiGrid({ currentMetrics, previousMetrics, loading }: Props)
     cur: computeTotals(currentMetrics),
     prev: computeTotals(previousMetrics),
     sparks: {
-      roas: dailySeries(currentMetrics, (t) => t.roas),
-      lucro: dailySeries(currentMetrics, (t) => t.lucro),
       invest: dailySeries(currentMetrics, (t) => t.investimento),
+      cliques: dailySeries(currentMetrics, (t) => t.cliques),
+      conversas: dailySeries(currentMetrics, (t) => t.conversas),
     },
   }), [currentMetrics, previousMetrics]);
 
-  // Tier 1 — cards grandes com sparkline
+  // Tier 1 — cards grandes com sparkline (metricas objetivas: brutos do anuncio)
   const tier1 = [
-    {
-      label: 'ROAS',
-      value: cur.roas != null ? cur.roas.toFixed(2) : '—',
-      unit: cur.roas != null ? 'x' : undefined,
-      deltaPct: delta(cur.roas, prev.roas),
-      higherIsBetter: true,
-      icon: DollarSign,
-      spark: sparks.roas,
-    },
-    {
-      label: 'Lucro',
-      value: fmtBRL(cur.lucro),
-      deltaPct: delta(cur.lucro, prev.lucro),
-      higherIsBetter: true,
-      icon: TrendingUp,
-      spark: sparks.lucro,
-      accent: cur.lucro >= 0 ? 'text-emerald-600' : 'text-red-600',
-    },
     {
       label: 'Investimento',
       value: fmtBRL(cur.investimento),
@@ -114,24 +108,40 @@ export function DashKpiGrid({ currentMetrics, previousMetrics, loading }: Props)
       icon: Wallet,
       spark: sparks.invest,
     },
-  ];
-
-  // Tier 2 — compactos
-  const tier2 = [
     {
-      label: 'ROI',
-      value: fmtOrDash(cur.roi, (v) => v.toFixed(1)),
-      unit: cur.roi != null ? '%' : undefined,
-      deltaPct: delta(cur.roi, prev.roi),
+      label: 'Cliques',
+      value: cur.cliques.toLocaleString('pt-BR'),
+      deltaPct: delta(cur.cliques, prev.cliques),
       higherIsBetter: true,
-      icon: Percent,
+      icon: MousePointerClick,
+      spark: sparks.cliques,
     },
     {
-      label: 'Leads / Conv.',
+      label: 'Conversas Iniciadas',
       value: cur.conversas.toLocaleString('pt-BR'),
       deltaPct: delta(cur.conversas, prev.conversas),
       higherIsBetter: true,
       icon: Target,
+      spark: sparks.conversas,
+    },
+  ];
+
+  // Tier 2 — compactos (taxas e custos unitarios)
+  const tier2 = [
+    {
+      label: 'Impressoes',
+      value: cur.impressoes.toLocaleString('pt-BR'),
+      deltaPct: delta(cur.impressoes, prev.impressoes),
+      higherIsBetter: true,
+      icon: Eye,
+    },
+    {
+      label: 'CTR',
+      value: fmtOrDash(cur.ctr, (v) => v.toFixed(2)),
+      unit: cur.ctr != null ? '%' : undefined,
+      deltaPct: delta(cur.ctr, prev.ctr),
+      higherIsBetter: true,
+      icon: Percent,
     },
     {
       label: 'CPL / CPA',

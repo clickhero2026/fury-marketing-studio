@@ -17,10 +17,10 @@ interface AppSidebarProps {
 const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "chat", label: "Assistente IA", icon: MessageSquare },
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
+  { id: "fury", label: "FURY", icon: Zap },
   { id: "creatives", label: "Criativos", icon: ImagePlus },
   { id: "analysis", label: "Analise", icon: TrendingUp },
   { id: "compliance", label: "Compliance", icon: ShieldCheck },
-  { id: "fury", label: "FURY", icon: Zap },
   { id: "publisher", label: "Publicar", icon: Rocket },
   { id: "budget", label: "Orcamento Smart", icon: Wallet },
   { id: "approvals", label: "Aprovacoes", icon: ShieldAlert },
