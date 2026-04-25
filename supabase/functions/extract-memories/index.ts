@@ -26,6 +26,14 @@ Regras:
 
 Categorias validas: campaigns, budget, creatives, account, workflow, goals, preferences, industry
 
+Para cada memoria, atribua:
+- importance (1-10): quanto a memoria impacta decisoes futuras (10 = critica, 1 = trivial)
+- confidence (0.0-1.0): quanto voce esta certo do fato (1.0 = usuario disse explicitamente, 0.5 = inferido com risco, 0.3 = especulacao)
+- source:
+  - "declared": usuario afirmou de forma direta ("eu trabalho com e-commerce")
+  - "observed": deduzido de comportamento ou dados ("o usuario consultou ROAS 5 vezes esta semana")
+  - "inferred": deducao indireta com salto logico ("provavelmente prefere video por ter so videos ativos")
+
 Responda APENAS com JSON valido:
 {
   "memories": [
@@ -34,6 +42,8 @@ Responda APENAS com JSON valido:
       "memory_type": "fact | preference | procedure | episode | profile",
       "category": "uma das categorias acima",
       "importance": 1-10,
+      "confidence": 0.0-1.0,
+      "source": "declared | observed | inferred",
       "supersedes_content": null
     }
   ]
@@ -182,9 +192,15 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Inserir nova memória (Sprint A3: confidence + source + evidence)
+      // Inserir nova memória (Sprint A4: confidence + source vem do LLM, fallback proxy)
       const importance = mem.importance ?? 5;
-      const confidence = Math.max(0, Math.min(1, importance / 10));
+      const llmConfidence = typeof mem.confidence === 'number' ? mem.confidence : null;
+      const confidence = llmConfidence !== null
+        ? Math.max(0, Math.min(1, llmConfidence))
+        : Math.max(0, Math.min(1, importance / 10));
+      const validSources = ['declared', 'observed', 'inferred'];
+      const source = validSources.includes(mem.source) ? mem.source : 'observed';
+
       const { data: inserted } = await supabase.from('memories').insert({
         user_id: conversation.user_id,
         company_id: conversation.company_id,
@@ -195,7 +211,7 @@ Deno.serve(async (req) => {
         importance,
         source_conversation_id: conversation_id,
         confidence,
-        source: 'observed',
+        source,
         evidence_message_ids: evidenceMessageIds,
       }).select('id').single();
 

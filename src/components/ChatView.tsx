@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Sparkles, Square, Search } from "lucide-react";
+import { Send, Paperclip, Sparkles, Square, Search, FileBarChart, Telescope } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/hooks/use-chat";
 
@@ -8,6 +8,21 @@ const suggestions = [
   "Qual campanha tem o melhor ROAS?",
   "Compare esta semana com a anterior",
   "Me de sugestoes para reduzir CPC",
+];
+
+const quickReports = [
+  {
+    icon: FileBarChart,
+    label: "Relatorio Semanal",
+    description: "Visao geral 7 dias com variacao + top campanhas",
+    prompt: "Me da um relatorio semanal completo das minhas campanhas",
+  },
+  {
+    icon: Telescope,
+    label: "Deep Dive em Campanha",
+    description: "Analise profunda de uma campanha especifica",
+    prompt: "Faz um deep dive na minha campanha de melhor ROAS",
+  },
 ];
 
 const ChatView = () => {
@@ -225,6 +240,36 @@ const ChatView = () => {
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="mt-6">
+              <div className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                Relatorios Rapidos
+              </div>
+              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                {quickReports.map((r) => {
+                  const Icon = r.icon;
+                  return (
+                    <button
+                      key={r.label}
+                      onClick={() => handleSuggestionClick(r.prompt)}
+                      className="group rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4 text-left transition-all duration-base ease-smooth hover:-translate-y-0.5 hover:border-primary/40 hover:from-primary/10"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[13px] font-medium text-foreground">{r.label}</div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground leading-snug">
+                            {r.description}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
