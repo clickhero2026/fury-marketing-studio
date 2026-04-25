@@ -36,6 +36,7 @@ export interface CreativeRow {
   call_to_action: string | null;
   status: string | null;
   detected_media_type: string | null;
+  ad_account_id?: string | null;
 }
 
 export function useCampaigns() {
@@ -80,12 +81,31 @@ export function useCreatives() {
   return useQuery<CreativeRow[]>({
     queryKey: ['creatives'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Buscar contas ativas pra filtrar criativos
+      const { data: activeAccounts } = await supabase
+        .from('meta_ad_accounts' as never)
+        .select('account_id')
+        .eq('is_active', true);
+
+      const activeIds = (activeAccounts ?? [])
+        .map((a: { account_id: string }) =>
+          a.account_id.startsWith('act_') ? a.account_id : `act_${a.account_id}`
+        );
+
+      let query = supabase
         .from('creatives')
-        .select('id, external_id, name, type, image_url, headline, text, call_to_action, status, detected_media_type')
+        .select('id, external_id, name, type, image_url, headline, text, call_to_action, status, detected_media_type, ad_account_id')
         .eq('platform', 'meta')
         .order('updated_at', { ascending: false })
-        .limit(100);
+        .limit(500);
+
+      // Se tem contas ativas, filtra por elas (criativos antigos de contas
+      // deselecionadas ficam ocultos sem precisar deletar do DB)
+      if (activeIds.length > 0) {
+        query = query.in('ad_account_id', activeIds);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as CreativeRow[];
     },

@@ -411,6 +411,7 @@ async function syncAccount(
           company_id: companyId,
           platform: 'meta',
           detected_media_type: mediaType,
+          ad_account_id: actId,  // ex: 'act_1234567890' — permite filtrar/cleanup por conta
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'external_id,company_id', ignoreDuplicates: false }
