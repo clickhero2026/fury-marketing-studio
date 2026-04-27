@@ -12,6 +12,8 @@ import Register from "./pages/Register.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Integrations from "./pages/Integrations.tsx";
 import OAuthComplete from "./pages/OAuthComplete.tsx";
+import { BriefingWizard } from "./components/briefing/BriefingWizard";
+import { BriefingView } from "./components/briefing/BriefingView";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Integrations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/briefing/wizard"
+              element={
+                <ProtectedRoute>
+                  <BriefingWizard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/briefing"
+              element={
+                <ProtectedRoute>
+                  <BriefingView />
                 </ProtectedRoute>
               }
             />

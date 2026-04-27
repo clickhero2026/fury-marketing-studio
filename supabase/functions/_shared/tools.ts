@@ -245,6 +245,49 @@ export const CHAT_TOOLS = [
       },
     },
   },
+  // ---- KNOWLEDGE BASE tool (RAG sobre documentos do cliente) ----
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_knowledge',
+      description:
+        'Busca semantica em DOCUMENTOS do cliente (PDFs, planilhas, depoimentos, fotos de produto, briefings antigos) que ele subiu na "Memoria". Use quando o usuario perguntar sobre dados especificos do negocio que possam estar em arquivos — ofertas detalhadas, depoimentos, dados historicos. NUNCA use para historico de conversas (use search_memories para isso) nem para campanhas Meta (use get_campaigns_summary). Apos chamar, CITE cada trecho usado na resposta no formato [doc:<document_id>#chunk:<chunk_index>] — nao invente referencias.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Pergunta em linguagem natural. Ex: "depoimentos sobre o produto X", "preco da oferta de Black Friday", "briefing inicial".',
+          },
+          top_k: {
+            type: 'number',
+            description: 'Quantos chunks recuperar (default 8, max 20).',
+          },
+          filters: {
+            type: 'object',
+            description: 'Filtros opcionais.',
+            properties: {
+              type: {
+                type: 'array',
+                items: { type: 'string', enum: ['pdf', 'docx', 'xlsx', 'csv', 'json', 'txt', 'md', 'image'] },
+                description: 'Filtrar por tipos de documento',
+              },
+              tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Filtrar por tags (overlap)',
+              },
+              is_source_of_truth: {
+                type: 'boolean',
+                description: 'Buscar apenas em documentos marcados como fonte de verdade.',
+              },
+            },
+          },
+        },
+        required: ['query'],
+      },
+    },
+  },
   // ---- DELEGATION tool (multi-agent, B5) ----
   {
     type: 'function' as const,
@@ -370,6 +413,199 @@ export const CHAT_TOOLS = [
           },
         },
         required: ['campaign_name', 'daily_budget_brl'],
+      },
+    },
+  },
+  // ---- CREATIVE GENERATION tools (ai-creative-generation) ----
+  // IMPORTANTE: estas tools GERAM IMAGENS NOVAS via IA. NAO use para perguntas analiticas
+  // sobre criativos existentes (use get_top_performers ou search_knowledge para isso).
+  {
+    type: 'function' as const,
+    function: {
+      name: 'generate_creative',
+      description:
+        'Gera NOVAS imagens de anuncio via IA (Nano Banana 2 ou GPT-image-1) usando o briefing do cliente. Use APENAS quando o usuario pedir explicitamente para "gerar/criar/fazer um anuncio/imagem/criativo" (ex: "cria um criativo pra Black Friday", "gera 2 imagens da oferta X em formato story"). NAO use para: analise de criativos existentes, perguntas sobre performance, ou recomendacoes de copy. Apos gerar, NAO descreva cada imagem em texto — o usuario ja vera a galeria inline.',
+      parameters: {
+        type: 'object',
+        properties: {
+          concept: {
+            type: 'string',
+            description: 'Descricao curta do que a imagem deve mostrar. Ex: "homem de terno cinza segurando smartphone num escritorio moderno, oferta de Black Friday em destaque".',
+          },
+          format: {
+            type: 'string',
+            enum: ['feed_1x1', 'story_9x16', 'reels_4x5'],
+            description: 'Formato/aspect: feed_1x1 (quadrado feed), story_9x16 (vertical full), reels_4x5 (vertical curto).',
+          },
+          count: {
+            type: 'number',
+            enum: [1, 2, 3, 4],
+            description: 'Quantas imagens gerar (default 1, max 4). Para variacoes use 2-3. Pipeline limita a 2 paralelas — restante seria sequencial.',
+          },
+          style_hint: {
+            type: 'string',
+            enum: ['minimalista', 'cinematografico', 'clean', 'lifestyle', 'produto_em_uso'],
+            description: 'Estilo visual desejado (opcional).',
+          },
+          use_logo: {
+            type: 'boolean',
+            description: 'Se true (default), inclui o logo do cliente como referencia visual.',
+          },
+          model: {
+            type: 'string',
+            enum: ['auto', 'nano_banana', 'gpt_image'],
+            description: 'auto (default — escolha inteligente), nano_banana (rapido/barato), gpt_image (premium, plano Pro+).',
+          },
+        },
+        required: ['concept', 'format'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'iterate_creative',
+      description:
+        'Modifica um criativo existente via img2img usando o ID dele como base. Use quando o usuario pedir mudancas especificas em um criativo ja gerado (ex: "troca o fundo desse pro escritorio", "deixa mais escuro", "tira o logo"). Reuso o prompt original somando a instrucao de mudanca. NAO use para gerar criativo novo do zero — use generate_creative.',
+      parameters: {
+        type: 'object',
+        properties: {
+          parent_creative_id: {
+            type: 'string',
+            description: 'UUID do criativo pai (deve ter sido gerado anteriormente nesta empresa).',
+          },
+          instruction: {
+            type: 'string',
+            description: 'Mudanca desejada em linguagem natural. Ex: "troque o fundo por um por do sol".',
+          },
+          mode: {
+            type: 'string',
+            enum: ['iterate', 'regenerate'],
+            description: 'iterate (default) aplica diff via instruction. regenerate refaz com mesmo prompt sem instrucao adicional.',
+          },
+          count: {
+            type: 'number',
+            enum: [1, 2, 3],
+            description: 'Quantas variantes gerar (default 1).',
+          },
+        },
+        required: ['parent_creative_id'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'vary_creative',
+      description:
+        'Gera 3 variacoes naturais de um criativo existente sem mudar o conceito. Atalho de iterate_creative com mode=vary, count=3. Use quando o usuario pedir "faz mais 3 variacoes desse", "quero outras opcoes desse mesmo criativo", "varia esse aqui".',
+      parameters: {
+        type: 'object',
+        properties: {
+          parent_creative_id: {
+            type: 'string',
+            description: 'UUID do criativo pai.',
+          },
+        },
+        required: ['parent_creative_id'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'adapt_creative',
+      description:
+        'Adapta um criativo existente para outro formato/aspect (ex: pegar um feed_1x1 aprovado e gerar versao story_9x16). Reuso o prompt e conceito do criativo fonte mas troca o formato. Use quando o usuario pedir "adapta esse pra story", "quero esse mesmo em formato reels", "transforma esse em vertical".',
+      parameters: {
+        type: 'object',
+        properties: {
+          source_creative_id: {
+            type: 'string',
+            description: 'UUID do criativo fonte (deve ter sido gerado anteriormente nesta empresa).',
+          },
+          format: {
+            type: 'string',
+            enum: ['feed_1x1', 'story_9x16', 'reels_4x5'],
+            description: 'Novo formato de destino (deve ser diferente do format do source).',
+          },
+          count: {
+            type: 'number',
+            enum: [1, 2],
+            description: 'Quantas adaptacoes gerar (default 1).',
+          },
+        },
+        required: ['source_creative_id', 'format'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'propose_rule',
+      description:
+        'OBRIGATORIO chamar SEMPRE que o usuario expressar uma instrucao permanente. Gatilhos diretos: "sempre", "toda vez", "nunca", "use sempre", "padronize", "daqui pra frente", "a partir de agora", "responda em X", "pause quando", "alerta se". Exemplos que DEVEM chamar esta tool: "Sempre responda em portugues formal" -> rule_type=behavior, "Pausa campanhas com CPL>30 por 3 dias" -> rule_type=action, "Use essa logo em todo criativo" -> rule_type=creative_pipeline. NAO chame para pedidos pontuais ("crie um anuncio agora"). NAO chame se confidence < 0.7. CRITICO: chame ANTES de responder ao usuario — depois de chamar, responda confirmando. Sem chamar esta tool, a regra NAO e salva.',
+      parameters: {
+        type: 'object',
+        required: ['rule_type', 'confidence', 'name', 'description', 'scope', 'reasoning'],
+        properties: {
+          rule_type: {
+            type: 'string',
+            enum: ['behavior', 'action', 'creative_pipeline'],
+            description: 'behavior=preferencia/tom (ex: "sempre responda em pt-BR"); action=condicao+acao em metrica (ex: "pause se CPL>30 por 3 dias"); creative_pipeline=transformacao visual em criativo (ex: "use sempre essa logo no canto")',
+          },
+          confidence: {
+            type: 'number',
+            minimum: 0,
+            maximum: 1,
+            description: 'Quao confiante voce esta que isso e uma regra permanente (0.7+ obrigatorio para registrar)',
+          },
+          name: { type: 'string', description: 'Nome curto humano (max 60 chars)' },
+          description: { type: 'string', description: 'Descricao em PT-BR que sera salva como instrucao' },
+          scope: {
+            type: 'object',
+            properties: {
+              level: { type: 'string', enum: ['global', 'campaign', 'adset', 'creative', 'ad_account'] },
+              id: { type: 'string', description: 'UUID quando level != global' },
+            },
+            required: ['level'],
+          },
+          trigger: {
+            type: 'object',
+            description: 'APENAS rule_type=action. Ex: {metric:"cpl",operator:">",value:30,window_days:3,consecutive_days:3}',
+            properties: {
+              metric: { type: 'string' },
+              operator: { type: 'string', enum: ['>', '>=', '<', '<=', '=='] },
+              value: { type: 'number' },
+              window_days: { type: 'number' },
+              consecutive_days: { type: 'number' },
+            },
+          },
+          action: {
+            type: 'object',
+            description: 'APENAS rule_type=action. Ex: {type:"pause"} ou {type:"alert",params:{channel:"chat"}}',
+            properties: {
+              type: { type: 'string', enum: ['pause', 'alert', 'suggest'] },
+              params: { type: 'object' },
+            },
+          },
+          transform: {
+            type: 'object',
+            description: 'APENAS rule_type=creative_pipeline. Ex: {transform_type:"logo_overlay",params:{position:"top-right",padding_pct:5,opacity:1.0,max_size_pct:15}}',
+            properties: {
+              transform_type: {
+                type: 'string',
+                enum: ['logo_overlay', 'caption', 'cta_text', 'font', 'color_filter', 'watermark', 'crop', 'custom'],
+              },
+              params: { type: 'object' },
+            },
+          },
+          needs_asset_upload: {
+            type: 'boolean',
+            description: 'true se o usuario referenciou um anexo da mensagem atual (ex: "use ESSA logo"); o handler vai mover o anexo pro bucket de assets de pipeline',
+          },
+          reasoning: { type: 'string', description: 'Por que voce considerou isso uma regra (max 200 chars)' },
+        },
       },
     },
   },

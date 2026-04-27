@@ -39,11 +39,13 @@
       "Read(//e/**)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:supabase.com)",
-      "WebFetch(domain:developers.facebook.com)"
+      "WebFetch(domain:developers.facebook.com)",
+      "Bash(export SUPABASE_ACCESS_TOKEN=\"sbp_fc78ab31dcc227ca12a1f3b437dc49abada00110\")",
+      "Bash(awk 'NR>=1 && NR<=10' supabase/functions/_shared/prompt.ts)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

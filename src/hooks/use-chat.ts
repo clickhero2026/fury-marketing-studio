@@ -7,6 +7,8 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  /** IDs em chat_attachments (so user message com anexos) */
+  attachmentIds?: string[];
 }
 
 export function useChat() {
@@ -16,8 +18,8 @@ export function useChat() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || isStreaming) return;
+  const sendMessage = useCallback(async (content: string, attachmentIds: string[] = []) => {
+    if ((!content.trim() && attachmentIds.length === 0) || isStreaming) return;
 
     // Add user message
     const userMsg: ChatMessage = {
@@ -25,6 +27,7 @@ export function useChat() {
       role: 'user',
       content: content.trim(),
       timestamp: new Date(),
+      attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined,
     };
     setMessages((prev) => [...prev, userMsg]);
 
@@ -56,6 +59,7 @@ export function useChat() {
           body: JSON.stringify({
             message: content.trim(),
             conversation_id: conversationId,
+            attachment_ids: attachmentIds,
           }),
           signal: abortRef.current.signal,
         }

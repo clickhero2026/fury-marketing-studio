@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Sparkles, Square, Search, FileBarChart, Telescope } from "lucide-react";
+import { Send, Sparkles, Square, Search, FileBarChart, Telescope } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/hooks/use-chat";
+import { useAttachments } from "@/hooks/use-attachments";
+import { useToast } from "@/hooks/use-toast";
 import { ProactiveBanner } from "@/components/chat/ProactiveBanner";
 import { InlineApprovalCards } from "@/components/chat/InlineApprovalCard";
+import { InlineRuleProposalCards } from "@/components/fury/InlineRuleProposalCards";
+import { AttachmentPicker } from "@/components/chat/AttachmentPicker";
+import { AttachmentDropzone } from "@/components/chat/AttachmentDropzone";
+import { AttachmentPreviewList } from "@/components/chat/AttachmentPreview";
+import { MessageAttachments } from "@/components/chat/MessageAttachments";
+import { CitationRenderer } from "@/components/knowledge/CitationRenderer";
+import { ChatCreativeGallery } from "@/components/creatives-studio/ChatCreativeGallery";
 
 const suggestions = [
   "Qual o desempenho das minhas campanhas nos ultimos 7 dias?",
@@ -43,6 +52,18 @@ const ChatView = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const proactiveLoaded = useRef(false);
+  const { toast } = useToast();
+  const attachments = useAttachments(conversationId);
+
+  // Mostra erros de validacao via toast
+  useEffect(() => {
+    if (attachments.validationErrors.length > 0) {
+      attachments.validationErrors.forEach((err) =>
+        toast({ title: "Anexo nao aceito", description: err, variant: "destructive" })
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attachments.validationErrors]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,10 +75,14 @@ const ChatView = () => {
   void loadProactiveInsights;
   void proactiveLoaded;
 
+  const hasContent = input.trim().length > 0 || attachments.readyAttachmentIds.length > 0;
+  const sendDisabled = isStreaming || attachments.isBusy || !hasContent;
+
   const handleSend = () => {
-    if (!input.trim() || isStreaming) return;
-    sendMessage(input);
+    if (sendDisabled) return;
+    sendMessage(input, attachments.readyAttachmentIds);
     setInput("");
+    attachments.clear();
     inputRef.current?.focus();
   };
 
@@ -77,7 +102,18 @@ const ChatView = () => {
   const renderContent = (content: string) => {
     if (!content) return null;
 
-    const lines = content.split('\n');
+    // Detecta <creative-gallery ids="a,b,c"/> e troca por placeholder unico no texto.
+    // Renderiza o componente real quando o placeholder aparece nos lines.
+    const galleryRegex = /<creative-gallery\s+ids="([^"]+)"\s*\/?>/g;
+    const galleries: Array<{ key: string; ids: string[] }> = [];
+    const contentWithMarkers = content.replace(galleryRegex, (_, idsStr: string) => {
+      const ids = idsStr.split(',').map((s) => s.trim()).filter(Boolean);
+      const key = `__CREATIVE_GALLERY_${galleries.length}__`;
+      galleries.push({ key, ids });
+      return `\n${key}\n`;
+    });
+
+    const lines = contentWithMarkers.split('\n');
     const elements: React.ReactNode[] = [];
     let tableRows: string[][] = [];
     let inTable = false;
@@ -85,13 +121,29 @@ const ChatView = () => {
     const processInline = (text: string): React.ReactNode => {
       // Bold
       const parts = text.split(/\*\*(.*?)\*\*/g);
-      return parts.map((part, i) =>
-        i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
-      );
+      return parts.map((part, i) => {
+        if (i % 2 === 1) {
+          return <strong key={i} className="font-semibold">{part}</strong>;
+        }
+        // Texto comum — substitui refs [doc:UUID#chunk:N] via CitationRenderer
+        // (no-op se nao houver refs no segmento)
+        return <CitationRenderer key={i} text={part} />;
+      });
     };
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+
+      // Creative gallery placeholder
+      const galleryMatch = line.match(/^__CREATIVE_GALLERY_(\d+)__$/);
+      if (galleryMatch) {
+        const idx = Number(galleryMatch[1]);
+        const g = galleries[idx];
+        if (g) {
+          elements.push(<ChatCreativeGallery key={`gal-${i}`} ids={g.ids} />);
+        }
+        continue;
+      }
 
       // Table row
       if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
@@ -292,6 +344,9 @@ const ChatView = () => {
               )}
             >
               {msg.role === 'assistant' ? renderContent(msg.content) : msg.content}
+              {msg.role === 'user' && msg.attachmentIds && msg.attachmentIds.length > 0 && (
+                <MessageAttachments attachmentIds={msg.attachmentIds} />
+              )}
               {msg.isStreaming && !msg.content && (
                 <div className="inline-flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
@@ -305,6 +360,9 @@ const ChatView = () => {
 
         {/* B4: Approvals/plans inline da conversation atual */}
         <InlineApprovalCards conversationId={conversationId} />
+
+        {/* Fury Learning: propostas de regra inline */}
+        <InlineRuleProposalCards conversationId={conversationId} />
 
         {/* Status indicator (e.g., "Buscando dados...") */}
         {status && (
@@ -322,50 +380,54 @@ const ChatView = () => {
       {/* Input Area */}
       <div className="border-t border-border/60 bg-background p-4 md:p-6">
         <div className="max-w-3xl mx-auto w-full">
-          <div className="flex items-end gap-2 bg-card border border-border/60 rounded-2xl p-2 focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-sm">
-            <button
-              type="button"
-              aria-label="Anexar arquivo"
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-            >
-              <Paperclip className="h-[18px] w-[18px]" />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Pergunte sobre suas campanhas..."
-              rows={1}
-              className="flex-1 resize-none bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none py-2 max-h-32"
-              disabled={isStreaming}
-            />
-            {isStreaming ? (
-              <button
-                type="button"
-                aria-label="Parar resposta"
-                onClick={stopStreaming}
-                className="rounded-xl bg-red-100 p-2 text-red-600 transition-all hover:bg-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
-              >
-                <Square className="h-[18px] w-[18px]" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                aria-label="Enviar mensagem"
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className={cn(
-                  "rounded-xl p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                  input.trim()
-                    ? "bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] text-white shadow-e2 hover:shadow-e3 active:scale-[0.98]"
-                    : "text-muted-foreground/40",
-                )}
-              >
-                <Send className="h-[18px] w-[18px]" />
-              </button>
-            )}
-          </div>
+          <AttachmentDropzone
+            onFiles={(files) => attachments.addFiles(files)}
+            disabled={isStreaming}
+            className="bg-card border border-border/60 rounded-2xl focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-sm"
+          >
+            <AttachmentPreviewList pending={attachments.pending} onRemove={attachments.remove} />
+            <div className="flex items-end gap-2 p-2">
+              <AttachmentPicker
+                onPick={(files) => attachments.addFiles(files)}
+                disabled={isStreaming}
+              />
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Pergunte sobre suas campanhas..."
+                rows={1}
+                className="flex-1 resize-none bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none py-2 max-h-32"
+                disabled={isStreaming}
+              />
+              {isStreaming ? (
+                <button
+                  type="button"
+                  aria-label="Parar resposta"
+                  onClick={stopStreaming}
+                  className="rounded-xl bg-red-100 p-2 text-red-600 transition-all hover:bg-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+                >
+                  <Square className="h-[18px] w-[18px]" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={attachments.isBusy ? "Aguardando anexos" : "Enviar mensagem"}
+                  onClick={handleSend}
+                  disabled={sendDisabled}
+                  className={cn(
+                    "rounded-xl p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                    !sendDisabled
+                      ? "bg-[linear-gradient(135deg,#cf6f03_0%,#e8850a_100%)] text-white shadow-e2 hover:shadow-e3 active:scale-[0.98]"
+                      : "text-muted-foreground/40",
+                  )}
+                >
+                  <Send className="h-[18px] w-[18px]" />
+                </button>
+              )}
+            </div>
+          </AttachmentDropzone>
           <div className="flex items-center justify-between mt-2.5">
             {messages.length > 0 && (
               <button

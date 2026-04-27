@@ -335,6 +335,28 @@ Deno.serve(async (req) => {
   }
   const companyId = company.id as string;
 
+  // ---- Briefing gate (briefing-onboarding R8.3) — OPT-IN FAIL-OPEN ----
+  // Controlado por env BRIEFING_GATE_ENABLED. Default OFF — preserva comportamento
+  // atual para companies criadas antes da feature de briefing.
+  // Quando ligado: bloqueia publish se briefing incompleto, retornando 422
+  // com missingFields para que o frontend direcione o usuario.
+  if (Deno.env.get('BRIEFING_GATE_ENABLED') === 'true') {
+    const { data: bs } = await supabaseAdmin
+      .from('v_company_briefing_status')
+      .select('is_complete, missing_fields')
+      .eq('company_id', companyId)
+      .maybeSingle();
+    if (bs && !bs.is_complete) {
+      return new Response(JSON.stringify({
+        error: 'Briefing incompleto. Complete antes de publicar campanha.',
+        kind: 'briefing_incomplete',
+        missing_fields: bs.missing_fields ?? [],
+      }), { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } });
+    }
+    // Se nao existe row em v_company_briefing_status (briefing nunca iniciado), fail-open
+    // (companies pre-feature continuam funcionando ate iniciarem o briefing).
+  }
+
   // ---- Parse body ----
   let body: { draft_id?: string; ad_account_id?: string; campaign_data?: unknown; adset_data?: unknown; ad_data?: unknown; force?: boolean } = {};
   try {

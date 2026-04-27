@@ -1,4 +1,4 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert, Activity } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert, Activity, BookOpen, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Logo } from "@/components/shared/Logo";
 
-type View = "chat" | "dashboard" | "creatives" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health";
+type View = "chat" | "dashboard" | "creatives" | "studio" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health" | "memory";
 
 interface AppSidebarProps {
   currentView: View;
@@ -19,12 +19,14 @@ const navItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "fury", label: "FURY", icon: Zap },
   { id: "creatives", label: "Criativos", icon: ImagePlus },
+  { id: "studio", label: "Estudio AI", icon: Sparkles },
   { id: "analysis", label: "Analise", icon: TrendingUp },
   { id: "compliance", label: "Compliance", icon: ShieldCheck },
   { id: "publisher", label: "Publicar", icon: Rocket },
   { id: "budget", label: "Orcamento Smart", icon: Wallet },
   { id: "approvals", label: "Aprovacoes", icon: ShieldAlert },
   { id: "ai-health", label: "Saude do AI", icon: Activity },
+  { id: "memory", label: "Memoria", icon: BookOpen },
 ];
 
 function usePendingApprovalsCount(): number {

@@ -6,6 +6,8 @@ import { useFuryEvaluate } from '@/hooks/use-fury';
 import { FuryDashboard } from './FuryDashboard';
 import { FuryActionFeed } from './FuryActionFeed';
 import { FuryRulesConfig } from './FuryRulesConfig';
+import { BehaviorRulesTab } from './BehaviorRulesTab';
+import { CreativePipelineTab } from './CreativePipelineTab';
 
 export default function FuryView() {
   const { evaluate, isEvaluating } = useFuryEvaluate();
@@ -38,7 +40,9 @@ export default function FuryView() {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="feed">Feed de Acoes</TabsTrigger>
-            <TabsTrigger value="config">Regras</TabsTrigger>
+            <TabsTrigger value="config">Acoes automaticas</TabsTrigger>
+            <TabsTrigger value="behavior">Comportamento</TabsTrigger>
+            <TabsTrigger value="pipeline">Pipeline criativo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="feed" className="mt-4">
@@ -47,6 +51,14 @@ export default function FuryView() {
 
           <TabsContent value="config" className="mt-4">
             <FuryRulesConfig />
+          </TabsContent>
+
+          <TabsContent value="behavior" className="mt-4">
+            <BehaviorRulesTab />
+          </TabsContent>
+
+          <TabsContent value="pipeline" className="mt-4">
+            <CreativePipelineTab />
           </TabsContent>
         </Tabs>
       </div>
