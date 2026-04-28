@@ -1,9 +1,11 @@
 // Tab: regras de comportamento (preferencias persistidas no system prompt).
 // Spec: .kiro/specs/fury-learning/ (T5.3)
 
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageSquare } from 'lucide-react';
 import { useActiveRules } from '@/hooks/useActiveRules';
+import { Button } from '@/components/ui/button';
 import { RuleListItem } from './RuleListItem';
+import { navigateToView } from '@/lib/view-navigation';
 
 export function BehaviorRulesTab() {
   const { behavior, isLoading } = useActiveRules();
@@ -13,9 +15,20 @@ export function BehaviorRulesTab() {
   }
   if (!behavior.length) {
     return (
-      <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-        <Sparkles className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-        Sem regras de comportamento ainda. Diga ao Fury algo como "sempre responda em pt-BR formal" no chat.
+      <div className="text-center py-12 px-6 border border-dashed rounded-lg space-y-3">
+        <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/50" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">Nenhuma regra de comportamento ainda</p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Vá ate a Conversa e diga ao FURY uma instrucao permanente. Ex:
+            <span className="block mt-1 italic text-foreground/80">"Sempre responda em portugues formal"</span>
+            <span className="block italic text-foreground/80">"Nunca use a palavra 'garantido'"</span>
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => navigateToView('chat')}>
+          <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+          Ir pra Conversa
+        </Button>
       </div>
     );
   }

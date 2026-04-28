@@ -2,7 +2,7 @@
 // Lista as 50 conversas mais recentes do user. Clique abre + carrega historico.
 
 import { useEffect, useState } from 'react';
-import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
+import { MessageSquare, Trash2, Loader2, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -65,8 +65,15 @@ async function fetchConversationMessages(conversationId: string): Promise<ChatMe
 export function ChatHistorySidebar({ currentConversationId, onSelectConversation, onNewConversation }: Props) {
   const { data: conversations, isLoading } = useConversationList();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const del = useDeleteConversation();
   const { toast } = useToast();
+
+  const filteredConversations = (conversations ?? []).filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (c.title ?? '').toLowerCase().includes(q);
+  });
 
   const handleSelect = async (conv: ConversationSummary) => {
     if (loadingId) return;
@@ -99,11 +106,31 @@ export function ChatHistorySidebar({ currentConversationId, onSelectConversation
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-border/50">
+      <div className="p-3 border-b border-border/50 space-y-2">
         <Button variant="default" className="w-full justify-start gap-2" onClick={onNewConversation}>
           <MessageSquare className="h-4 w-4" />
           Nova conversa
         </Button>
+        {/* Busca no historico */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar conversa..."
+            className="w-full pl-7 pr-7 py-1.5 text-xs rounded-md bg-background/50 border border-border/50 focus:outline-none focus:border-primary/50"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-accent rounded"
+              aria-label="Limpar busca"
+            >
+              <X className="h-3 w-3 text-muted-foreground" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -111,7 +138,10 @@ export function ChatHistorySidebar({ currentConversationId, onSelectConversation
         {!isLoading && (!conversations || conversations.length === 0) && (
           <div className="text-xs text-muted-foreground p-2">Sem conversas anteriores ainda.</div>
         )}
-        {conversations?.map((conv) => {
+        {!isLoading && conversations && conversations.length > 0 && filteredConversations.length === 0 && (
+          <div className="text-xs text-muted-foreground p-2">Nenhuma conversa encontrada para "{searchQuery}".</div>
+        )}
+        {filteredConversations.map((conv) => {
           const isActive = conv.id === currentConversationId;
           const isLoading = loadingId === conv.id;
           return (
