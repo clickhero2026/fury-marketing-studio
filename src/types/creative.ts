@@ -50,6 +50,10 @@ export interface Creative {
   description: string | null;
   briefing_snapshot: Record<string, unknown>;
   kb_chunk_ids: string[];
+  /** Fase 6 fury-learning: ids dos creative_pipeline_rules aplicados */
+  pipeline_applied_rules?: string[];
+  pipeline_source_path?: string | null;
+  pipeline_status?: 'idle' | 'pending' | 'applying' | 'applied' | 'skipped' | 'failed';
   created_at: string;
   updated_at: string;
   /** Apenas presente em respostas com signed URL — nao persistido. */

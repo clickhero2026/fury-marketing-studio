@@ -1,4 +1,4 @@
-(node:19024) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(node:20284) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
 (Use `node --trace-warnings ...` to show where the warning was created)
 export type Json =
   | string
@@ -4325,6 +4325,10 @@ export type Database = {
           near_duplicate_of_id: string | null
           parent_creative_id: string | null
           phash: string
+          pipeline_applied_rules: Json
+          pipeline_error: string | null
+          pipeline_source_path: string | null
+          pipeline_status: string
           prompt: string
           provider_model_version: string | null
           ready_for_publish: boolean
@@ -4357,6 +4361,10 @@ export type Database = {
           near_duplicate_of_id?: string | null
           parent_creative_id?: string | null
           phash: string
+          pipeline_applied_rules?: Json
+          pipeline_error?: string | null
+          pipeline_source_path?: string | null
+          pipeline_status?: string
           prompt: string
           provider_model_version?: string | null
           ready_for_publish?: boolean
@@ -4389,6 +4397,10 @@ export type Database = {
           near_duplicate_of_id?: string | null
           parent_creative_id?: string | null
           phash?: string
+          pipeline_applied_rules?: Json
+          pipeline_error?: string | null
+          pipeline_source_path?: string | null
+          pipeline_status?: string
           prompt?: string
           provider_model_version?: string | null
           ready_for_publish?: boolean
@@ -6892,6 +6904,10 @@ export type Database = {
           memory_type: string
           similarity: number
         }[]
+      }
+      set_message_proposal_status: {
+        Args: { p_message_id: string; p_new_status: string }
+        Returns: undefined
       }
       trigger_compliance_fast_tick: { Args: never; Returns: undefined }
       trigger_compliance_scan_tick: { Args: never; Returns: undefined }

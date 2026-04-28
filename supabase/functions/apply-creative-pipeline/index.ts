@@ -113,7 +113,12 @@ Deno.serve(async (req) => {
   if (!guard.ok) return guard.response;
   const { companyId } = guard.value;
 
-  let body: { creative_id?: string; source_storage_path?: string; source_bucket?: string };
+  let body: {
+    creative_id?: string;
+    source_storage_path?: string;
+    source_bucket?: string;
+    target_table?: 'creatives' | 'creatives_generated';
+  };
   try {
     body = await req.json();
   } catch {
@@ -124,24 +129,40 @@ Deno.serve(async (req) => {
   }
 
   const creativeId = body.creative_id;
-  const sourcePath = body.source_storage_path;
-  const sourceBucket = body.source_bucket ?? 'creatives';
-  if (!creativeId || !sourcePath) {
-    return new Response(JSON.stringify({ error: 'missing_creative_id_or_source_path' }), {
+  const targetTable = body.target_table === 'creatives_generated' ? 'creatives_generated' : 'creatives';
+  // creatives_generated: bucket default = 'generated-creatives'; creatives: 'creatives'
+  const sourceBucket = body.source_bucket ?? (targetTable === 'creatives_generated' ? 'generated-creatives' : 'creatives');
+
+  if (!creativeId) {
+    return new Response(JSON.stringify({ error: 'missing_creative_id' }), {
       status: 400,
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
 
-  // 1. Buscar criativo (valida tenant)
+  // 1. Buscar criativo (valida tenant) — usa storage_path do banco se nao fornecido
   const { data: creative } = await supabaseAdmin
-    .from('creatives')
-    .select('id, company_id')
+    .from(targetTable)
+    .select('id, company_id, storage_path, pipeline_applied_rules')
     .eq('id', creativeId)
     .maybeSingle();
   if (!creative || creative.company_id !== companyId) {
     return new Response(JSON.stringify({ error: 'creative_not_found' }), {
       status: 404,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  }
+  // Idempotency: se ja teve pipeline aplicado, pula
+  if (Array.isArray(creative.pipeline_applied_rules) && creative.pipeline_applied_rules.length > 0) {
+    return new Response(JSON.stringify({ skipped: true, reason: 'already_applied', applied_rule_ids: creative.pipeline_applied_rules }), {
+      status: 200,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  }
+  const sourcePath = body.source_storage_path ?? creative.storage_path;
+  if (!sourcePath) {
+    return new Response(JSON.stringify({ error: 'missing_source_path' }), {
+      status: 400,
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
@@ -195,6 +216,11 @@ Deno.serve(async (req) => {
   }
 
   if (applied.length === 0) {
+    // Marca como skipped no creative pra UI nao tentar de novo
+    await supabaseAdmin
+      .from(targetTable)
+      .update({ pipeline_status: 'skipped' })
+      .eq('id', creativeId);
     return new Response(JSON.stringify({ skipped: true, reason: 'no_rule_matched' }), {
       status: 200,
       headers: { ...cors, 'Content-Type': 'application/json' },
@@ -214,16 +240,23 @@ Deno.serve(async (req) => {
     });
   }
 
-  // 6. UPDATE creative
+  // 6. UPDATE creative — campos comuns: pipeline_applied_rules + pipeline_source_path
+  // creatives (Meta): atualiza media_url; creatives_generated: atualiza storage_path
   const { data: pub } = supabaseAdmin.storage.from(sourceBucket).getPublicUrl(finalPath);
   const newUrl = pub?.publicUrl ?? null;
+  const updatePayload: Record<string, unknown> = {
+    pipeline_applied_rules: applied,
+    pipeline_source_path: sourcePath,
+    pipeline_status: 'applied',
+  };
+  if (targetTable === 'creatives' && newUrl) {
+    updatePayload.media_url = newUrl;
+  } else if (targetTable === 'creatives_generated') {
+    updatePayload.storage_path = finalPath;
+  }
   await supabaseAdmin
-    .from('creatives')
-    .update({
-      pipeline_applied_rules: applied,
-      pipeline_source_path: sourcePath,
-      ...(newUrl ? { media_url: newUrl } : {}),
-    })
+    .from(targetTable)
+    .update(updatePayload)
     .eq('id', creativeId);
 
   // 7. Update rules.last_applied_at (fire-and-forget)

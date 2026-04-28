@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreatives } from '@/hooks/use-creatives';
+import { useApplyCreativePipeline } from '@/hooks/useApplyCreativePipeline';
 import { useToast } from '@/hooks/use-toast';
 import {
   ASPECT_LABELS,
@@ -35,6 +36,7 @@ interface CreativeGalleryInlineProps {
 
 export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps) {
   const { isReadOnly, approve, discard, iterate, vary } = useCreatives();
+  const applyPipeline = useApplyCreativePipeline();
   const { toast } = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [iteratingId, setIteratingId] = useState<string | null>(null);
@@ -59,6 +61,21 @@ export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps)
     if (r.ok) {
       setLocalStatus((prev) => ({ ...prev, [id]: 'approved' }));
       toast({ title: 'Criativo aprovado', description: 'Disponivel no Estudio AI.' });
+      // Fase 6: aplica pipeline_rules ativos (logos/watermarks) em background
+      applyPipeline
+        .mutateAsync({ creative_id: id, target_table: 'creatives_generated' })
+        .then((res) => {
+          if (res.applied_rule_ids && res.applied_rule_ids.length > 0) {
+            toast({
+              title: 'Pipeline aplicado',
+              description: `${res.applied_rule_ids.length} regra(s) aplicada(s) ao criativo.`,
+            });
+          }
+        })
+        .catch((err) => {
+          // Erro silencioso — pipeline e best-effort. Logamos no console.
+          console.warn('[apply-pipeline] failed (non-blocking):', err);
+        });
     } else {
       toast({ title: 'Erro ao aprovar', description: r.error?.message ?? r.error?.kind, variant: 'destructive' });
     }

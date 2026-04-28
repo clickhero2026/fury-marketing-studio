@@ -223,6 +223,11 @@ export function StudioView() {
                       {STATUS_LABELS[c.status]}
                     </Badge>
                     {c.ready_for_publish && <Badge variant="default" className="text-[10px]">Pronto</Badge>}
+                    {Array.isArray(c.pipeline_applied_rules) && c.pipeline_applied_rules.length > 0 && (
+                      <Badge variant="outline" className="text-[10px] border-violet-500/40 text-violet-300">
+                        Pipeline ({c.pipeline_applied_rules.length})
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
