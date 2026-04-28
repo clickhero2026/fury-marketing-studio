@@ -394,38 +394,69 @@ async function softDeleteSweep(
 }
 
 // ============================================================================
-// Sync Business Managers (paginado + batch upsert)
+// Sync Business Managers (respeitando selecao do "Gerenciar Ativos")
+//
+// Busca /me/businesses (todas BMs do token) mas filtra pra incluir APENAS as
+// BMs que tem ao menos uma ad_account ATIVA OU uma page ATIVA selecionada
+// pelo usuario via MetaAssetPickerModal. Isso evita poluir a UI com 15 BMs
+// quando o user so liga 1.
 // ============================================================================
 async function syncBMs(ctx: ScanContext) {
   try {
+    // 1. BMs que o usuario selecionou (derivadas de ad_accounts ativas)
+    const accountsRes = await ctx.supabase
+      .from('meta_ad_accounts')
+      .select('business_id')
+      .eq('company_id', ctx.companyId)
+      .eq('is_active', true)
+      .not('business_id', 'is', null);
+
+    const allowedBmIds = new Set<string>();
+    for (const row of (accountsRes.data ?? []) as Array<{ business_id: string | null }>) {
+      if (row.business_id) allowedBmIds.add(row.business_id);
+    }
+
+    if (allowedBmIds.size === 0) {
+      // Sem selecao explicita -> nao toca nada (evita ressuscitar BMs deletadas)
+      return;
+    }
+
+    // 2. Fetch /me/businesses (lista completa do token)
     const bms = await callMetaPaginated<Record<string, unknown>>(
       ctx,
       `/me/businesses?fields=id,name,vertical,primary_page,created_time,two_factor_type,verification_status&limit=100`,
       '/me/businesses',
     );
 
+    // 3. Filtra pra incluir apenas as BMs selecionadas
     const nowIso = new Date().toISOString();
     const externalIds: string[] = [];
-    const rows = bms.map((bm) => {
-      const externalId = String(bm.id);
-      externalIds.push(externalId);
-      return {
-        company_id: ctx.companyId,
-        integration_id: ctx.integrationId,
-        external_id: externalId,
-        name: bm.name ?? null,
-        vertical: bm.vertical ?? null,
-        primary_page: bm.primary_page ?? null,
-        created_time: bm.created_time ?? null,
-        two_factor_type: bm.two_factor_type ?? null,
-        verification_status: bm.verification_status ?? null,
-        last_scanned_at: nowIso,
-        deleted_at: null,
-        updated_at: nowIso,
-      };
-    });
+    const rows = bms
+      .filter((bm) => allowedBmIds.has(String(bm.id)))
+      .map((bm) => {
+        const externalId = String(bm.id);
+        externalIds.push(externalId);
+        return {
+          company_id: ctx.companyId,
+          integration_id: ctx.integrationId,
+          external_id: externalId,
+          name: bm.name ?? null,
+          vertical: bm.vertical ?? null,
+          primary_page: bm.primary_page ?? null,
+          created_time: bm.created_time ?? null,
+          two_factor_type: bm.two_factor_type ?? null,
+          verification_status: bm.verification_status ?? null,
+          last_scanned_at: nowIso,
+          deleted_at: null,
+          updated_at: nowIso,
+        };
+      });
 
-    await safeUpsertBatch(ctx, 'meta_business_managers', rows, 'external_id,company_id', 'bms_synced');
+    if (rows.length > 0) {
+      await safeUpsertBatch(ctx, 'meta_business_managers', rows, 'external_id,company_id', 'bms_synced');
+    }
+    // Soft delete: marca como deleted_at qualquer BM no banco que nao esta no
+    // conjunto selecionado (limpa BMs antigas que o user des-selecionou).
     await softDeleteSweep(ctx, 'meta_business_managers', externalIds);
   } catch (err) {
     pushError(ctx, 'syncBMs', err);
