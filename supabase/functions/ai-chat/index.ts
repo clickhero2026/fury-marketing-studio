@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import OpenAI from 'https://esm.sh/openai@4.79.1';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { SYSTEM_PROMPT } from '../_shared/prompt.ts';
-import { CHAT_TOOLS } from '../_shared/tools.ts';
+import { ORCHESTRATOR_TOOLS } from '../_shared/tools.ts';
 import {
   getCampaignsSummary,
   getCampaignDetails,
@@ -30,6 +30,7 @@ import {
   invokeCreativeIterate,
   invokeCreativeAdapt,
 } from '../_shared/creative-tool-handlers.ts';
+import { invokeSpecialist } from '../_shared/specialist-invoker.ts';
 
 const MAX_HISTORY_MESSAGES = 20;
 const OPENAI_URL = 'https://api.openai.com/v1';
@@ -401,7 +402,7 @@ Deno.serve(async (req) => {
     const firstResponse = await openai.chat.completions.create({
       model: MODEL_NAME,
       messages: openaiMessages,
-      tools: CHAT_TOOLS,
+      tools: ORCHESTRATOR_TOOLS,
       temperature: 0.4,
       max_tokens: 2000,
       stream: true,
@@ -462,6 +463,7 @@ Deno.serve(async (req) => {
                     proposedRuleRef,
                     complianceActionRef,
                     runStart,
+                    runId,
                   },
                 );
                 toolResults.push({ tool_call_id: tc.id, role: 'tool', content: result });
@@ -667,6 +669,7 @@ async function executeTool(
     proposedRuleRef: { current: ProposedRuleCapture | null };
     complianceActionRef: { current: ComplianceActionCapture | null };
     runStart: number;
+    runId: string | null;
   },
 ): Promise<string> {
   try {
@@ -697,8 +700,32 @@ async function executeTool(
         return await proposeUpdateBudget(supabase, companyId, args as { campaign_name: string; daily_budget_brl: number }, convIdForTools);
       case 'propose_plan':
         return await proposePlan(supabase, companyId, args as never, convIdForTools);
-      case 'delegate_to_meta_specialist':
-        return await delegateToSpecialist(args as { question: string; context?: string }, companyId, convIdForTools);
+      case 'delegate_to_meta_specialist': {
+        const a = args as { question: string; context?: string };
+        const r = await invokeSpecialist({
+          endpoint: 'meta-ads-specialist',
+          question: a.question,
+          context: a.context,
+          companyId,
+          conversationId: convIdForTools,
+          parentRunId: ctx?.runId ?? null,
+          authHeader,
+        });
+        return r.summary;
+      }
+      case 'delegate_to_creative': {
+        const a = args as { question: string; context?: string };
+        const r = await invokeSpecialist({
+          endpoint: 'creative-specialist',
+          question: a.question,
+          context: a.context,
+          companyId,
+          conversationId: convIdForTools,
+          parentRunId: ctx?.runId ?? null,
+          authHeader,
+        });
+        return r.summary;
+      }
       case 'generate_report':
         return await generateReport(supabase, companyId, args as { template: 'weekly_performance' | 'campaign_deep_dive'; date_range?: string; campaign_name?: string });
       case 'search_knowledge':
@@ -750,6 +777,7 @@ async function handleProposeRule(
     proposedRuleRef: { current: ProposedRuleCapture | null };
     complianceActionRef: { current: ComplianceActionCapture | null };
     runStart: number;
+    runId: string | null;
   },
 ): Promise<string> {
   if (!companyId || !ctx) {
@@ -1007,43 +1035,6 @@ async function searchKnowledge(
     '',
     ...lines,
   ].join('\n');
-}
-
-// B5: Delega para meta-ads-specialist (sub-agente isolado)
-async function delegateToSpecialist(
-  args: { question: string; context?: string },
-  companyId: string,
-  conversationId: string | null
-): Promise<string> {
-  if (!args.question || args.question.length < 5) {
-    return 'Pergunta muito curta para delegar. Forneca uma pergunta especifica.';
-  }
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  if (!supabaseUrl || !serviceKey) return 'Falha na configuracao de delegacao.';
-
-  try {
-    const res = await fetch(`${supabaseUrl}/functions/v1/meta-ads-specialist`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        question: args.question,
-        context: args.context ?? null,
-        company_id: companyId,
-        conversation_id: conversationId,
-      }),
-    });
-    const body = await res.json();
-    if (!res.ok || !body.ok) {
-      return `Specialist falhou: ${body.error ?? 'unknown'}. Continue com tools diretas.`;
-    }
-    return `[Resposta do Meta Ads Specialist — tokens: ${body.tokens}, custo: US$ ${Number(body.cost_usd ?? 0).toFixed(4)}]\n\n${body.answer}`;
-  } catch (err) {
-    return `Falha ao delegar: ${err instanceof Error ? err.message : String(err)}`;
-  }
 }
 
 interface MemoryRecord {

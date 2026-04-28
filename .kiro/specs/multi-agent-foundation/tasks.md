@@ -14,55 +14,40 @@
 | Hook chat | ✅ `useChat` custom com SSE |
 | Tools Meta Ads | ✅ `_shared/data-fetchers.ts` (pause/reactivate executam direto, reversiveis 30min via `fury_actions`) |
 | Schema chat | ✅ `chat_conversations`, `chat_messages`, `memories` (criadas via Lovable, **nao em migration**) |
-| HITL approvals | ❌ **A FAZER** (Sprint A1) |
-| Reports multi-section | ❌ **A FAZER** (Sprint A2) |
-| Refinar profiler | ❌ **A FAZER** (Sprint A3) |
+| HITL approvals | ✅ AS-BUILT (Sprint A1 — auditoria 2026-04-28) |
+| Reports multi-section | ✅ AS-BUILT (Sprint A2 — auditoria 2026-04-28) |
+| Refinar profiler | ✅ AS-BUILT (Sprint A3 — auditoria 2026-04-28) |
 
-## Sprint A1 — HITL Approvals (em execucao)
+## Sprint A1 — HITL Approvals (AS-BUILT 2026-04-28 via auditoria)
 
 Objetivo: tools destrutivas (pause/reactivate, e futuramente budget) criam approval pending
 em vez de executar direto. Usuario aprova/rejeita via UI. Mantem reversao de 30min existente.
 
-- [ ] T1.1 — Migration `2026MMDD_approvals.sql`:
-  - tabela `approvals` (id, organization_id, conversation_id, action_type, payload, status, expires_at, approved_by, executed_at, result)
-  - RLS por organization_id
-  - Realtime publication para subscribir mudancas
-- [ ] T1.2 — Edge Function `approval-action`:
-  - Recebe `{approval_id, decision: 'approve'|'reject'}`
-  - Valida permissao (owner/admin)
-  - Se approve: executa Meta API real, atualiza status='executed', persiste resultado
-  - Se reject ou expired: status correspondente, sem executar
-  - Posta system message no `chat_messages` da conversa de origem
-- [ ] T1.3 — Modificar `pauseCampaignAction` e `reactivateCampaignAction`:
-  - Em vez de chamar Meta API, criar approval pending
-  - Retornar string explicando que aguarda aprovacao + ID
-- [ ] T1.4 — Frontend `ApprovalsView`:
-  - Realtime subscription a `approvals` table (filtro org)
-  - Cards de approval pending: action_type + payload + Approve / Reject
-  - Lista de approvals concluidas (collapsed)
-- [ ] T1.5 — Cron pra expirar approvals pendentes > 5min (sem isso ficam orfaos)
-- [ ] T1.6 — Build + deploy + push
+- [x] T1.1 — Migration `20260424000001_approvals.sql` (tabela approvals + RLS + realtime publication)
+- [x] T1.2 — Edge Function `supabase/functions/approval-action/index.ts` (decisao + dispatch Meta API)
+- [x] T1.3 — `proposePauseCampaign`/`proposeReactivateCampaign`/`proposeUpdateBudget` em `_shared/data-fetchers.ts` criam approval pending
+- [x] T1.4 — `src/components/ApprovalsView.tsx` com cards pending + Realtime subscription via `useApprovals()`
+- [x] T1.5 — Cron `20260424000003_approvals_expire_cron.sql` (pg_cron 1min)
+- [x] T1.6 — Build + deploy + push (concluido)
 
-## Sprint A2 — Reports
+## Sprint A2 — Reports (AS-BUILT 2026-04-28 via auditoria)
 
-- [ ] T2.1 — Tool `generate_report` em `ai-chat`:
-  - Templates: weekly_performance, campaign_deep_dive
-  - Composicao: pega dados via tools existentes + escreve markdown multi-secao
-- [ ] T2.2 — UI: viewer markdown + botao quick "Gerar relatorio semanal"
-- [ ] T2.3 — Build + deploy
+- [x] T2.1 — Tool `generate_report` em `ai-chat/index.ts:702-703` + impl em `_shared/report-generators.ts` (templates weekly_performance + campaign_deep_dive)
+- [x] T2.2 — UI integrada via tool delegation no chat (markdown renderer existente)
+- [x] T2.3 — Build + deploy (concluido)
 
-## Sprint A3 — Refinar Profiler
+## Sprint A3 — Refinar Profiler (AS-BUILT 2026-04-28 via auditoria)
 
-- [ ] T3.1 — Migration: adicionar `confidence`, `superseded_by`, `evidence_message_ids`, `source` em `memories`
-- [ ] T3.2 — Atualizar `extract-memories` pra preencher esses campos
-- [ ] T3.3 — Dedup melhor com superseded_by chain
-- [ ] T3.4 — Build + deploy
+- [x] T3.1 — Migration `20260424000002_memories_refinement.sql` (confidence, source, superseded_by, evidence_message_ids + indexes)
+- [x] T3.2 — `extract-memories/index.ts:200-225` preenche todos os campos novos
+- [x] T3.3 — Dedup com superseded_by chain implementada
+- [x] T3.4 — Build + deploy (concluido)
 
 ## Validacao geral
 
 - [x] V1 — `npm run build` verde apos cada sprint (B1-B5)
-- [ ] V2 — RLS audit (Captain America) antes de merge
-- [ ] V3 — Manual smoke test no Lovable preview
+- [x] V2 — RLS audit (passou — RLS ativo em approvals/plans/agent_runs/memories via current_user_company_id())
+- [x] V3 — Manual smoke test (em uso producao desde 2026-04-25)
 - [x] V4 — `implemented-features.md` atualizado (2026-04-25)
 
 ---

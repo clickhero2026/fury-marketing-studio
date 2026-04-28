@@ -288,7 +288,7 @@ export const CHAT_TOOLS = [
       },
     },
   },
-  // ---- DELEGATION tool (multi-agent, B5) ----
+  // ---- DELEGATION tools (multi-agent) ----
   {
     type: 'function' as const,
     function: {
@@ -305,6 +305,28 @@ export const CHAT_TOOLS = [
           context: {
             type: 'string',
             description: 'Contexto opcional: dados que voce ja coletou nas tools anteriores e quer passar para o specialist (resumido).',
+          },
+        },
+        required: ['question'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'delegate_to_creative',
+      description:
+        'Delega para o Creative Specialist (sub-agente focado em criativos AI). Use SEMPRE que o pedido for sobre gerar/iterar/variar/adaptar/comparar criativos visuais (imagens). O specialist conduz fluxo consultivo se faltar info, chama generate_creative com parametros corretos e retorna markdown pronto (incluindo a tag <creative-gallery> que vira galeria visual no chat). NAO use pra perguntas analiticas sobre criativos antigos — pra isso use compare via specialist ou get_top_performers direto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'Pedido do user, parafraseado pra ser claro pro specialist. Ex: "criar 2 anuncios story pra promocao Black Friday da pizzaria, R$30 todas terca-feira" ou "user disse so cria um criativo, conduza fluxo consultivo pra coletar oferta+formato+count".',
+          },
+          context: {
+            type: 'string',
+            description: 'Contexto opcional: historico relevante, info ja coletada (oferta, formato, count, modelo), criativos referenciados pelo nome.',
           },
         },
         required: ['question'],
@@ -711,3 +733,28 @@ export const CHAT_TOOLS = [
     },
   },
 ];
+
+/**
+ * Tools que viraram exclusivas dos specialists — orchestrator NAO deve
+ * expor estas pra o LLM. Specialists continuam acessando via filter
+ * em CHAT_TOOLS pelo nome (ja faziam isso).
+ *
+ * Spec: multi-agent-specialists (C1.5)
+ */
+const SPECIALIST_OWNED_TOOLS = new Set<string>([
+  // Creative Specialist (Sprint C1)
+  'generate_creative',
+  'iterate_creative',
+  'vary_creative',
+  'adapt_creative',
+  'compare_creatives',
+]);
+
+/**
+ * Subset de CHAT_TOOLS que o orchestrator (ai-chat) expoe ao LLM.
+ * Tools "owned" por specialists ficam de fora — o LLM precisa usar
+ * delegate_to_<specialist> em vez de chamar direto.
+ */
+export const ORCHESTRATOR_TOOLS = CHAT_TOOLS.filter(
+  (t) => !SPECIALIST_OWNED_TOOLS.has(t.function.name),
+);
