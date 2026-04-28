@@ -10,7 +10,7 @@ export type ApprovalStatus =
   | 'executed'
   | 'failed';
 
-export type ApprovalActionType = 'pause_campaign' | 'reactivate_campaign' | 'update_budget';
+export type ApprovalActionType = 'pause_campaign' | 'reactivate_campaign' | 'update_budget' | 'pause_ad' | 'reactivate_ad';
 
 export interface Approval {
   id: string;

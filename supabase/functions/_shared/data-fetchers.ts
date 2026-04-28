@@ -483,6 +483,169 @@ async function findOneCampaignByName(
   return campaigns[0];
 }
 
+// ============================================================
+// compareCreatives — analise pura de 2+ criativos por id ou nome
+// ============================================================
+export async function compareCreatives(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { creative_ids?: string[]; creative_names?: string[] },
+): Promise<string> {
+  const ids = args.creative_ids ?? [];
+  const names = args.creative_names ?? [];
+  if (ids.length === 0 && names.length === 0) {
+    return 'Forneca pelo menos 2 criativos via creative_ids ou creative_names.';
+  }
+
+  type Row = {
+    id: string;
+    title: string | null;
+    concept: string;
+    format: string;
+    model_used: string;
+    status: string;
+    cost_usd: number;
+    is_near_duplicate: boolean;
+    pipeline_applied_rules: unknown;
+    created_at: string;
+  };
+
+  // Junta query por id e por nome
+  const found: Row[] = [];
+  if (ids.length > 0) {
+    const { data } = await supabase
+      .from('creatives_generated')
+      .select('id, title, concept, format, model_used, status, cost_usd, is_near_duplicate, pipeline_applied_rules, created_at')
+      .eq('company_id', companyId)
+      .in('id', ids);
+    if (data) found.push(...(data as Row[]));
+  }
+  if (names.length > 0) {
+    for (const name of names) {
+      const { data } = await supabase
+        .from('creatives_generated')
+        .select('id, title, concept, format, model_used, status, cost_usd, is_near_duplicate, pipeline_applied_rules, created_at')
+        .eq('company_id', companyId)
+        .ilike('title', `%${name}%`)
+        .limit(3);
+      if (data) found.push(...(data as Row[]));
+    }
+  }
+
+  // Dedup por id
+  const unique = Array.from(new Map(found.map((r) => [r.id, r])).values());
+  if (unique.length < 2) {
+    return `Encontrei ${unique.length} criativo(s). Preciso de pelo menos 2 pra comparar.`;
+  }
+
+  const lines: string[] = ['## Comparacao de criativos', ''];
+  lines.push('| # | Titulo | Conceito | Formato | Modelo | Status | Custo | Pipeline | Criado |');
+  lines.push('|---|--------|----------|---------|--------|--------|-------|----------|--------|');
+  unique.slice(0, 4).forEach((r, i) => {
+    const title = (r.title ?? r.concept).slice(0, 40);
+    const concept = r.concept.slice(0, 50);
+    const pipeline = Array.isArray(r.pipeline_applied_rules) ? `${r.pipeline_applied_rules.length} regras` : '—';
+    const created = new Date(r.created_at).toLocaleDateString('pt-BR');
+    lines.push(`| ${i + 1} | ${title} | ${concept} | ${r.format} | ${r.model_used} | ${r.status} | $${r.cost_usd.toFixed(4)} | ${pipeline} | ${created} |`);
+  });
+
+  // Heuristica leve: pHash similarity (grupo de near_duplicates)
+  const dupes = unique.filter((r) => r.is_near_duplicate);
+  if (dupes.length > 0) {
+    lines.push('');
+    lines.push(`> Atencao: ${dupes.length} desses criativos foram marcados como near-duplicates (visualmente similares a anteriores).`);
+  }
+
+  // Status breakdown
+  const approved = unique.filter((r) => r.status === 'approved' || r.status === 'published').length;
+  const generated = unique.filter((r) => r.status === 'generated').length;
+  const discarded = unique.filter((r) => r.status === 'discarded').length;
+  lines.push('');
+  lines.push(`Status: ${approved} aprovado(s), ${generated} pendente(s), ${discarded} descartado(s).`);
+
+  return lines.join('\n');
+}
+
+// ============================================================
+// proposePauseAd / proposeReactivateAd — controle granular
+// ============================================================
+async function findOneAdByName(
+  supabase: SupabaseClient,
+  companyId: string,
+  name: string,
+): Promise<{ id: string; name: string; ad_external_id: string | null; effective_status: string | null } | string> {
+  const { data } = await supabase
+    .from('creatives')
+    .select('id, name, ad_external_id, effective_status')
+    .eq('company_id', companyId)
+    .ilike('name', `%${name}%`)
+    .limit(5);
+  const rows = (data ?? []) as Array<{ id: string; name: string; ad_external_id: string | null; effective_status: string | null }>;
+  if (rows.length === 0) return `Nenhum anuncio encontrado com nome contendo "${name}".`;
+  if (rows.length > 1) {
+    return `Encontrei ${rows.length} anuncios com "${name}": ${rows.map((r) => r.name).slice(0, 5).join(', ')}. Seja mais especifico.`;
+  }
+  return rows[0];
+}
+
+export async function proposePauseAd(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { ad_name: string },
+  conversationId: string | null,
+): Promise<string> {
+  const result = await findOneAdByName(supabase, companyId, args.ad_name);
+  if (typeof result === 'string') return result;
+  if (result.effective_status === 'PAUSED' || result.effective_status === 'ADSET_PAUSED' || result.effective_status === 'CAMPAIGN_PAUSED') {
+    return `"${result.name}" ja esta pausado (${result.effective_status}).`;
+  }
+  if (!result.ad_external_id) {
+    return `"${result.name}" sem ID externo Meta — nao da pra pausar via API.`;
+  }
+
+  const human_summary = `Pausar anuncio "${result.name}"`;
+  const { data: approval, error } = await supabase
+    .from('approvals')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      action_type: 'pause_ad',
+      payload: { ad_id: result.id, ad_external_id: result.ad_external_id, ad_name: result.name },
+      human_summary,
+    })
+    .select('id')
+    .single();
+  if (error || !approval) return `Falha ao criar aprovacao: ${error?.message ?? 'unknown'}`;
+  return `Solicitacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes em ate 5 minutos.`;
+}
+
+export async function proposeReactivateAd(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { ad_name: string },
+  conversationId: string | null,
+): Promise<string> {
+  const result = await findOneAdByName(supabase, companyId, args.ad_name);
+  if (typeof result === 'string') return result;
+  if (result.effective_status === 'ACTIVE') return `"${result.name}" ja esta ativo.`;
+  if (!result.ad_external_id) return `"${result.name}" sem ID externo Meta — nao da pra reativar via API.`;
+
+  const human_summary = `Reativar anuncio "${result.name}"`;
+  const { data: approval, error } = await supabase
+    .from('approvals')
+    .insert({
+      company_id: companyId,
+      conversation_id: conversationId,
+      action_type: 'reactivate_ad',
+      payload: { ad_id: result.id, ad_external_id: result.ad_external_id, ad_name: result.name },
+      human_summary,
+    })
+    .select('id')
+    .single();
+  if (error || !approval) return `Falha ao criar aprovacao: ${error?.message ?? 'unknown'}`;
+  return `Solicitacao criada (ID: ${approval.id}).\n\n**Acao proposta:** ${human_summary}\n\nO usuario precisa aprovar via painel de aprovacoes em ate 5 minutos.`;
+}
+
 export async function proposePauseCampaign(
   supabase: SupabaseClient,
   companyId: string,

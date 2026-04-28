@@ -542,6 +542,51 @@ export const CHAT_TOOLS = [
   {
     type: 'function' as const,
     function: {
+      name: 'compare_creatives',
+      description:
+        'Compara 2+ criativos gerados pela IA. Retorna tabela com titulo, conceito, formato, modelo, status, custo, pipeline aplicado. Use quando o usuario perguntar variacoes de "compare esses criativos", "qual desses e melhor", "diferenca entre os dois", ou cite explicitamente nomes/ids. Identifica near-duplicates e status (aprovado vs pendente vs descartado). NAO chame se o usuario pediu para gerar — use generate_creative.',
+      parameters: {
+        type: 'object',
+        properties: {
+          creative_ids: { type: 'array', items: { type: 'string' }, description: 'Array de UUIDs dos criativos (preferivel)' },
+          creative_names: { type: 'array', items: { type: 'string' }, description: 'Array de titulos parciais (busca ilike). Use se nao tiver os ids' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'pause_ad',
+      description:
+        'Propoe pausar UM anuncio especifico (ad-level, nao campanha). Use quando o usuario menciona um anuncio pelo nome e quer pausar. Granularidade fina — diferente de pause_campaign. Cria aprovacao na fila (HITL); a IA NAO executa direto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ad_name: { type: 'string', description: 'Nome (parcial) do anuncio a pausar' },
+        },
+        required: ['ad_name'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'reactivate_ad',
+      description:
+        'Propoe reativar UM anuncio pausado. Use quando o usuario quer voltar um ad pausado. Cria aprovacao na fila (HITL).',
+      parameters: {
+        type: 'object',
+        properties: {
+          ad_name: { type: 'string', description: 'Nome (parcial) do anuncio a reativar' },
+        },
+        required: ['ad_name'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'sync_meta_assets',
       description:
         'Roda uma sincronizacao profunda das contas Meta selecionadas pelo usuario (em /integrations). Atualiza Business Managers, Ad Sets, Pixels e Pages. CHAME quando o usuario pedir variacoes de "sincroniza", "atualiza meus dados Meta", "puxa o que ha de novo", "verifica se tem novos ad sets", "atualiza pixels", "varredura". NAO chame se o usuario perguntou metricas (use get_campaigns_summary etc). NAO chame proativamente — so a pedido. Demora 20-90s, mostre status enquanto roda.',

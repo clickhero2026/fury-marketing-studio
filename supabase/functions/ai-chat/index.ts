@@ -15,6 +15,9 @@ import {
   getComplianceStatus,
   proposePauseCampaign,
   proposeReactivateCampaign,
+  compareCreatives,
+  proposePauseAd,
+  proposeReactivateAd,
   proposeUpdateBudget,
   proposePlan,
 } from '../_shared/data-fetchers.ts';
@@ -705,6 +708,12 @@ async function executeTool(
         return await handleProposeRule(supabase, companyId, args, ctx);
       case 'sync_meta_assets':
         return await handleSyncMetaAssets(authHeader, args as { scope?: 'all' | 'campaigns_only' | 'assets_only' });
+      case 'compare_creatives':
+        return await compareCreatives(supabase, companyId, args as { creative_ids?: string[]; creative_names?: string[] });
+      case 'pause_ad':
+        return await proposePauseAd(supabase, companyId, args as { ad_name: string }, convIdForTools);
+      case 'reactivate_ad':
+        return await proposeReactivateAd(supabase, companyId, args as { ad_name: string }, convIdForTools);
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }

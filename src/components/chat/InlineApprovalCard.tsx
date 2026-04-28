@@ -12,6 +12,8 @@ import type { PlanWithSteps } from '@/hooks/use-plans';
 
 const ACTION_META: Record<ApprovalActionType, { icon: typeof Pause; color: string; label: string }> = {
   pause_campaign: { icon: Pause, color: 'text-orange-400', label: 'Pausar' },
+  pause_ad: { icon: Pause, color: 'text-orange-400', label: 'Pausar anuncio' },
+  reactivate_ad: { icon: Play, color: 'text-emerald-400', label: 'Reativar anuncio' },
   reactivate_campaign: { icon: Play, color: 'text-emerald-400', label: 'Reativar' },
   update_budget: { icon: DollarSign, color: 'text-sky-400', label: 'Budget' },
 };

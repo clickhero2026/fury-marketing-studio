@@ -12,6 +12,8 @@ const ACTION_META: Record<
   pause_campaign: { icon: Pause, color: 'text-orange-400', label: 'Pausar campanha' },
   reactivate_campaign: { icon: Play, color: 'text-emerald-400', label: 'Reativar campanha' },
   update_budget: { icon: DollarSign, color: 'text-sky-400', label: 'Alterar budget' },
+  pause_ad: { icon: Pause, color: 'text-orange-400', label: 'Pausar anuncio' },
+  reactivate_ad: { icon: Play, color: 'text-emerald-400', label: 'Reativar anuncio' },
 };
 
 const STATUS_META: Record<string, { color: string; label: string }> = {

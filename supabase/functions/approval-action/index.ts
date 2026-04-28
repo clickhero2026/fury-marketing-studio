@@ -21,7 +21,7 @@ interface ApprovalRow {
   company_id: string;
   conversation_id: string | null;
   message_id: string | null;
-  action_type: 'pause_campaign' | 'reactivate_campaign' | 'update_budget';
+  action_type: 'pause_campaign' | 'reactivate_campaign' | 'update_budget' | 'pause_ad' | 'reactivate_ad';
   payload: Record<string, unknown>;
   human_summary: string;
   status: string;
@@ -196,6 +196,10 @@ async function executeAction(supabase: SupabaseClient, approval: ApprovalRow): P
       return executeCampaignStatus(supabase, approval, 'ACTIVE', 'revert');
     case 'update_budget':
       return executeUpdateBudget(supabase, approval);
+    case 'pause_ad':
+      return executeAdStatus(supabase, approval, 'PAUSED');
+    case 'reactivate_ad':
+      return executeAdStatus(supabase, approval, 'ACTIVE');
     default:
       throw new Error(`Unknown action_type: ${approval.action_type}`);
   }
@@ -268,6 +272,47 @@ async function executeCampaignStatus(
   });
 
   return { meta_response: body, status };
+}
+
+async function executeAdStatus(
+  supabase: SupabaseClient,
+  approval: ApprovalRow,
+  status: 'PAUSED' | 'ACTIVE',
+): Promise<Record<string, unknown>> {
+  const payload = approval.payload as {
+    ad_id?: string;
+    ad_external_id: string;
+    ad_name: string;
+  };
+  if (!payload.ad_external_id) throw new Error('Missing ad_external_id in payload');
+
+  const token = await getMetaToken(supabase, approval.company_id);
+
+  const res = await fetch(
+    `https://graph.facebook.com/${GRAPH_VERSION}/${payload.ad_external_id}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${token}`,
+      },
+      body: `status=${status}`,
+    },
+  );
+
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(`Meta API error: ${JSON.stringify(body.error ?? body).substring(0, 300)}`);
+  }
+
+  // Atualiza estado local em creatives
+  await supabase
+    .from('creatives')
+    .update({ status, effective_status: status })
+    .eq('id', payload.ad_id ?? '')
+    .eq('company_id', approval.company_id);
+
+  return { meta_response: body, status, ad_external_id: payload.ad_external_id };
 }
 
 async function executeUpdateBudget(
