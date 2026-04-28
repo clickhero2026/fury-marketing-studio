@@ -505,7 +505,7 @@ export async function addProhibition(
   if (error) {
     return `Falha ao adicionar proibicao: ${error.message}`;
   }
-  return `Proibicao adicionada (${category}: "${value}"). De agora em diante, novos criativos com isso sao bloqueados pela compliance. Recomendo chamar rescan_compliance pra detectar criativos antigos que agora violam.`;
+  return `Proibicao "${value}" adicionada (categoria ${category}). Aparece em **Cerebro do FURY → Identidade → "O que NAO usar"** com badge "${category}". De agora em diante novos criativos com isso sao bloqueados. Vou rodar rescan_compliance pra detectar criativos antigos que agora violam.`;
 }
 
 // ============================================================
