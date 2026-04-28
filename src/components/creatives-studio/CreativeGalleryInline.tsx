@@ -2,7 +2,7 @@
 // Spec: ai-creative-generation (task 9.1 — R5.1, R5.2, R5.3, R5.4, R5.5)
 
 import { useState } from 'react';
-import { Loader2, Check, Sparkles, Copy, Trash2, AlertTriangle, CheckCircle2, XCircle, RotateCcw, ArrowRight } from 'lucide-react';
+import { Loader2, Check, Sparkles, Copy, Trash2, AlertTriangle, CheckCircle2, XCircle, RotateCcw, ArrowRight, Rocket } from 'lucide-react';
 import { navigateToView } from '@/lib/view-navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -179,8 +179,16 @@ export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps)
                   className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${isDiscarded ? 'grayscale' : ''}`}
                 />
                 {c.compliance_warning && (
-                  <Badge variant="destructive" className="absolute top-1 left-1 gap-1">
-                    <AlertTriangle className="h-3 w-3" />
+                  <Badge
+                    variant="destructive"
+                    className="absolute top-1 left-1 gap-1 cursor-pointer hover:opacity-80"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToView('compliance');
+                    }}
+                    title="Atencao: este criativo tem aviso de compliance. Click para ver detalhes."
+                  >
+                    <AlertTriangle className="h-3 w-3" /> Compliance
                   </Badge>
                 )}
                 {isApproved && (
@@ -209,14 +217,24 @@ export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps)
                 {(isApproved || isDiscarded) ? (
                   <div className="grid grid-cols-1 gap-1">
                     {isApproved && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[11px] border-emerald-500/30"
-                        onClick={() => navigateToView('criativos', { criativosTab: 'ia' })}
-                      >
-                        <ArrowRight className="h-3 w-3 mr-1" /> Ver em Criativos
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-[11px]"
+                          onClick={() => navigateToView('publisher')}
+                        >
+                          <Rocket className="h-3 w-3 mr-1" /> Publicar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] border-emerald-500/30"
+                          onClick={() => navigateToView('criativos', { criativosTab: 'ia' })}
+                        >
+                          <ArrowRight className="h-3 w-3 mr-1" /> Ver em Criativos
+                        </Button>
+                      </>
                     )}
                     <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => handleReopen(c.id)}>
                       <RotateCcw className="h-3 w-3 mr-1" /> Reabrir

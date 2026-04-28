@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Logo } from "@/components/shared/Logo";
+import { useCreativeUsage } from "@/hooks/use-creative-usage";
 
 type View = "chat" | "painel" | "criativos" | "cerebro" | "approvals" | "ai-health" | "compliance" | "publisher";
 
@@ -50,16 +51,36 @@ function usePendingApprovalsCount(): number {
   return count;
 }
 
-function useAiHealthDot(): 'green' | 'yellow' | 'red' {
-  // Simplificado: poderia chamar get_creative_health/get_ai_health.
-  // V1: sempre verde. Pos-MVP, troca por RPC real.
-  return 'green';
+function useAiHealthDot(): { color: 'green' | 'yellow' | 'red'; tooltip: string } {
+  const { health, isLoading } = useCreativeUsage();
+  if (isLoading) return { color: 'green', tooltip: 'Carregando saude do AI...' };
+
+  // Total de runs nas ultimas 24h por provedor
+  const nanoTotal = health.nano_banana_24h.success + health.nano_banana_24h.failed;
+  const gptTotal = health.gpt_image_24h.success + health.gpt_image_24h.failed;
+  const totalRuns = nanoTotal + gptTotal;
+
+  if (totalRuns === 0) {
+    return { color: 'green', tooltip: 'Sem geracoes nas ultimas 24h.' };
+  }
+
+  const totalFailed = health.nano_banana_24h.failed + health.gpt_image_24h.failed;
+  const failRatio = totalFailed / totalRuns;
+  const p95s = (health.p95_latency_ms ?? 0) / 1000;
+
+  if (failRatio >= 0.5 || p95s > 90) {
+    return { color: 'red', tooltip: `Saude critica: ${Math.round(failRatio * 100)}% falhas, p95 ${p95s.toFixed(1)}s` };
+  }
+  if (failRatio >= 0.2 || p95s > 45) {
+    return { color: 'yellow', tooltip: `Atencao: ${Math.round(failRatio * 100)}% falhas, p95 ${p95s.toFixed(1)}s` };
+  }
+  return { color: 'green', tooltip: `OK — ${Math.round((1 - failRatio) * 100)}% sucesso, p95 ${p95s.toFixed(1)}s` };
 }
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   const navigate = useNavigate();
   const pendingApprovals = usePendingApprovalsCount();
-  const healthDot = useAiHealthDot();
+  const health = useAiHealthDot();
 
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl md:w-[240px] xl:w-[260px]">
@@ -149,16 +170,16 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
         <button
           onClick={() => onViewChange("ai-health")}
           className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
-          title="Saude do agente IA"
+          title={health.tooltip}
         >
           <Activity className="h-3.5 w-3.5 text-sidebar-foreground/50" />
           <span className="truncate">Saude do AI</span>
           <span
             className={cn(
               'ml-auto h-1.5 w-1.5 rounded-full',
-              healthDot === 'green' && 'bg-emerald-500',
-              healthDot === 'yellow' && 'bg-amber-500',
-              healthDot === 'red' && 'bg-red-500',
+              health.color === 'green' && 'bg-emerald-500',
+              health.color === 'yellow' && 'bg-amber-500',
+              health.color === 'red' && 'bg-red-500',
             )}
           />
         </button>

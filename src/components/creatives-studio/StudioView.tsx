@@ -2,8 +2,9 @@
 // Spec: ai-creative-generation (task 9.2 — R7.1, R7.6)
 
 import { useMemo, useState } from 'react';
+import { navigateToView } from '@/lib/view-navigation';
 import {
-  Sparkles, Search, Download, Check, Trash2, Loader2, MessageSquare, AlertTriangle,
+  Sparkles, Search, Download, Check, Trash2, Loader2, MessageSquare, AlertTriangle, Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -206,8 +207,16 @@ export function StudioView() {
                     </div>
                   )}
                   {c.compliance_warning && (
-                    <Badge variant="destructive" className="absolute top-2 right-2 gap-1">
-                      <AlertTriangle className="h-3 w-3" />
+                    <Badge
+                      variant="destructive"
+                      className="absolute top-2 right-2 gap-1 cursor-pointer hover:opacity-80"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToView('compliance');
+                      }}
+                      title="Atencao: aviso de compliance. Click para detalhes."
+                    >
+                      <AlertTriangle className="h-3 w-3" /> Compliance
                     </Badge>
                   )}
                 </button>
@@ -229,6 +238,19 @@ export function StudioView() {
                       </Badge>
                     )}
                   </div>
+                  {(c.status === 'approved' || c.status === 'published') && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="w-full h-7 text-[11px] mt-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToView('publisher');
+                      }}
+                    >
+                      <Rocket className="h-3 w-3 mr-1" /> Publicar
+                    </Button>
+                  )}
                 </div>
               </div>
             );
