@@ -1,16 +1,22 @@
 // Painel consolidado: Resumo (Dashboard) + Analise + Orcamento Smart em tabs.
 // Reduz 3 entries da sidebar pra 1 entry com tabs.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DashboardView from './DashboardView';
 import AnalysisView from './AnalysisView';
 import BudgetSmartView from './budget/BudgetSmartView';
+import { clearTabPref, readTabPref } from '@/lib/view-navigation';
 
 type Tab = 'resumo' | 'analise' | 'orcamento';
 
 export default function PainelView() {
-  const [tab, setTab] = useState<Tab>('resumo');
+  const [tab, setTab] = useState<Tab>(() => {
+    const pref = readTabPref('painel');
+    if (pref === 'analise' || pref === 'orcamento') return pref;
+    return 'resumo';
+  });
+  useEffect(() => { clearTabPref('painel'); }, []);
 
   return (
     <div className="h-full overflow-y-auto">

@@ -1,15 +1,20 @@
 // Criativos consolidado: Da IA (StudioView) + Da Meta (synced ads, read-only) em tabs.
 // Reduz 2 entries da sidebar (Criativos + Estudio AI) pra 1.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StudioView } from './creatives-studio/StudioView';
 import CreativesViewMeta from './CreativesView';
+import { clearTabPref, readTabPref } from '@/lib/view-navigation';
 
 type Tab = 'ia' | 'meta';
 
 export default function CriativosView() {
-  const [tab, setTab] = useState<Tab>('ia');
+  const [tab, setTab] = useState<Tab>(() => {
+    const pref = readTabPref('criativos');
+    return pref === 'meta' ? 'meta' : 'ia';
+  });
+  useEffect(() => { clearTabPref('criativos'); }, []);
 
   return (
     <div className="h-full overflow-y-auto">

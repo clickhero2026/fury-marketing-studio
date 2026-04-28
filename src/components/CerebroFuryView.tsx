@@ -3,7 +3,8 @@
 //
 // Consolida 3 entries da sidebar (FURY + Memoria + briefing externo) pra 1.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { clearTabPref, readTabPref } from '@/lib/view-navigation';
 import { Brain, Loader2, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -22,8 +23,20 @@ type Tab = 'regras' | 'memoria' | 'identidade' | 'historico';
 type RuleSubTab = 'todas' | 'comportamento' | 'acoes' | 'pipeline';
 
 export default function CerebroFuryView() {
-  const [tab, setTab] = useState<Tab>('regras');
-  const [ruleSubTab, setRuleSubTab] = useState<RuleSubTab>('todas');
+  const [tab, setTab] = useState<Tab>(() => {
+    const pref = readTabPref('cerebro');
+    if (pref === 'memoria' || pref === 'identidade' || pref === 'historico') return pref;
+    return 'regras';
+  });
+  const [ruleSubTab, setRuleSubTab] = useState<RuleSubTab>(() => {
+    const pref = readTabPref('cerebro-rules');
+    if (pref === 'comportamento' || pref === 'acoes' || pref === 'pipeline') return pref;
+    return 'todas';
+  });
+  useEffect(() => {
+    clearTabPref('cerebro');
+    clearTabPref('cerebro-rules');
+  }, []);
   const { evaluate, isEvaluating } = useFuryEvaluate();
   const { behavior, pipeline, action } = useActiveRules();
   const totalRules = behavior.length + pipeline.length + action.length;

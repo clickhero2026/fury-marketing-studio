@@ -2,7 +2,9 @@
 // Spec: ai-creative-generation (task 9.1 — R5.1, R5.2, R5.3, R5.4, R5.5)
 
 import { useState } from 'react';
-import { Loader2, Check, Sparkles, Copy, Trash2, AlertTriangle, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { Loader2, Check, Sparkles, Copy, Trash2, AlertTriangle, CheckCircle2, XCircle, RotateCcw, ArrowRight } from 'lucide-react';
+import { navigateToView } from '@/lib/view-navigation';
+import { ToastAction } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,7 +62,15 @@ export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps)
     setBusyId(null);
     if (r.ok) {
       setLocalStatus((prev) => ({ ...prev, [id]: 'approved' }));
-      toast({ title: 'Criativo aprovado', description: 'Disponivel no Estudio AI.' });
+      toast({
+        title: 'Criativo aprovado',
+        description: 'Disponivel em Criativos > Da IA.',
+        action: (
+          <ToastAction altText="Ver em Criativos" onClick={() => navigateToView('criativos', { criativosTab: 'ia' })}>
+            Ver
+          </ToastAction>
+        ),
+      });
       // Fase 6: aplica pipeline_rules ativos (logos/watermarks) em background
       applyPipeline
         .mutateAsync({ creative_id: id, target_table: 'creatives_generated' })
@@ -198,6 +208,16 @@ export function CreativeGalleryInline({ creatives }: CreativeGalleryInlineProps)
 
                 {(isApproved || isDiscarded) ? (
                   <div className="grid grid-cols-1 gap-1">
+                    {isApproved && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] border-emerald-500/30"
+                        onClick={() => navigateToView('criativos', { criativosTab: 'ia' })}
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" /> Ver em Criativos
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => handleReopen(c.id)}>
                       <RotateCcw className="h-3 w-3 mr-1" /> Reabrir
                     </Button>

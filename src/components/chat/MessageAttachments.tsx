@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { FileText, Download, FileImage, BookmarkPlus, Check } from 'lucide-react';
+import { navigateToView } from '@/lib/view-navigation';
+import { ToastAction } from '@/components/ui/toast';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useMessageAttachments, useAttachmentsByIds } from '@/hooks/use-message-attachments';
 import { useKnowledge } from '@/hooks/use-knowledge';
@@ -46,7 +48,15 @@ export function MessageAttachments({ messageId, attachmentIds }: MessageAttachme
       return;
     }
     setSavedIds((prev) => new Set([...prev, attachmentId]));
-    toast({ title: 'Salvo na memoria', description: 'A IA ja pode usar este conteudo nas respostas.' });
+    toast({
+      title: 'Salvo na memoria',
+      description: 'A IA ja pode usar este conteudo nas respostas.',
+      action: (
+        <ToastAction altText="Ver na memoria" onClick={() => navigateToView('cerebro', { cerebroTab: 'memoria' })}>
+          Ver
+        </ToastAction>
+      ),
+    });
   };
 
   if (!attachments?.length) return null;

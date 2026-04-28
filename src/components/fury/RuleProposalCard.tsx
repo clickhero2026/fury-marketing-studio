@@ -2,13 +2,21 @@
 // Spec: .kiro/specs/fury-learning/ (T4.1)
 
 import { useEffect, useState } from 'react';
-import { Check, X, Pencil, Sparkles, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Check, X, Pencil, Sparkles, Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAcceptRuleProposal, useRejectRuleProposal } from '@/hooks/useRuleProposal';
 import { RULE_TYPE_LABELS, type ProposedRuleEnvelope } from '@/types/fury-rules';
 import { RuleEditModal } from './RuleEditModal';
+import { navigateToView, type CerebroRulesSubTab } from '@/lib/view-navigation';
+
+function ruleSubTabFor(ruleType: string): CerebroRulesSubTab {
+  if (ruleType === 'behavior') return 'comportamento';
+  if (ruleType === 'creative_pipeline') return 'pipeline';
+  if (ruleType === 'action') return 'acoes';
+  return 'todas';
+}
 
 interface Props {
   messageId: string;
@@ -63,11 +71,21 @@ export function RuleProposalCard({ messageId, envelope }: Props) {
     return (
       <div className="max-w-3xl mx-auto w-full my-2 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center gap-3 animate-fade-in">
         <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-        <div className="text-sm">
+        <div className="text-sm flex-1 min-w-0">
           <span className="text-foreground font-medium">Regra ativa: </span>
-          <span className="text-muted-foreground">{proposed.name}</span>
+          <span className="text-muted-foreground truncate">{proposed.name}</span>
         </div>
-        <Badge variant="outline" className="ml-auto">{RULE_TYPE_LABELS[envelope.rule_type]}</Badge>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs gap-1 shrink-0"
+          onClick={() => navigateToView('cerebro', {
+            cerebroTab: 'regras',
+            cerebroRulesSubTab: ruleSubTabFor(envelope.rule_type),
+          })}
+        >
+          Ver no Cerebro <ArrowRight className="h-3 w-3" />
+        </Button>
       </div>
     );
   }

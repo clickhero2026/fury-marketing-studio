@@ -12,6 +12,7 @@ import AiHealthView from "@/components/AiHealthView";
 import ComplianceView from "@/components/compliance/ComplianceView";
 import CampaignPublisherView from "@/components/publisher/CampaignPublisherView";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { onNavigateToView } from "@/lib/view-navigation";
 
 // Sidebar consolidada (5 itens principais + 3 footer/secundarios)
 type View = "chat" | "painel" | "criativos" | "cerebro" | "approvals" | "ai-health" | "compliance" | "publisher";
@@ -59,6 +60,9 @@ const Index = () => {
       localStorage.setItem(VIEW_STORAGE_KEY, currentView);
     } catch { /* ignore */ }
   }, [currentView]);
+
+  // Listener pra navegacao programatica (links contextuais pos-acao do chat)
+  useEffect(() => onNavigateToView((view) => setCurrentView(view as View)), []);
 
   const hasSkipped = (() => {
     try { return !!localStorage.getItem('briefing:skipped-at'); } catch { return false; }
