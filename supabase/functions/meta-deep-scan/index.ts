@@ -444,10 +444,13 @@ async function enrichAdAccount(
     return;
   }
 
+  // Meta API exige prefix act_ em endpoints de ad account
+  const acctPath = acct.account_id.startsWith('act_') ? acct.account_id : `act_${acct.account_id}`;
+
   try {
     const data = (await callMeta(
       ctx,
-      `/${acct.account_id}?fields=balance,spend_cap,currency,timezone_name,amount_spent,funding_source,account_status`,
+      `/${acctPath}?fields=balance,spend_cap,currency,timezone_name,amount_spent,funding_source,account_status`,
       '/act_<id>',
     )) as Record<string, unknown>;
 
@@ -478,10 +481,11 @@ async function enrichAdAccount(
 // FIX Q1: backfill removido daqui — agora roda UMA VEZ ao final do deepScan
 // ============================================================================
 async function syncAdsets(ctx: ScanContext, accountId: string) {
+  const acctPath = accountId.startsWith('act_') ? accountId : `act_${accountId}`;
   try {
     const adsets = await callMetaPaginated<Record<string, unknown>>(
       ctx,
-      `/${accountId}/adsets?fields=id,name,status,effective_status,campaign_id,daily_budget,lifetime_budget,budget_remaining,bid_strategy,billing_event,optimization_goal,targeting,promoted_object,start_time,end_time&limit=100`,
+      `/${acctPath}/adsets?fields=id,name,status,effective_status,campaign_id,daily_budget,lifetime_budget,budget_remaining,bid_strategy,billing_event,optimization_goal,targeting,promoted_object,start_time,end_time&limit=100`,
       '/act_<id>/adsets',
     );
 
@@ -547,10 +551,11 @@ async function syncAdsets(ctx: ScanContext, accountId: string) {
 // Sync Pixels (paginado + batch upsert)
 // ============================================================================
 async function syncPixels(ctx: ScanContext, accountId: string) {
+  const acctPath = accountId.startsWith('act_') ? accountId : `act_${accountId}`;
   try {
     const pixels = await callMetaPaginated<Record<string, unknown>>(
       ctx,
-      `/${accountId}/adspixels?fields=id,name,code,last_fired_time,creation_time,owner_business,can_proxy,is_unavailable,automatic_matching_fields,first_party_cookie_status&limit=100`,
+      `/${acctPath}/adspixels?fields=id,name,code,last_fired_time,creation_time,owner_business,can_proxy,is_unavailable,automatic_matching_fields,first_party_cookie_status&limit=100`,
       '/act_<id>/adspixels',
     );
 
