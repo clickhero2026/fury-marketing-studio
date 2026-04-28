@@ -726,6 +726,38 @@ async function executeTool(
         });
         return r.summary;
       }
+      case 'delegate_to_compliance': {
+        const a = args as { question: string; context?: string };
+        const r = await invokeSpecialist({
+          endpoint: 'compliance-officer',
+          question: a.question,
+          context: a.context,
+          companyId,
+          conversationId: convIdForTools,
+          parentRunId: ctx?.runId ?? null,
+          authHeader,
+        });
+        // Propaga compliance_action capturado pelo specialist pra metadata
+        // da assistant message (renderiza card violeta inline)
+        const ca = r.metadata?.compliance_action as ComplianceActionCapture | undefined;
+        if (ca && ctx?.complianceActionRef) {
+          ctx.complianceActionRef.current = ca;
+        }
+        return r.summary;
+      }
+      case 'delegate_to_action': {
+        const a = args as { question: string; context?: string };
+        const r = await invokeSpecialist({
+          endpoint: 'action-manager',
+          question: a.question,
+          context: a.context,
+          companyId,
+          conversationId: convIdForTools,
+          parentRunId: ctx?.runId ?? null,
+          authHeader,
+        });
+        return r.summary;
+      }
       case 'generate_report':
         return await generateReport(supabase, companyId, args as { template: 'weekly_performance' | 'campaign_deep_dive'; date_range?: string; campaign_name?: string });
       case 'search_knowledge':

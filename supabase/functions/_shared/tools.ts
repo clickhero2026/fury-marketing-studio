@@ -314,6 +314,50 @@ export const CHAT_TOOLS = [
   {
     type: 'function' as const,
     function: {
+      name: 'delegate_to_action',
+      description:
+        'Delega para o Action Manager (sub-agente focado em acoes destrutivas HITL: pausar/reativar ad ou campanha, mudar budget, criar plano com varios passos). Todas as tools criam approval pendente — user precisa aprovar via painel. Use quando o user pede acao concreta sobre uma campanha/anuncio especifico.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'Pedido do user, parafraseado claro pro specialist. Ex: "user pediu pra pausar a campanha Black Friday" ou "plano: pausa A, ajusta budget de B pra R$50".',
+          },
+          context: {
+            type: 'string',
+            description: 'Contexto opcional: dados de campanhas relevantes ja consultados, situacao atual.',
+          },
+        },
+        required: ['question'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'delegate_to_compliance',
+      description:
+        'Delega para o Compliance Officer (sub-agente focado em regras de compliance e conformidade Meta). Use SEMPRE que o pedido for sobre adicionar palavra/assunto proibido ("nunca use X", "tira X dos meus anuncios"), rodar scan retroativo de compliance, ou consultar status de anuncios reprovados na Meta. Specialist captura proibicao + stats do scan que viram card violeta inline.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'Pedido do user, parafraseado pra ser claro pro specialist. Ex: "user pediu pra adicionar palavra proibida \'cura\' e rodar rescan" ou "user quer ver status de compliance dos anuncios ativos".',
+          },
+          context: {
+            type: 'string',
+            description: 'Contexto opcional: historico relevante, regras existentes ja mencionadas.',
+          },
+        },
+        required: ['question'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'delegate_to_creative',
       description:
         'Delega para o Creative Specialist (sub-agente focado em criativos AI). Use SEMPRE que o pedido for sobre gerar/iterar/variar/adaptar/comparar criativos visuais (imagens). O specialist conduz fluxo consultivo se faltar info, chama generate_creative com parametros corretos e retorna markdown pronto (incluindo a tag <creative-gallery> que vira galeria visual no chat). NAO use pra perguntas analiticas sobre criativos antigos — pra isso use compare via specialist ou get_top_performers direto.',
@@ -748,6 +792,17 @@ const SPECIALIST_OWNED_TOOLS = new Set<string>([
   'vary_creative',
   'adapt_creative',
   'compare_creatives',
+  // Compliance Officer (Sprint C2)
+  'add_prohibition',
+  'rescan_compliance',
+  'get_compliance_status',
+  // Action Manager (Sprint C3)
+  'pause_campaign',
+  'reactivate_campaign',
+  'pause_ad',
+  'reactivate_ad',
+  'update_budget',
+  'propose_plan',
 ]);
 
 /**

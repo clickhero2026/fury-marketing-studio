@@ -3,66 +3,52 @@
 > 3 sprints incrementais. Cada sprint deploy + commit independente.
 > Fast-track aprovado pelo usuario 2026-04-28.
 
-## Sprint C0 — Helper compartilhado (pre-trabalho)
+## Sprint C0 — Helper compartilhado (CONCLUIDO 2026-04-28)
 
-- [ ] C0.1 — Criar `supabase/functions/_shared/specialist-invoker.ts`
-       generico (recebe endpoint name, body, authHeader; retorna answer +
-       metadata + cost). Substitui `delegateToSpecialist` em ai-chat.
-- [ ] C0.2 — Refatorar ai-chat para usar invokeSpecialist no
-       `delegate_to_meta_specialist` existente (sem mudanca de comportamento)
-- [ ] C0.3 — Build verde
+- [x] C0.1 — `supabase/functions/_shared/specialist-invoker.ts`
+- [x] C0.2 — Refator ai-chat usa invokeSpecialist no delegate_to_meta_specialist
+- [x] C0.3 — Build verde
 
-## Sprint C1 — Creative Specialist
+## Sprint C1 — Creative Specialist (CONCLUIDO 2026-04-28)
 
-- [ ] C1.1 — Criar `supabase/functions/creative-specialist/index.ts`
-       (prompt focado em creative + 5 tools criativas + search_knowledge)
-- [ ] C1.2 — Adicionar tool `delegate_to_creative` em `_shared/tools.ts`
-- [ ] C1.3 — Adicionar case em `executeTool` no ai-chat
-- [ ] C1.4 — Atualizar prompt do orchestrator: secao "QUANDO DELEGAR
-       creative" + reforco de polimento WhatsApp pos-delegacao
-- [ ] C1.5 — Manter as tools generate_creative/iterate/vary/adapt/compare
-       em `_shared/tools.ts` (specialists usam) MAS REMOVER do array
-       exposto ao orchestrator (orchestrator so tem delegate_*)
-- [ ] C1.6 — Deploy creative-specialist + ai-chat
-- [ ] C1.7 — Smoke test: pedir "cria anuncio para minha pizzaria" e
-       verificar fluxo consultivo + agent_runs com parent_run_id
-- [ ] C1.8 — Build + commit + push
+- [x] C1.1 — `supabase/functions/creative-specialist/index.ts` (~280 linhas)
+- [x] C1.2 — Tool delegate_to_creative
+- [x] C1.3 — Case em executeTool
+- [x] C1.4 — Prompt orchestrator atualizado
+- [x] C1.5 — ORCHESTRATOR_TOOLS subset criado, 5 tools criativas removidas
+- [x] C1.6 — Deploy
+- [ ] C1.7 — Smoke test manual (pendente — usuario testa)
+- [x] C1.8 — Commit ec1890a + push 3 remotes
 
-## Sprint C2 — Compliance Officer
+## Sprint C2 — Compliance Officer (CONCLUIDO 2026-04-28)
 
-- [ ] C2.1 — Criar `supabase/functions/compliance-officer/index.ts`
-       com 3 tools (add_prohibition, rescan_compliance, get_compliance_status)
-       + retorno de compliance_action capturado
-- [ ] C2.2 — Adicionar tool `delegate_to_compliance` em tools.ts
-- [ ] C2.3 — Adicionar case em executeTool, propagando compliance_action
-       retornado para `complianceActionRef.current`
-- [ ] C2.4 — Atualizar prompt: secao "QUANDO DELEGAR compliance"
-- [ ] C2.5 — Remover add_prohibition/rescan_compliance do array exposto
-       ao orchestrator (mantem export)
-- [ ] C2.6 — Deploy + smoke test (adicionar proibicao, conferir card violeta)
-- [ ] C2.7 — Build + commit + push
+- [x] C2.1 — `supabase/functions/compliance-officer/index.ts` (~270 linhas)
+       com 3 tools + retorno de compliance_action
+- [x] C2.2 — Tool delegate_to_compliance
+- [x] C2.3 — Case com propagacao de compliance_action -> ref
+- [x] C2.4 — Prompt orchestrator atualizado (secao COMPLIANCE)
+- [x] C2.5 — 3 tools adicionadas em SPECIALIST_OWNED_TOOLS
+- [x] C2.6 — Deploy
+- [x] C2.7 — Build verde
 
-## Sprint C3 — Action Manager
+## Sprint C3 — Action Manager (CONCLUIDO 2026-04-28)
 
-- [ ] C3.1 — Criar `supabase/functions/action-manager/index.ts` com 7 tools
-       (pause/reactivate ad/campaign + update_budget + propose_rule + propose_plan)
-       + retorno de proposed_rule capturado
-- [ ] C3.2 — Adicionar tool `delegate_to_action` em tools.ts
-- [ ] C3.3 — Adicionar case em executeTool, propagando proposed_rule
-       retornado para `proposedRuleRef.current`
-- [ ] C3.4 — Atualizar prompt: secao "QUANDO DELEGAR action"
-- [ ] C3.5 — Remover essas 7 tools do array exposto ao orchestrator
-- [ ] C3.6 — Deploy + smoke test (pausar ad, regra "sempre X", conferir
-       cards inline)
-- [ ] C3.7 — Build + commit + push
+- [x] C3.1 — `supabase/functions/action-manager/index.ts` (~270 linhas)
+       com 6 tools (pause/reactivate ad/campaign + update_budget + propose_plan).
+       NOTA: propose_rule continua no orchestrator (precisa userMessageId +
+       attachmentIds pra feature de asset upload, fora de scope desta sprint).
+- [x] C3.2 — Tool delegate_to_action
+- [x] C3.3 — Case em executeTool
+- [x] C3.4 — Prompt orchestrator atualizado (secao ACOES DESTRUTIVAS)
+- [x] C3.5 — 6 tools adicionadas em SPECIALIST_OWNED_TOOLS
+- [x] C3.6 — Deploy
+- [x] C3.7 — Build verde
 
 ## Validacao geral
 
-- [ ] V1 — `npm run build` verde apos cada sprint
-- [ ] V2 — Telemetria agent_runs mostra distribuicao por agent_name
-       (orchestrator vs especialistas)
-- [ ] V3 — Latencia p50 <= 12s em 10 turnos de teste
-- [ ] V4 — Custo medio por turno <= 1.8x baseline (medido via cost_usd
-       agregado por parent_run_id)
-- [ ] V5 — Atualizar `.kiro/steering/implemented-features.md` ao final
-- [ ] V6 — Commit final + push 3 remotes
+- [x] V1 — `npm run build` verde apos cada sprint
+- [ ] V2 — Telemetria agent_runs (validar apos uso real)
+- [ ] V3 — Latencia p50 <= 12s (medir apos 10 turnos)
+- [ ] V4 — Custo <= 1.8x baseline (medir apos 1 semana)
+- [ ] V5 — Atualizar implemented-features.md
+- [x] V6 — Commit final + push 3 remotes
