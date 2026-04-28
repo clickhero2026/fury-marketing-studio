@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MetaAssetPickerModal } from '@/components/meta/MetaAssetPickerModal';
+import { MetaInventoryTab } from '@/components/meta/MetaInventoryTab';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -110,7 +111,7 @@ const Integrations = () => {
         <h1 className="text-sm font-semibold text-foreground">Integracoes</h1>
       </header>
 
-      <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6 xl:p-8">
+      <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-6 xl:p-8">
         <PageHeader
           title="Integracoes"
           description="Conecte plataformas de anuncio para importar campanhas, metricas e insights"
@@ -277,6 +278,15 @@ const Integrations = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Inventario Meta sincronizado (vem do meta-deep-scan) */}
+        {isConnected && (
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 md:p-6">
+              <MetaInventoryTab />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <MetaAssetPickerModal

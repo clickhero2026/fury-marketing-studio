@@ -7,7 +7,6 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DashFilters, type Period } from './dashboard/DashFilters';
-import { DeepScanButton } from './meta/DeepScanButton';
 import { DashKpiGrid, type MetricRow } from './dashboard/DashKpiGrid';
 import { DashCharts } from './dashboard/DashCharts';
 import { DashFuryTimeline } from './dashboard/DashFuryTimeline';
@@ -103,22 +102,17 @@ const DashboardView = () => {
         }
       />
 
-      {/* Filters + Varredura profunda */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex-1 min-w-0">
-          <DashFilters
-            period={period}
-            onPeriodChange={setPeriod}
-            accounts={accounts}
-            selectedAccounts={selectedAccounts}
-            onSelectedAccountsChange={setSelectedAccounts}
-            campaigns={campaignNames}
-            selectedCampaigns={selectedCampaigns}
-            onSelectedCampaignsChange={setSelectedCampaigns}
-          />
-        </div>
-        <DeepScanButton />
-      </div>
+      {/* Filters */}
+      <DashFilters
+        period={period}
+        onPeriodChange={setPeriod}
+        accounts={accounts}
+        selectedAccounts={selectedAccounts}
+        onSelectedAccountsChange={setSelectedAccounts}
+        campaigns={campaignNames}
+        selectedCampaigns={selectedCampaigns}
+        onSelectedCampaignsChange={setSelectedCampaigns}
+      />
 
       {/* Error state */}
       {error && (

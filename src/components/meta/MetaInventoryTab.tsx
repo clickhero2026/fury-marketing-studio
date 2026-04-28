@@ -9,7 +9,6 @@ import { Building2, Layers3, Activity, ShieldCheck, Search } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useBusinessManagers, useAdsets, useMetaPixels } from '@/hooks/use-meta-inventory';
-import { DeepScanButton } from './DeepScanButton';
 
 type SubTab = 'bms' | 'adsets' | 'pixels';
 
@@ -55,14 +54,11 @@ export function MetaInventoryTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Conexoes Meta</h3>
-          <p className="text-xs text-muted-foreground">
-            Business Managers, Ad Sets e Pixels sincronizados da sua conta.
-          </p>
-        </div>
-        <DeepScanButton />
+      <div>
+        <h3 className="text-base font-semibold text-foreground">Inventario sincronizado</h3>
+        <p className="text-xs text-muted-foreground">
+          Business Managers, Ad Sets e Pixels que vieram da ultima Varredura Profunda.
+        </p>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)}>
