@@ -28,15 +28,19 @@ export interface ProactiveBriefing {
   memories: BriefingMemory[];
   pending_approvals: number;
   pending_plans: number;
+  compliance_alerts?: {
+    total: number;
+    samples: Array<{ id: string; name: string; effective_status: string; updated_at: string }>;
+  };
   metrics: BriefingMetrics | null;
   has_data: boolean;
 }
 
 export interface BriefingInsight {
-  kind: 'memory' | 'metric_drop' | 'metric_jump' | 'pending_actions';
+  kind: 'memory' | 'metric_drop' | 'metric_jump' | 'pending_actions' | 'compliance_alert';
   title: string;
   body: string;
-  severity: 'info' | 'warning' | 'success';
+  severity: 'info' | 'warning' | 'success' | 'danger';
 }
 
 export function useProactiveBriefing() {
@@ -64,6 +68,20 @@ export function useProactiveBriefing() {
 
 function buildInsights(b: ProactiveBriefing): BriefingInsight[] {
   const out: BriefingInsight[] = [];
+
+  // Compliance alerts (Meta DISAPPROVED, WITH_ISSUES, etc) — prioridade alta
+  const ca = b.compliance_alerts;
+  if (ca && ca.total > 0) {
+    const sample = ca.samples?.[0];
+    out.push({
+      kind: 'compliance_alert',
+      title: `${ca.total} anuncio${ca.total > 1 ? 's' : ''} com problema na Meta`,
+      body: sample
+        ? `Mais recente: "${sample.name}" — status ${sample.effective_status}`
+        : 'Anuncios marcados como DISAPPROVED, WITH_ISSUES ou pendentes de revisao.',
+      severity: 'danger',
+    });
+  }
 
   // Pending actions
   if (b.pending_approvals > 0 || b.pending_plans > 0) {

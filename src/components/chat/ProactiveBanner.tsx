@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Lightbulb, ShieldAlert, Loader2, Sparkles } from 'lucide-react';
+import { TrendingUp, TrendingDown, Lightbulb, ShieldAlert, Loader2, Sparkles, AlertOctagon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProactiveBriefing, type BriefingInsight } from '@/hooks/use-proactive-briefing';
 
@@ -48,27 +48,33 @@ function InsightCard({
   onAsk: (prompt: string) => void;
 }) {
   const Icon =
-    insight.kind === 'metric_drop'
-      ? TrendingDown
-      : insight.kind === 'metric_jump'
-        ? TrendingUp
-        : insight.kind === 'pending_actions'
-          ? ShieldAlert
-          : Lightbulb;
+    insight.kind === 'compliance_alert'
+      ? AlertOctagon
+      : insight.kind === 'metric_drop'
+        ? TrendingDown
+        : insight.kind === 'metric_jump'
+          ? TrendingUp
+          : insight.kind === 'pending_actions'
+            ? ShieldAlert
+            : Lightbulb;
 
   const severityClass =
-    insight.severity === 'warning'
-      ? 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
-      : insight.severity === 'success'
-        ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10'
-        : 'border-border bg-card hover:bg-card/80';
+    insight.severity === 'danger'
+      ? 'border-red-500/40 bg-red-500/10 hover:bg-red-500/15'
+      : insight.severity === 'warning'
+        ? 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
+        : insight.severity === 'success'
+          ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10'
+          : 'border-border bg-card hover:bg-card/80';
 
   const iconClass =
-    insight.severity === 'warning'
-      ? 'text-amber-400'
-      : insight.severity === 'success'
-        ? 'text-emerald-400'
-        : 'text-primary';
+    insight.severity === 'danger'
+      ? 'text-red-400'
+      : insight.severity === 'warning'
+        ? 'text-amber-400'
+        : insight.severity === 'success'
+          ? 'text-emerald-400'
+          : 'text-primary';
 
   const prompt = buildPrompt(insight);
 
@@ -96,6 +102,8 @@ function InsightCard({
 
 function buildPrompt(insight: BriefingInsight): string {
   switch (insight.kind) {
+    case 'compliance_alert':
+      return `Tenho ${insight.title.toLowerCase()}. Quais sao os anuncios afetados, qual o problema de cada um e o que voce sugere fazer?`;
     case 'metric_drop':
       return `Notei que ${insight.title.toLowerCase()}. Pode investigar o que causou essa queda e sugerir o que fazer?`;
     case 'metric_jump':
