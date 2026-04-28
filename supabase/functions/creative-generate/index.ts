@@ -481,9 +481,13 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // OCR pos (best-effort)
-    const ocr = await runOcrCheck(ok.bytes, ok.mimeType, blocklist, openaiKey)
-      .catch(() => ({ detected_text: '', ocr_hits: [], has_warning: false }));
+    // OCR pos: SKIP temporario (2026-04-28 — gargalo de latency, refazer async)
+    // Habilitar via env SKIP_CREATIVE_OCR=false
+    const skipOcr = (Deno.env.get('SKIP_CREATIVE_OCR') ?? 'true').toLowerCase() !== 'false';
+    const ocr = skipOcr
+      ? { detected_text: '', ocr_hits: [], has_warning: false }
+      : await runOcrCheck(ok.bytes, ok.mimeType, blocklist, openaiKey)
+          .catch(() => ({ detected_text: '', ocr_hits: [], has_warning: false }));
 
     // Persist
     const newId = crypto.randomUUID();

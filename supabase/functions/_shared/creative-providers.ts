@@ -227,7 +227,7 @@ async function callGptImage(input: ProviderInput, apiKey: string): Promise<Provi
         ? `${input.prompt}\n\nEvite: ${input.negativePrompt}`
         : input.prompt);
       fd.append('size', sizing.size);
-      fd.append('quality', 'high');
+      fd.append('quality', 'medium');
       fd.append('input_fidelity', 'high');
       if (input.parentBytes) {
         fd.append('image', new Blob([input.parentBytes], { type: 'image/png' }), 'parent.png');
@@ -254,7 +254,7 @@ async function callGptImage(input: ProviderInput, apiKey: string): Promise<Provi
             : input.prompt,
           n: 1,
           size: sizing.size,
-          quality: 'high',
+          quality: 'medium',
           output_format: 'png',
         }),
       });
