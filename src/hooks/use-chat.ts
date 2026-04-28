@@ -1,6 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface ComplianceAction {
+  prohibition?: { value: string; category: 'word' | 'topic' | 'visual' };
+  rescan?: { scanned: number; violations: number; taken_down: number };
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -9,6 +14,8 @@ export interface ChatMessage {
   isStreaming?: boolean;
   /** IDs em chat_attachments (so user message com anexos) */
   attachmentIds?: string[];
+  /** Card violeta inline com resultado de add_prohibition / rescan_compliance */
+  complianceAction?: ComplianceAction;
 }
 
 export function useChat() {
@@ -114,6 +121,14 @@ export function useChat() {
             } else if (data.type === 'done') {
               if (data.conversation_id) {
                 setConversationId(data.conversation_id);
+              }
+              const ca = data.metadata?.compliance_action as ComplianceAction | null | undefined;
+              if (ca && (ca.prohibition || ca.rescan)) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, complianceAction: ca } : m
+                  )
+                );
               }
             } else if (data.type === 'error') {
               setMessages((prev) =>

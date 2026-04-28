@@ -22,6 +22,7 @@ import {
   rescanCompliance,
   proposeUpdateBudget,
   proposePlan,
+  type ComplianceActionCapture,
 } from '../_shared/data-fetchers.ts';
 import { generateReport } from '../_shared/report-generators.ts';
 import {
@@ -391,6 +392,7 @@ Deno.serve(async (req) => {
     let completionTokens = 0;
     let totalTokens = 0;
     const proposedRuleRef: { current: ProposedRuleCapture | null } = { current: null };
+    const complianceActionRef: { current: ComplianceActionCapture | null } = { current: null };
 
     // ============ OPENAI STREAMING + FUNCTION CALLING ============
 
@@ -458,6 +460,7 @@ Deno.serve(async (req) => {
                     userId: user.id,
                     attachmentIds,
                     proposedRuleRef,
+                    complianceActionRef,
                     runStart,
                   },
                 );
@@ -536,9 +539,10 @@ Deno.serve(async (req) => {
 
           // Save assistant response
           if (convId && assistantContent) {
-            const assistantMetadata = proposedRuleRef.current
-              ? { proposed_rule: proposedRuleRef.current }
-              : null;
+            const metadataParts: Record<string, unknown> = {};
+            if (proposedRuleRef.current) metadataParts.proposed_rule = proposedRuleRef.current;
+            if (complianceActionRef.current) metadataParts.compliance_action = complianceActionRef.current;
+            const assistantMetadata = Object.keys(metadataParts).length > 0 ? metadataParts : null;
             await supabaseAdmin.from('chat_messages').insert({
               conversation_id: convId,
               role: 'assistant',
@@ -592,7 +596,7 @@ Deno.serve(async (req) => {
               .eq('id', runId);
           }
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', conversation_id: convId })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', conversation_id: convId, metadata: { proposed_rule: proposedRuleRef.current, compliance_action: complianceActionRef.current } })}\n\n`));
           controller.close();
         } catch (streamError) {
           console.error('Stream error:', streamError);
@@ -661,6 +665,7 @@ async function executeTool(
     userId: string;
     attachmentIds: string[];
     proposedRuleRef: { current: ProposedRuleCapture | null };
+    complianceActionRef: { current: ComplianceActionCapture | null };
     runStart: number;
   },
 ): Promise<string> {
@@ -717,9 +722,9 @@ async function executeTool(
       case 'reactivate_ad':
         return await proposeReactivateAd(supabase, companyId, args as { ad_name: string }, convIdForTools);
       case 'add_prohibition':
-        return await addProhibition(supabase, companyId, args as { category?: 'word' | 'topic' | 'visual'; value?: string });
+        return await addProhibition(supabase, companyId, args as { category?: 'word' | 'topic' | 'visual'; value?: string }, ctx?.complianceActionRef);
       case 'rescan_compliance':
-        return await rescanCompliance(authHeader, args as { mode?: 'active_only' | 'all' });
+        return await rescanCompliance(authHeader, args as { mode?: 'active_only' | 'all' }, ctx?.complianceActionRef);
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }
@@ -743,6 +748,7 @@ async function handleProposeRule(
     userId: string;
     attachmentIds: string[];
     proposedRuleRef: { current: ProposedRuleCapture | null };
+    complianceActionRef: { current: ComplianceActionCapture | null };
     runStart: number;
   },
 ): Promise<string> {

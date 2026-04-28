@@ -47,7 +47,10 @@ async function fetchConversationMessages(conversationId: string): Promise<ChatMe
     role: string;
     content: string;
     created_at: string;
-    metadata: { attachments?: string[] } | null;
+    metadata: {
+      attachments?: string[];
+      compliance_action?: import('@/hooks/use-chat').ComplianceAction;
+    } | null;
   };
   const rows = (data ?? []) as Row[];
   return rows.map((r) => ({
@@ -58,6 +61,10 @@ async function fetchConversationMessages(conversationId: string): Promise<ChatMe
     attachmentIds:
       r.role === 'user' && Array.isArray(r.metadata?.attachments)
         ? r.metadata!.attachments
+        : undefined,
+    complianceAction:
+      r.role === 'assistant' && r.metadata?.compliance_action
+        ? r.metadata.compliance_action
         : undefined,
   }));
 }

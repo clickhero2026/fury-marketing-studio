@@ -8,6 +8,7 @@ import { ProactiveBanner } from "@/components/chat/ProactiveBanner";
 import { InlineApprovalCards } from "@/components/chat/InlineApprovalCard";
 import { InlineRuleProposalCards } from "@/components/fury/InlineRuleProposalCards";
 import { ChatHistorySidebar } from "@/components/chat/ChatHistorySidebar";
+import { ComplianceActionCard } from "@/components/chat/ComplianceActionCard";
 import { AttachmentPicker } from "@/components/chat/AttachmentPicker";
 import { AttachmentDropzone } from "@/components/chat/AttachmentDropzone";
 import { AttachmentPreviewList } from "@/components/chat/AttachmentPreview";
@@ -276,11 +277,11 @@ const ChatView = () => {
               currentConversationId={conversationId}
               onSelectConversation={(id, history) => {
                 loadConversation(id, history);
-                setHistoryOpen(false);
+                if (window.matchMedia('(max-width: 767px)').matches) setHistoryOpen(false);
               }}
               onNewConversation={() => {
                 newConversation();
-                setHistoryOpen(false);
+                if (window.matchMedia('(max-width: 767px)').matches) setHistoryOpen(false);
               }}
             />
           </aside>
@@ -367,33 +368,37 @@ const ChatView = () => {
 
         {/* Message bubbles — oculta mensagens [SISTEMA] do usuario */}
         {messages.filter((m) => !(m.role === 'user' && m.content.startsWith('[SISTEMA]'))).map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              "max-w-3xl mx-auto w-full slide-up",
-              msg.role === "user" ? "flex justify-end" : ""
-            )}
-          >
+          <div key={msg.id} className="space-y-2">
             <div
               className={cn(
-                "px-4 py-3 rounded-2xl text-[13px] leading-relaxed",
-                msg.role === "user"
-                  ? "chat-gradient text-white rounded-br-md max-w-[80%] whitespace-pre-wrap"
-                  : "bg-chat-ai text-chat-ai-foreground rounded-bl-md space-y-0.5"
+                "max-w-3xl mx-auto w-full slide-up",
+                msg.role === "user" ? "flex justify-end" : ""
               )}
             >
-              {msg.role === 'assistant' ? renderContent(msg.content) : msg.content}
-              {msg.role === 'user' && msg.attachmentIds && msg.attachmentIds.length > 0 && (
-                <MessageAttachments attachmentIds={msg.attachmentIds} />
-              )}
-              {msg.isStreaming && !msg.content && (
-                <div className="inline-flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.3s]" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.6s]" />
-                </div>
-              )}
+              <div
+                className={cn(
+                  "px-4 py-3 rounded-2xl text-[13px] leading-relaxed",
+                  msg.role === "user"
+                    ? "chat-gradient text-white rounded-br-md max-w-[80%] whitespace-pre-wrap"
+                    : "bg-chat-ai text-chat-ai-foreground rounded-bl-md space-y-0.5"
+                )}
+              >
+                {msg.role === 'assistant' ? renderContent(msg.content) : msg.content}
+                {msg.role === 'user' && msg.attachmentIds && msg.attachmentIds.length > 0 && (
+                  <MessageAttachments attachmentIds={msg.attachmentIds} />
+                )}
+                {msg.isStreaming && !msg.content && (
+                  <div className="inline-flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.3s]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.6s]" />
+                  </div>
+                )}
+              </div>
             </div>
+            {msg.role === 'assistant' && msg.complianceAction && (
+              <ComplianceActionCard action={msg.complianceAction} />
+            )}
           </div>
         ))}
 

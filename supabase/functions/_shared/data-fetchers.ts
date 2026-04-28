@@ -488,10 +488,16 @@ async function findOneCampaignByName(
 // Trigger sync_rule_to_prohibition_trigger espelha em company_prohibitions
 // pra UI legada (Cerebro > Identidade > Step 6) continuar funcionando.
 // ============================================================
+export type ComplianceActionCapture = {
+  prohibition?: { value: string; category: 'word' | 'topic' | 'visual' };
+  rescan?: { scanned: number; violations: number; taken_down: number };
+};
+
 export async function addProhibition(
   supabase: SupabaseClient,
   companyId: string,
   args: { category?: 'word' | 'topic' | 'visual'; value?: string },
+  capture?: { current: ComplianceActionCapture | null },
 ): Promise<string> {
   const category = args.category;
   const value = args.value?.trim().slice(0, 200);
@@ -517,6 +523,9 @@ export async function addProhibition(
   if (error) {
     return `Falha ao adicionar proibicao: ${error.message}`;
   }
+  if (capture) {
+    capture.current = { ...(capture.current ?? {}), prohibition: { value, category } };
+  }
   return `Proibicao "${value}" adicionada (categoria ${category}). Aparece em **Compliance** e em **Cerebro do FURY → Identidade → "O que NAO usar"** (mesma fonte). De agora em diante novos criativos com isso sao bloqueados. Vou rodar rescan_compliance pra detectar criativos antigos que agora violam.`;
 }
 
@@ -526,6 +535,7 @@ export async function addProhibition(
 export async function rescanCompliance(
   authHeader: string,
   args: { mode?: 'active_only' | 'all' },
+  capture?: { current: ComplianceActionCapture | null },
 ): Promise<string> {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
   const mode = args.mode ?? 'active_only';
@@ -549,6 +559,16 @@ export async function rescanCompliance(
       if (typeof stats.taken_down === 'number') parts.push(`- Pausados automaticamente: ${stats.taken_down}`);
     }
     parts.push('Veja detalhes em Compliance ou peca um get_compliance_status.');
+    if (capture) {
+      capture.current = {
+        ...(capture.current ?? {}),
+        rescan: {
+          scanned: Number(stats?.scanned ?? 0),
+          violations: Number(stats?.violations_found ?? 0),
+          taken_down: Number(stats?.taken_down ?? 0),
+        },
+      };
+    }
     return parts.join('\n');
   } catch (err) {
     return `Erro ao invocar compliance-scan: ${(err as Error).message}`;
