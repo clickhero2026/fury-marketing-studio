@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MetaAssetPickerModal } from '@/components/meta/MetaAssetPickerModal';
-import { MetaInventoryTab } from '@/components/meta/MetaInventoryTab';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -19,9 +18,7 @@ import {
   Unplug,
   Settings2,
   RefreshCw,
-  Radar,
 } from 'lucide-react';
-import { useDeepScan } from '@/hooks/use-deep-scan';
 import { ScanHealthCard } from '@/components/meta/ScanHealthCard';
 
 const Integrations = () => {
@@ -41,7 +38,6 @@ const Integrations = () => {
     updateScanInterval,
     isUpdatingScanInterval,
   } = useMetaConnect();
-  const { deepScan, isDeepScanning } = useDeepScan();
 
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -227,15 +223,6 @@ const Integrations = () => {
                     {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     {isSyncing ? 'Sincronizando' : 'Sincronizar'}
                   </Button>
-                  <Button
-                    onClick={deepScan}
-                    disabled={isDeepScanning || !isConnected}
-                    variant="outline"
-                    className="min-w-[140px] flex-1"
-                  >
-                    {isDeepScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
-                    {isDeepScanning ? 'Varrendo' : 'Varredura Profunda'}
-                  </Button>
                   {(isExpiringSoon || isExpired) && (
                     <Button onClick={connect} disabled={isConnecting} className="min-w-[140px] flex-1">
                       {isConnecting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -279,14 +266,6 @@ const Integrations = () => {
           </CardContent>
         </Card>
 
-        {/* Inventario Meta sincronizado (vem do meta-deep-scan) */}
-        {isConnected && (
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
-              <MetaInventoryTab />
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <MetaAssetPickerModal
