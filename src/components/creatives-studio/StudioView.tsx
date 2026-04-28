@@ -23,6 +23,7 @@ import {
   type CreativeStatus,
 } from '@/types/creative';
 import { CreativeUsageBanner } from './CreativeUsageBanner';
+import { CreativeUsageStrip } from './CreativeUsageStrip';
 import { CreativeDetailDialog } from './CreativeDetailDialog';
 
 const STATUS_FILTERS: Array<CreativeStatus | 'all'> = ['all', 'generated', 'approved', 'discarded', 'published'];
@@ -87,6 +88,7 @@ export function StudioView() {
 
   return (
     <div className="px-6 py-6 max-w-7xl mx-auto">
+      <CreativeUsageStrip />
       <CreativeUsageBanner />
 
       <div className="flex items-center justify-between mb-6">
