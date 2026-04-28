@@ -542,6 +542,44 @@ export const CHAT_TOOLS = [
   {
     type: 'function' as const,
     function: {
+      name: 'add_prohibition',
+      description:
+        'Adiciona uma proibicao permanente ao briefing da empresa (palavra/assunto/regra visual que a IA NUNCA pode usar nem deixar passar). Cria em company_prohibitions; passa a bloquear criativos novos via compliance + briefing gate. Use quando o usuario disser variacoes de "nunca use X", "proibido falar Y", "nao quero a palavra Z em anuncios". Apos adicionar, sempre chame rescan_compliance pra re-analisar criativos antigos.',
+      parameters: {
+        type: 'object',
+        required: ['category', 'value'],
+        properties: {
+          category: {
+            type: 'string',
+            enum: ['word', 'topic', 'visual'],
+            description: 'word=palavra/frase especifica; topic=assunto/tema; visual=regra visual (ex: "nao mostrar pessoas dirigindo")',
+          },
+          value: { type: 'string', description: 'O conteudo proibido (max 200 chars)' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'rescan_compliance',
+      description:
+        'Re-analisa criativos ativos contra as regras de compliance atuais (incluindo proibicoes recem-adicionadas). Use SEMPRE depois de add_prohibition pra detectar criativos antigos que agora violam. Tambem pode ser chamada solo quando usuario diz "verifica meus anuncios", "scaneia compliance", "analisa se ha problema". Demora 30-60s.',
+      parameters: {
+        type: 'object',
+        properties: {
+          mode: {
+            type: 'string',
+            enum: ['active_only', 'all'],
+            description: 'active_only (default) = so criativos ACTIVE; all = inclui PAUSED tambem',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'compare_creatives',
       description:
         'Compara 2+ criativos gerados pela IA. Retorna tabela com titulo, conceito, formato, modelo, status, custo, pipeline aplicado. Use quando o usuario perguntar variacoes de "compare esses criativos", "qual desses e melhor", "diferenca entre os dois", ou cite explicitamente nomes/ids. Identifica near-duplicates e status (aprovado vs pendente vs descartado). NAO chame se o usuario pediu para gerar — use generate_creative.',

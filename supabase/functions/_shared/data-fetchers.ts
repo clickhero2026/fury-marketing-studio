@@ -484,6 +484,66 @@ async function findOneCampaignByName(
 }
 
 // ============================================================
+// addProhibition — insere proibicao em company_prohibitions
+// ============================================================
+export async function addProhibition(
+  supabase: SupabaseClient,
+  companyId: string,
+  args: { category?: 'word' | 'topic' | 'visual'; value?: string },
+): Promise<string> {
+  const category = args.category;
+  const value = args.value?.trim().slice(0, 200);
+  if (!category || !value) {
+    return 'Forneca category (word/topic/visual) e value (texto).';
+  }
+  if (!['word', 'topic', 'visual'].includes(category)) {
+    return `Categoria invalida: "${category}". Use word, topic ou visual.`;
+  }
+  const { error } = await supabase
+    .from('company_prohibitions')
+    .insert({ company_id: companyId, category, value, source: 'user' });
+  if (error) {
+    return `Falha ao adicionar proibicao: ${error.message}`;
+  }
+  return `Proibicao adicionada (${category}: "${value}"). De agora em diante, novos criativos com isso sao bloqueados pela compliance. Recomendo chamar rescan_compliance pra detectar criativos antigos que agora violam.`;
+}
+
+// ============================================================
+// rescanCompliance — invoca compliance-scan via fetch
+// ============================================================
+export async function rescanCompliance(
+  authHeader: string,
+  args: { mode?: 'active_only' | 'all' },
+): Promise<string> {
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+  const mode = args.mode ?? 'active_only';
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/compliance-scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+      body: JSON.stringify({ mode }),
+    });
+    const body = await resp.text();
+    if (!resp.ok) {
+      return `Falha no rescan compliance (HTTP ${resp.status}): ${body.slice(0, 300)}`;
+    }
+    let json: Record<string, unknown> = {};
+    try { json = JSON.parse(body); } catch { /* keep empty */ }
+    const stats = json.stats as Record<string, number> | undefined;
+    const parts: string[] = ['Rescan compliance concluido.'];
+    if (stats) {
+      if (typeof stats.scanned === 'number') parts.push(`- Analisados: ${stats.scanned}`);
+      if (typeof stats.violations_found === 'number') parts.push(`- Violacoes: ${stats.violations_found}`);
+      if (typeof stats.taken_down === 'number') parts.push(`- Pausados automaticamente: ${stats.taken_down}`);
+    }
+    parts.push('Veja detalhes em Compliance ou peca um get_compliance_status.');
+    return parts.join('\n');
+  } catch (err) {
+    return `Erro ao invocar compliance-scan: ${(err as Error).message}`;
+  }
+}
+
+// ============================================================
 // compareCreatives — analise pura de 2+ criativos por id ou nome
 // ============================================================
 export async function compareCreatives(

@@ -18,6 +18,8 @@ import {
   compareCreatives,
   proposePauseAd,
   proposeReactivateAd,
+  addProhibition,
+  rescanCompliance,
   proposeUpdateBudget,
   proposePlan,
 } from '../_shared/data-fetchers.ts';
@@ -714,6 +716,10 @@ async function executeTool(
         return await proposePauseAd(supabase, companyId, args as { ad_name: string }, convIdForTools);
       case 'reactivate_ad':
         return await proposeReactivateAd(supabase, companyId, args as { ad_name: string }, convIdForTools);
+      case 'add_prohibition':
+        return await addProhibition(supabase, companyId, args as { category?: 'word' | 'topic' | 'visual'; value?: string });
+      case 'rescan_compliance':
+        return await rescanCompliance(authHeader, args as { mode?: 'active_only' | 'all' });
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }
