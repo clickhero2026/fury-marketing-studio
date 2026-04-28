@@ -73,9 +73,9 @@ function formatErrorForChat(err: ErrorResp): string {
     case 'forbidden_by_blocklist':
       return `Atencao: o conceito contem termos sensiveis pela Meta (${JSON.stringify(body.hits ?? [])}). Reformule o pedido ou peca explicitamente para sobrepor o aviso.`;
     case 'provider_unavailable':
-      return 'Provedor de imagem indisponivel no momento. Tente novamente em alguns minutos.';
+      return 'Provedor de imagem indisponivel no momento (OpenAI/Gemini retornou erro). Diga ao usuario LITERALMENTE: "O provedor de imagem (OpenAI/Gemini) esta indisponivel agora. Tente novamente em 1-2 minutos."';
     case 'timeout_total':
-      return 'Geracao excedeu 60s. Tente reduzir count ou simplificar o conceito.';
+      return 'Geracao excedeu 55s (timeout). Diga ao usuario LITERALMENTE: "A geracao da imagem demorou mais que 55s e foi cancelada. Isso geralmente acontece quando o provedor (OpenAI gpt-image / Gemini nano-banana) esta lento. Posso tentar de novo, ou voce prefere um conceito mais simples / formato menor (feed_1x1)?" — NAO diga apenas "houve um problema".';
     case 'parent_not_found':
       return 'Criativo pai nao encontrado ou nao acessivel.';
     case 'source_not_found':

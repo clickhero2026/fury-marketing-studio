@@ -43,7 +43,10 @@ import {
 // ============================================================
 // Constantes
 // ============================================================
-const TOTAL_TIMEOUT_MS = 90_000;
+// 55s deixa margem confortavel antes do corte da plataforma (~150s wall clock,
+// mas 504 EDGE_FUNCTION_ERROR ja apareceu em ~92s). Garante que sempre temos
+// tempo de logar + retornar JSON estruturado pro chat formatar a mensagem.
+const TOTAL_TIMEOUT_MS = 55_000;
 const HASH_BLOCK_DISTANCE = 3;
 const HASH_NEAR_DISTANCE = 8;
 const DEDUPE_WINDOW_DAYS = 30;
