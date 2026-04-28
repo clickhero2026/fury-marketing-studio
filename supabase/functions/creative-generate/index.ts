@@ -645,7 +645,12 @@ function buildPrompt(opts: {
   const palette = briefing?.visualIdentity?.palette;
 
   const parts: string[] = [];
-  parts.push(`Crie uma imagem de anuncio (alta qualidade, sem texto sobre a imagem a menos que solicitado): ${concept}`);
+  parts.push(
+    `Crie uma imagem de anuncio para o mercado brasileiro (alta qualidade, idioma portugues do Brasil em qualquer texto visivel). ` +
+    `IMPORTANTE: TODO texto na imagem (titulos, CTAs, precos, headlines, badges, taglines) DEVE estar em portugues do Brasil. ` +
+    `NUNCA use ingles. Ex: "BLACK FRIDAY" -> "BLACK FRIDAY" e aceito por ser termo cunhado, mas "Technology Consulting" deve ser "Consultoria de Tecnologia". ` +
+    `Se nao foi pedido texto, nao adicione texto. Conceito: ${concept}`,
+  );
 
   if (offer?.title || offer?.description) {
     parts.push(`Oferta: ${offer.title ?? ''}${offer.description ? ' — ' + offer.description : ''}`);

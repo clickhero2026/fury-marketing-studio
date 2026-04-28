@@ -1,7 +1,7 @@
 // Card inline de proposta de regra (renderizado abaixo da assistant message).
 // Spec: .kiro/specs/fury-learning/ (T4.1)
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, X, Pencil, Sparkles, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,20 +15,25 @@ interface Props {
   envelope: ProposedRuleEnvelope;
 }
 
-type LocalState = 'pending' | 'accepted' | 'rejected';
+type LocalState = 'pending' | 'accepted' | 'rejected' | 'dismissed';
 
 export function RuleProposalCard({ messageId, envelope }: Props) {
   const accept = useAcceptRuleProposal();
   const reject = useRejectRuleProposal();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
-  // Estado local: oculta otimisticamente apos sucesso, mesmo se o refetch demorar.
   const [localState, setLocalState] = useState<LocalState>(envelope.status === 'pending' ? 'pending' : envelope.status);
 
-  if (envelope.status !== 'pending' && localState === 'pending') {
-    // estado ja persistido no banco antes do mount
-    return null;
-  }
+  // Apos accepted/rejected, some completamente em 3.5s
+  useEffect(() => {
+    if (localState === 'accepted' || localState === 'rejected') {
+      const t = setTimeout(() => setLocalState('dismissed'), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [localState]);
+
+  if (envelope.status !== 'pending' && localState === 'pending') return null;
+  if (localState === 'dismissed') return null;
   const proposed = envelope.proposed_rule;
 
   const onAccept = async () => {

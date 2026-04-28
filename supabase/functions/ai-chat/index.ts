@@ -495,6 +495,32 @@ Deno.serve(async (req) => {
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content })}\n\n`));
                 }
               }
+
+              // Garante que tags <creative-gallery ids="..."/> presentes nos tool
+              // results NAO sejam descartadas pelo LLM (que tende a parafrasear
+              // texto e remover XML). Se ja vier no assistantContent, nao duplica.
+              const galleryRegex = /<creative-gallery\s+ids="([^"]+)"\s*\/?>/g;
+              const existingGalleryIds = new Set<string>();
+              for (const m of assistantContent.matchAll(galleryRegex)) {
+                m[1].split(',').forEach((id) => existingGalleryIds.add(id.trim()));
+              }
+              const tagsToAppend: string[] = [];
+              for (const tr of toolResults) {
+                for (const m of tr.content.matchAll(galleryRegex)) {
+                  const ids = m[1].split(',').map((s) => s.trim()).filter(Boolean);
+                  const missing = ids.filter((id) => !existingGalleryIds.has(id));
+                  if (missing.length > 0) {
+                    const tag = `<creative-gallery ids="${missing.join(',')}"/>`;
+                    tagsToAppend.push(tag);
+                    missing.forEach((id) => existingGalleryIds.add(id));
+                  }
+                }
+              }
+              if (tagsToAppend.length > 0) {
+                const appendix = '\n\n' + tagsToAppend.join('\n');
+                assistantContent += appendix;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content: appendix })}\n\n`));
+              }
             }
 
             if (delta?.content && !hasToolCalls) {
