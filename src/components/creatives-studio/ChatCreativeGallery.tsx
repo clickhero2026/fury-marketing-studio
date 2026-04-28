@@ -16,6 +16,7 @@ interface InlineCreative {
   cost_usd?: number;
   is_near_duplicate?: boolean;
   compliance_warning?: boolean;
+  status: 'generated' | 'approved' | 'discarded' | 'published';
 }
 
 interface ChatCreativeGalleryProps {
@@ -36,7 +37,7 @@ export function ChatCreativeGallery({ ids }: ChatCreativeGalleryProps) {
     (async () => {
       const { data: rows } = await supabase
         .from('creatives_generated' as never)
-        .select('id, format, model_used, cost_usd, is_near_duplicate, compliance_warning, storage_path')
+        .select('id, format, model_used, cost_usd, is_near_duplicate, compliance_warning, storage_path, status')
         .in('id', ids);
 
       const found = ((rows ?? []) as Array<{
@@ -47,6 +48,7 @@ export function ChatCreativeGallery({ ids }: ChatCreativeGalleryProps) {
         is_near_duplicate: boolean;
         compliance_warning: boolean;
         storage_path: string;
+        status: InlineCreative['status'];
       }>);
 
       const enriched = await Promise.all(
@@ -62,6 +64,7 @@ export function ChatCreativeGallery({ ids }: ChatCreativeGalleryProps) {
             cost_usd: r.cost_usd,
             is_near_duplicate: r.is_near_duplicate,
             compliance_warning: r.compliance_warning,
+            status: r.status,
           };
         }),
       );

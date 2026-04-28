@@ -17,12 +17,12 @@ interface RejectArgs {
   ruleType: RuleType;
 }
 
-async function updateMessageMetadata(messageId: string, envelope: ProposedRuleEnvelope) {
-  const { error } = await supabase
-    .from('chat_messages' as never)
-    .update({ metadata: { proposed_rule: envelope } })
-    .eq('id', messageId);
-  if (error) throw error;
+async function setMessageProposalStatus(messageId: string, status: 'accepted' | 'rejected') {
+  const { error } = await supabase.rpc('set_message_proposal_status' as never, {
+    p_message_id: messageId,
+    p_new_status: status,
+  } as never);
+  if (error) throw new Error(error.message || 'Falha ao atualizar status');
 }
 
 export function useAcceptRuleProposal() {
@@ -100,13 +100,8 @@ export function useAcceptRuleProposal() {
         ruleId = (data as { id: string }).id;
       }
 
-      // UPDATE mensagem -> status accepted
-      await updateMessageMetadata(messageId, {
-        proposed_rule: proposed,
-        status: 'accepted',
-        rule_type: proposed.rule_type,
-        confidence: proposed.confidence,
-      });
+      // UPDATE mensagem -> status accepted (via RPC SECURITY DEFINER)
+      await setMessageProposalStatus(messageId, 'accepted');
 
       // Telemetria
       await supabase.from('rule_proposal_events' as never).insert({
@@ -138,7 +133,8 @@ export function useRejectRuleProposal() {
     mutationFn: async ({ messageId, ruleType }: RejectArgs & { proposed?: ProposedRulePayload }) => {
       if (!companyId) throw new Error('Sem empresa associada');
 
-      // Lemos a mensagem pra preservar o proposed_rule original
+      await setMessageProposalStatus(messageId, 'rejected');
+      // Lemos confidence pra telemetria
       const { data: msg } = await supabase
         .from('chat_messages' as never)
         .select('metadata')
@@ -146,15 +142,6 @@ export function useRejectRuleProposal() {
         .maybeSingle();
       const meta = (msg as { metadata?: { proposed_rule?: ProposedRuleEnvelope } } | null)?.metadata;
       const existing = meta?.proposed_rule;
-
-      if (existing?.proposed_rule) {
-        await updateMessageMetadata(messageId, {
-          proposed_rule: existing.proposed_rule,
-          status: 'rejected',
-          rule_type: existing.rule_type,
-          confidence: existing.confidence,
-        });
-      }
 
       await supabase.from('rule_proposal_events' as never).insert({
         company_id: companyId,
