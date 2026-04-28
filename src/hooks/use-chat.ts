@@ -18,6 +18,13 @@ export function useChat() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Carrega uma conversa existente (id + historico de mensagens vindo do servidor)
+  const loadConversation = useCallback((id: string, history: ChatMessage[]) => {
+    setConversationId(id);
+    setMessages(history);
+    setStatus(null);
+  }, []);
+
   const sendMessage = useCallback(async (content: string, attachmentIds: string[] = []) => {
     if ((!content.trim() && attachmentIds.length === 0) || isStreaming) return;
 
@@ -176,6 +183,7 @@ export function useChat() {
     sendMessage,
     stopStreaming,
     newConversation,
+    loadConversation,
     loadProactiveInsights,
   };
 }

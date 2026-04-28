@@ -358,7 +358,10 @@ Deno.serve(async (req) => {
     && briefing.visualIdentity.palette.length > 0;
   let resolvedModel: ProviderModel;
   if (model === 'auto') {
-    resolvedModel = (concreteCount === 1 && paletteDefined) ? 'gpt_image' : 'nano_banana';
+    // 2026-04-28: pivotamos default pra gpt_image enquanto Nano Banana
+    // (gemini-2.5-flash-image) esta com latencia >90s. Reels 4:5 ainda usa
+    // Nano (GPT-image-1 nao tem 4:5 nativo).
+    resolvedModel = 'gpt_image';
   } else {
     resolvedModel = model;
   }

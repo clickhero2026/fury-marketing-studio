@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProactiveBanner } from "@/components/chat/ProactiveBanner";
 import { InlineApprovalCards } from "@/components/chat/InlineApprovalCard";
 import { InlineRuleProposalCards } from "@/components/fury/InlineRuleProposalCards";
+import { ChatHistorySidebar } from "@/components/chat/ChatHistorySidebar";
 import { AttachmentPicker } from "@/components/chat/AttachmentPicker";
 import { AttachmentDropzone } from "@/components/chat/AttachmentDropzone";
 import { AttachmentPreviewList } from "@/components/chat/AttachmentPreview";
@@ -45,6 +46,7 @@ const ChatView = () => {
     sendMessage,
     stopStreaming,
     newConversation,
+    loadConversation,
     loadProactiveInsights,
   } = useChat();
 
@@ -260,7 +262,17 @@ const ChatView = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex h-full bg-background">
+      {/* Sidebar de conversas anteriores */}
+      <aside className="hidden md:flex w-64 shrink-0 border-r border-border/50 bg-card/30 flex-col">
+        <ChatHistorySidebar
+          currentConversationId={conversationId}
+          onSelectConversation={loadConversation}
+          onNewConversation={newConversation}
+        />
+      </aside>
+
+      <div className="flex flex-col flex-1 min-w-0">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8 space-y-4">
         {/* Welcome + Suggestions (only when no messages) */}
@@ -443,6 +455,7 @@ const ChatView = () => {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
