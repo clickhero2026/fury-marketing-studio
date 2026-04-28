@@ -1,4 +1,4 @@
-(node:17576) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(node:19024) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
 (Use `node --trace-warnings ...` to show where the warning was created)
 export type Json =
   | string
@@ -3164,6 +3164,7 @@ export type Database = {
           conversation_id: string
           created_at: string | null
           id: string
+          metadata: Json | null
           role: string
           tokens_used: number | null
           tool_call_id: string | null
@@ -3174,6 +3175,7 @@ export type Database = {
           conversation_id: string
           created_at?: string | null
           id?: string
+          metadata?: Json | null
           role: string
           tokens_used?: number | null
           tool_call_id?: string | null
@@ -3184,6 +3186,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string | null
           id?: string
+          metadata?: Json | null
           role?: string
           tokens_used?: number | null
           tool_call_id?: string | null
