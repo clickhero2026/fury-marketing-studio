@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import OpenAI from 'https://esm.sh/openai@4';
+import OpenAI from 'https://esm.sh/openai@4.79.1';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { SYSTEM_PROMPT } from '../_shared/prompt.ts';
 import { CHAT_TOOLS } from '../_shared/tools.ts';
@@ -703,6 +703,8 @@ async function executeTool(
         return await invokeCreativeAdapt(authHeader, args as never, convIdForTools);
       case 'propose_rule':
         return await handleProposeRule(supabase, companyId, args, ctx);
+      case 'sync_meta_assets':
+        return await handleSyncMetaAssets(authHeader, args as { scope?: 'all' | 'campaigns_only' | 'assets_only' });
       default:
         return `Funcao "${name}" nao reconhecida.`;
     }
@@ -846,6 +848,72 @@ async function handleProposeRule(
   }
 
   return 'Proposta de regra registrada. Continue respondendo normalmente ao usuario; o card de aprovacao sera renderizado pela UI inline.';
+}
+
+// ============ SYNC META ASSETS handler ============
+// Invoca meta-sync e/ou meta-deep-scan via fetch usando o JWT do user.
+// Usado quando o user pede "sincroniza meus dados Meta" no chat.
+async function handleSyncMetaAssets(
+  authHeader: string,
+  args: { scope?: 'all' | 'campaigns_only' | 'assets_only' },
+): Promise<string> {
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+  const scope = args.scope ?? 'all';
+
+  const tasks: Array<{ name: string; url: string }> = [];
+  if (scope === 'all' || scope === 'campaigns_only') {
+    tasks.push({ name: 'campanhas+metricas', url: `${SUPABASE_URL}/functions/v1/meta-sync` });
+  }
+  if (scope === 'all' || scope === 'assets_only') {
+    tasks.push({ name: 'BMs+adsets+pixels', url: `${SUPABASE_URL}/functions/v1/meta-deep-scan` });
+  }
+
+  const results = await Promise.allSettled(
+    tasks.map((t) =>
+      fetch(t.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+        body: JSON.stringify({}),
+      }).then(async (r) => ({ name: t.name, status: r.status, body: await r.text().catch(() => '') })),
+    ),
+  );
+
+  const lines: string[] = [];
+  let anySuccess = false;
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    const taskName = tasks[i].name;
+    if (r.status === 'fulfilled' && r.value.status >= 200 && r.value.status < 300) {
+      anySuccess = true;
+      // Tenta extrair stats do body
+      let summary = 'OK';
+      try {
+        const json = JSON.parse(r.value.body);
+        if (json.stats) {
+          const s = json.stats as Record<string, number>;
+          const parts: string[] = [];
+          if (s.bms_synced) parts.push(`${s.bms_synced} BMs`);
+          if (s.adsets_synced) parts.push(`${s.adsets_synced} ad sets`);
+          if (s.pixels_synced) parts.push(`${s.pixels_synced} pixels`);
+          if (s.pages_updated) parts.push(`${s.pages_updated} pages`);
+          if (s.campaigns_synced) parts.push(`${s.campaigns_synced} campanhas`);
+          if (parts.length > 0) summary = parts.join(' · ');
+        }
+      } catch { /* keep OK */ }
+      lines.push(`- ${taskName}: ${summary}`);
+    } else {
+      const detail = r.status === 'fulfilled'
+        ? `HTTP ${r.value.status}: ${r.value.body.slice(0, 200)}`
+        : (r.reason?.message ?? 'erro desconhecido');
+      lines.push(`- ${taskName}: falha (${detail})`);
+    }
+  }
+
+  return [
+    anySuccess ? 'Sincronizacao concluida.' : 'Sincronizacao falhou.',
+    ...lines,
+    'Os dados ja estao atualizados no Painel e Estudio.',
+  ].join('\n');
 }
 
 // knowledge-base-rag: busca semantica em documentos do cliente.

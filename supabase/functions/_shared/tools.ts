@@ -542,6 +542,24 @@ export const CHAT_TOOLS = [
   {
     type: 'function' as const,
     function: {
+      name: 'sync_meta_assets',
+      description:
+        'Roda uma sincronizacao profunda das contas Meta selecionadas pelo usuario (em /integrations). Atualiza Business Managers, Ad Sets, Pixels e Pages. CHAME quando o usuario pedir variacoes de "sincroniza", "atualiza meus dados Meta", "puxa o que ha de novo", "verifica se tem novos ad sets", "atualiza pixels", "varredura". NAO chame se o usuario perguntou metricas (use get_campaigns_summary etc). NAO chame proativamente — so a pedido. Demora 20-90s, mostre status enquanto roda.',
+      parameters: {
+        type: 'object',
+        properties: {
+          scope: {
+            type: 'string',
+            enum: ['all', 'campaigns_only', 'assets_only'],
+            description: 'all = tudo (campanhas + adsets + pixels + BMs); campaigns_only = so meta-sync (rapido); assets_only = so deep-scan (BMs/adsets/pixels)',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'propose_rule',
       description:
         'OBRIGATORIO chamar SEMPRE que o usuario expressar uma instrucao permanente. Gatilhos diretos: "sempre", "toda vez", "nunca", "use sempre", "padronize", "daqui pra frente", "a partir de agora", "responda em X", "pause quando", "alerta se". Exemplos que DEVEM chamar esta tool: "Sempre responda em portugues formal" -> rule_type=behavior, "Pausa campanhas com CPL>30 por 3 dias" -> rule_type=action, "Use essa logo em todo criativo" -> rule_type=creative_pipeline. NAO chame para pedidos pontuais ("crie um anuncio agora"). NAO chame se confidence < 0.7. CRITICO: chame ANTES de responder ao usuario — depois de chamar, responda confirmando. Sem chamar esta tool, a regra NAO e salva.',
