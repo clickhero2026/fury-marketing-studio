@@ -6,14 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DashboardView from './DashboardView';
 import AnalysisView from './AnalysisView';
 import BudgetSmartView from './budget/BudgetSmartView';
+import { MetaInventoryTab } from './meta/MetaInventoryTab';
 import { clearTabPref, readTabPref } from '@/lib/view-navigation';
 
-type Tab = 'resumo' | 'analise' | 'orcamento';
+type Tab = 'resumo' | 'analise' | 'orcamento' | 'conexoes';
 
 export default function PainelView() {
   const [tab, setTab] = useState<Tab>(() => {
     const pref = readTabPref('painel');
-    if (pref === 'analise' || pref === 'orcamento') return pref;
+    if (pref === 'analise' || pref === 'orcamento' || pref === 'conexoes') return pref as Tab;
     return 'resumo';
   });
   useEffect(() => { clearTabPref('painel'); }, []);
@@ -26,6 +27,7 @@ export default function PainelView() {
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
             <TabsTrigger value="analise">Analise</TabsTrigger>
             <TabsTrigger value="orcamento">Orcamento</TabsTrigger>
+            <TabsTrigger value="conexoes">Conexoes Meta</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -34,6 +36,11 @@ export default function PainelView() {
         {tab === 'resumo' && <DashboardView />}
         {tab === 'analise' && <AnalysisView />}
         {tab === 'orcamento' && <BudgetSmartView />}
+        {tab === 'conexoes' && (
+          <div className="px-4 md:px-6 py-4">
+            <MetaInventoryTab />
+          </div>
+        )}
       </div>
     </div>
   );
