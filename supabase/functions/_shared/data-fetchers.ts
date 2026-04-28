@@ -484,7 +484,9 @@ async function findOneCampaignByName(
 }
 
 // ============================================================
-// addProhibition — insere proibicao em company_prohibitions
+// addProhibition — insere em compliance_rules (canonica desde 2026-04-28)
+// Trigger sync_rule_to_prohibition_trigger espelha em company_prohibitions
+// pra UI legada (Cerebro > Identidade > Step 6) continuar funcionando.
 // ============================================================
 export async function addProhibition(
   supabase: SupabaseClient,
@@ -499,13 +501,23 @@ export async function addProhibition(
   if (!['word', 'topic', 'visual'].includes(category)) {
     return `Categoria invalida: "${category}". Use word, topic ou visual.`;
   }
+  // Tabela canonica unificada (compliance_rules); trigger sincroniza company_prohibitions
+  const ruleType = category === 'visual' ? 'custom' : 'blacklist_term';
   const { error } = await supabase
-    .from('company_prohibitions')
-    .insert({ company_id: companyId, category, value, source: 'user' });
+    .from('compliance_rules')
+    .insert({
+      company_id: companyId,
+      rule_type: ruleType,
+      value,
+      severity: 'warning',
+      source: 'user',
+      is_active: true,
+      category,
+    });
   if (error) {
     return `Falha ao adicionar proibicao: ${error.message}`;
   }
-  return `Proibicao "${value}" adicionada (categoria ${category}). Aparece em **Cerebro do FURY → Identidade → "O que NAO usar"** com badge "${category}". De agora em diante novos criativos com isso sao bloqueados. Vou rodar rescan_compliance pra detectar criativos antigos que agora violam.`;
+  return `Proibicao "${value}" adicionada (categoria ${category}). Aparece em **Compliance** e em **Cerebro do FURY → Identidade → "O que NAO usar"** (mesma fonte). De agora em diante novos criativos com isso sao bloqueados. Vou rodar rescan_compliance pra detectar criativos antigos que agora violam.`;
 }
 
 // ============================================================

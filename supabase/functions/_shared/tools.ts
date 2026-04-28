@@ -544,7 +544,7 @@ export const CHAT_TOOLS = [
     function: {
       name: 'add_prohibition',
       description:
-        'Adiciona uma proibicao permanente ao briefing da empresa (palavra/assunto/regra visual que a IA NUNCA pode usar nem deixar passar). Cria em company_prohibitions; passa a bloquear criativos novos via compliance + briefing gate. Use quando o usuario disser variacoes de "nunca use X", "proibido falar Y", "nao quero a palavra Z em anuncios". Apos adicionar, sempre chame rescan_compliance pra re-analisar criativos antigos.',
+        'Adiciona uma regra de compliance (palavra/assunto/visual proibido) que a IA NUNCA pode usar nem deixar passar. Cria em compliance_rules — aparece em Compliance + Cerebro do FURY > Identidade > "O que NAO usar". Bloqueia criativos novos via compliance gate + creative-generate. Use quando o usuario disser "nunca use X", "proibido falar Y", "tira essa palavra dos meus anuncios". Apos adicionar, SEMPRE chame rescan_compliance pra re-analisar criativos antigos.',
       parameters: {
         type: 'object',
         required: ['category', 'value'],

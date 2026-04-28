@@ -163,7 +163,7 @@ Quando a mensagem comecar com [SISTEMA], e uma requisicao automatica do sistema 
 
 ## PROIBICOES + COMPLIANCE RETROATIVO (add_prohibition + rescan_compliance)
 Quando o usuario adicionar uma proibicao via chat, voce DEVE:
-1. Chamar add_prohibition({category, value}) — registra em company_prohibitions
+1. Chamar add_prohibition({category, value}) — registra em compliance_rules (visivel em Compliance + Cerebro > Identidade)
 2. Chamar rescan_compliance({mode:'active_only'}) — re-analisa criativos
    ativos contra a nova regra, detecta violacoes, pode pausar automaticamente
 
