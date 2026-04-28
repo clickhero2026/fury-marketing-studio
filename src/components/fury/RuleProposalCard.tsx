@@ -2,7 +2,7 @@
 // Spec: .kiro/specs/fury-learning/ (T4.1)
 
 import { useState } from 'react';
-import { Check, X, Pencil, Sparkles, Loader2 } from 'lucide-react';
+import { Check, X, Pencil, Sparkles, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -15,19 +15,27 @@ interface Props {
   envelope: ProposedRuleEnvelope;
 }
 
+type LocalState = 'pending' | 'accepted' | 'rejected';
+
 export function RuleProposalCard({ messageId, envelope }: Props) {
   const accept = useAcceptRuleProposal();
   const reject = useRejectRuleProposal();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  // Estado local: oculta otimisticamente apos sucesso, mesmo se o refetch demorar.
+  const [localState, setLocalState] = useState<LocalState>(envelope.status === 'pending' ? 'pending' : envelope.status);
 
-  if (envelope.status !== 'pending') return null;
+  if (envelope.status !== 'pending' && localState === 'pending') {
+    // estado ja persistido no banco antes do mount
+    return null;
+  }
   const proposed = envelope.proposed_rule;
 
   const onAccept = async () => {
     try {
       await accept.mutateAsync({ messageId, proposed });
-      toast({ title: 'Regra ativa', description: proposed.name });
+      setLocalState('accepted');
+      toast({ title: 'Regra salva', description: proposed.name });
     } catch (e) {
       toast({ title: 'Falha ao salvar regra', description: (e as Error).message, variant: 'destructive' });
     }
@@ -36,14 +44,40 @@ export function RuleProposalCard({ messageId, envelope }: Props) {
   const onReject = async () => {
     try {
       await reject.mutateAsync({ messageId, ruleType: envelope.rule_type });
+      setLocalState('rejected');
       toast({ title: 'Proposta descartada' });
     } catch (e) {
       toast({ title: 'Falha ao descartar', description: (e as Error).message, variant: 'destructive' });
     }
   };
 
-  const busy = accept.isPending || reject.isPending;
   const confidencePct = Math.round((envelope.confidence ?? 0) * 100);
+
+  // Estado pos-decisao: mostra confirmacao discreta por 2.5s, depois esconde
+  if (localState === 'accepted') {
+    return (
+      <div className="max-w-3xl mx-auto w-full my-2 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center gap-3 animate-fade-in">
+        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div className="text-sm">
+          <span className="text-foreground font-medium">Regra ativa: </span>
+          <span className="text-muted-foreground">{proposed.name}</span>
+        </div>
+        <Badge variant="outline" className="ml-auto">{RULE_TYPE_LABELS[envelope.rule_type]}</Badge>
+      </div>
+    );
+  }
+  if (localState === 'rejected') {
+    return (
+      <div className="max-w-3xl mx-auto w-full my-2 p-3 rounded-xl border border-muted-foreground/20 bg-muted/30 flex items-center gap-3 animate-fade-in">
+        <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="text-sm text-muted-foreground">
+          Proposta descartada: {proposed.name}
+        </div>
+      </div>
+    );
+  }
+
+  const busy = accept.isPending || reject.isPending;
 
   return (
     <div className="max-w-3xl mx-auto w-full my-2 p-4 rounded-xl border border-violet-500/30 bg-violet-500/5">
@@ -83,7 +117,11 @@ export function RuleProposalCard({ messageId, envelope }: Props) {
         open={editOpen}
         envelope={envelope}
         messageId={messageId}
-        onClose={() => setEditOpen(false)}
+        onClose={() => {
+          setEditOpen(false);
+          // Se o modal salvou, marca como accepted localmente
+          if (accept.isSuccess) setLocalState('accepted');
+        }}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Square, Search, FileBarChart, Telescope } from "lucide-react";
+import { Send, Sparkles, Square, Search, FileBarChart, Telescope, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/hooks/use-chat";
 import { useAttachments } from "@/hooks/use-attachments";
@@ -51,6 +51,7 @@ const ChatView = () => {
   } = useChat();
 
   const [input, setInput] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const proactiveLoaded = useRef(false);
@@ -262,17 +263,43 @@ const ChatView = () => {
   };
 
   return (
-    <div className="flex h-full bg-background">
-      {/* Sidebar de conversas anteriores */}
-      <aside className="hidden md:flex w-64 shrink-0 border-r border-border/50 bg-card/30 flex-col">
-        <ChatHistorySidebar
-          currentConversationId={conversationId}
-          onSelectConversation={loadConversation}
-          onNewConversation={newConversation}
-        />
-      </aside>
+    <div className="flex h-full bg-background relative">
+      {/* Drawer de conversas anteriores (toggle por botao) */}
+      {historyOpen && (
+        <>
+          <div
+            className="absolute inset-0 z-30 bg-background/60 backdrop-blur-sm md:hidden"
+            onClick={() => setHistoryOpen(false)}
+          />
+          <aside className="absolute md:relative left-0 top-0 bottom-0 z-40 w-72 shrink-0 border-r border-border/50 bg-card flex flex-col">
+            <ChatHistorySidebar
+              currentConversationId={conversationId}
+              onSelectConversation={(id, history) => {
+                loadConversation(id, history);
+                setHistoryOpen(false);
+              }}
+              onNewConversation={() => {
+                newConversation();
+                setHistoryOpen(false);
+              }}
+            />
+          </aside>
+        </>
+      )}
 
       <div className="flex flex-col flex-1 min-w-0">
+      {/* Toolbar superior */}
+      <div className="flex items-center gap-2 px-4 md:px-6 pt-3">
+        <button
+          onClick={() => setHistoryOpen((v) => !v)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+          aria-label="Toggle historico de conversas"
+        >
+          <PanelLeft className="h-3.5 w-3.5" />
+          Historico de conversas
+        </button>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8 space-y-4">
         {/* Welcome + Suggestions (only when no messages) */}

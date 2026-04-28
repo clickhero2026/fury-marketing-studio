@@ -123,6 +123,7 @@ export function useAcceptRuleProposal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fury-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['rule-proposals'] });
       queryClient.invalidateQueries({ queryKey: ['chat'] });
     },
   });
@@ -165,6 +166,7 @@ export function useRejectRuleProposal() {
       } as never);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rule-proposals'] });
       queryClient.invalidateQueries({ queryKey: ['chat'] });
     },
   });
