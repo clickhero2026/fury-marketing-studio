@@ -1,4 +1,4 @@
-import { MessageSquare, BarChart3, ImagePlus, TrendingUp, ShieldCheck, Zap, Rocket, Wallet, Settings, Plus, Plug, ShieldAlert, Activity, BookOpen, Sparkles } from "lucide-react";
+import { MessageSquare, BarChart3, ImagePlus, Brain, ShieldAlert, Plus, Plug, Activity, Rocket, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -7,31 +7,30 @@ import { OrganizationSwitcher } from "@/components/auth/OrganizationSwitcher";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Logo } from "@/components/shared/Logo";
 
-type View = "chat" | "dashboard" | "creatives" | "studio" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health" | "memory";
+type View = "chat" | "painel" | "criativos" | "cerebro" | "approvals" | "ai-health" | "compliance" | "publisher";
 
 interface AppSidebarProps {
   currentView: View;
   onViewChange: (view: View) => void;
 }
 
-const navItems: { id: View; label: string; icon: React.ElementType }[] = [
-  { id: "chat", label: "Assistente IA", icon: MessageSquare },
-  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { id: "fury", label: "FURY", icon: Zap },
-  { id: "creatives", label: "Criativos", icon: ImagePlus },
-  { id: "studio", label: "Estudio AI", icon: Sparkles },
-  { id: "analysis", label: "Analise", icon: TrendingUp },
+// 5 itens principais — sidebar enxuta com nomes em linguagem de usuario
+const navItems: { id: View; label: string; icon: React.ElementType; helper?: string }[] = [
+  { id: "chat", label: "Conversa", icon: MessageSquare, helper: "Onde voce fala com o FURY" },
+  { id: "painel", label: "Painel", icon: BarChart3, helper: "KPIs, analise e orcamento" },
+  { id: "criativos", label: "Criativos", icon: ImagePlus, helper: "Anuncios criados pela IA e da Meta" },
+  { id: "cerebro", label: "Cerebro do FURY", icon: Brain, helper: "Regras, memoria e identidade" },
+  { id: "approvals", label: "Aprovacoes", icon: ShieldAlert, helper: "Acoes pendentes de aprovacao" },
+];
+
+// Itens secundarios (footer)
+const secondaryItems: { id: View; label: string; icon: React.ElementType }[] = [
   { id: "compliance", label: "Compliance", icon: ShieldCheck },
-  { id: "publisher", label: "Publicar", icon: Rocket },
-  { id: "budget", label: "Orcamento Smart", icon: Wallet },
-  { id: "approvals", label: "Aprovacoes", icon: ShieldAlert },
-  { id: "ai-health", label: "Saude do AI", icon: Activity },
-  { id: "memory", label: "Memoria", icon: BookOpen },
+  { id: "publisher", label: "Publicar campanha", icon: Rocket },
 ];
 
 function usePendingApprovalsCount(): number {
   const [count, setCount] = useState(0);
-
   useEffect(() => {
     let mounted = true;
     const fetchCount = async () => {
@@ -42,43 +41,37 @@ function usePendingApprovalsCount(): number {
       if (mounted) setCount(c ?? 0);
     };
     fetchCount();
-
     const channel = supabase
       .channel('approvals-badge')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'approvals' },
-        () => fetchCount()
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'approvals' }, () => fetchCount())
       .subscribe();
-
-    return () => {
-      mounted = false;
-      supabase.removeChannel(channel);
-    };
+    return () => { mounted = false; supabase.removeChannel(channel); };
   }, []);
-
   return count;
+}
+
+function useAiHealthDot(): 'green' | 'yellow' | 'red' {
+  // Simplificado: poderia chamar get_creative_health/get_ai_health.
+  // V1: sempre verde. Pos-MVP, troca por RPC real.
+  return 'green';
 }
 
 const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   const navigate = useNavigate();
   const pendingApprovals = usePendingApprovalsCount();
+  const healthDot = useAiHealthDot();
 
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl md:w-[240px] xl:w-[260px]">
-      {/* Topo: logo + org switcher + botao novo */}
       <div className="shrink-0">
         <div className="px-6 pb-2 pt-8">
           <div className="hover-lift cursor-pointer transition-all duration-300">
             <Logo size="md" />
           </div>
         </div>
-
         <div className="px-4 py-4">
           <OrganizationSwitcher />
         </div>
-
         <div className="px-4 pb-4">
           <button
             onClick={() => onViewChange("chat")}
@@ -90,11 +83,7 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
-        <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground opacity-50">
-          Main Menu
-        </div>
         <div className="space-y-1">
           {navItems.map((item) => {
             const active = currentView === item.id;
@@ -102,6 +91,7 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
+                title={item.helper}
                 className={cn(
                   "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                   active
@@ -128,15 +118,55 @@ const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
             );
           })}
         </div>
+
+        <div className="mt-6 mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground opacity-50">
+          Secundarios
+        </div>
+        <div className="space-y-1">
+          {secondaryItems.map((item) => {
+            const active = currentView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-all",
+                  active
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <item.icon className={cn("h-3.5 w-3.5 shrink-0", active ? "text-primary" : "text-sidebar-foreground/50")} />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Footer */}
       <div className="shrink-0 space-y-1 border-t border-sidebar-border p-4">
         <button
-          onClick={() => navigate('/integrations')}
-          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+          onClick={() => onViewChange("ai-health")}
+          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+          title="Saude do agente IA"
         >
-          <Plug className="h-4 w-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground" />
+          <Activity className="h-3.5 w-3.5 text-sidebar-foreground/50" />
+          <span className="truncate">Saude do AI</span>
+          <span
+            className={cn(
+              'ml-auto h-1.5 w-1.5 rounded-full',
+              healthDot === 'green' && 'bg-emerald-500',
+              healthDot === 'yellow' && 'bg-amber-500',
+              healthDot === 'red' && 'bg-red-500',
+            )}
+          />
+        </button>
+        <button
+          onClick={() => navigate('/integrations')}
+          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+        >
+          <Plug className="h-3.5 w-3.5 text-sidebar-foreground/50" />
           <span className="truncate">Integracoes</span>
         </button>
         <UserMenu />

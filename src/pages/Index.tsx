@@ -4,44 +4,49 @@ import AppSidebar from "@/components/AppSidebar";
 import { BriefingCompletenessBanner } from "@/components/briefing/BriefingCompletenessBanner";
 import { useBriefingCompleteness } from "@/hooks/use-briefing-completeness";
 import ChatView from "@/components/ChatView";
-import DashboardView from "@/components/DashboardView";
-import CreativesView from "@/components/CreativesView";
-import AnalysisView from "@/components/AnalysisView";
-import ComplianceView from "@/components/compliance/ComplianceView";
-import FuryView from "@/components/fury/FuryView";
-import CampaignPublisherView from "@/components/publisher/CampaignPublisherView";
-import BudgetSmartView from "@/components/budget/BudgetSmartView";
+import PainelView from "@/components/PainelView";
+import CriativosView from "@/components/CriativosView";
+import CerebroFuryView from "@/components/CerebroFuryView";
 import ApprovalsView from "@/components/ApprovalsView";
 import AiHealthView from "@/components/AiHealthView";
-import MemoryView from "@/components/knowledge/MemoryView";
-import { StudioView } from "@/components/creatives-studio/StudioView";
+import ComplianceView from "@/components/compliance/ComplianceView";
+import CampaignPublisherView from "@/components/publisher/CampaignPublisherView";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-type View = "chat" | "dashboard" | "creatives" | "studio" | "analysis" | "compliance" | "fury" | "publisher" | "budget" | "approvals" | "ai-health" | "memory";
+// Sidebar consolidada (5 itens principais + 3 footer/secundarios)
+type View = "chat" | "painel" | "criativos" | "cerebro" | "approvals" | "ai-health" | "compliance" | "publisher";
 
 const viewTitles: Record<View, string> = {
-  chat: "Assistente IA",
-  dashboard: "Dashboard",
-  creatives: "Criativos",
-  studio: "Estudio AI",
-  analysis: "Analise",
-  compliance: "Compliance",
-  fury: "FURY",
-  publisher: "Publicar Campanha",
-  budget: "Orcamento Smart",
+  chat: "Conversa",
+  painel: "Painel",
+  criativos: "Criativos",
+  cerebro: "Cerebro do FURY",
   approvals: "Aprovacoes",
   "ai-health": "Saude do AI",
-  memory: "Memoria",
+  compliance: "Compliance",
+  publisher: "Publicar Campanha",
 };
 
 const VIEW_STORAGE_KEY = "clickhero:currentView";
-const VALID_VIEWS: View[] = ["chat", "dashboard", "creatives", "studio", "analysis", "compliance", "fury", "publisher", "budget", "approvals", "ai-health", "memory"];
+const VALID_VIEWS: View[] = ["chat", "painel", "criativos", "cerebro", "approvals", "ai-health", "compliance", "publisher"];
+
+// Compat: views antigas redirecionam pras novas
+const LEGACY_REDIRECT: Record<string, View> = {
+  dashboard: 'painel',
+  analysis: 'painel',
+  budget: 'painel',
+  studio: 'criativos',
+  creatives: 'criativos',
+  fury: 'cerebro',
+  memory: 'cerebro',
+};
 
 function loadInitialView(): View {
   try {
     const saved = localStorage.getItem(VIEW_STORAGE_KEY);
     if (saved && VALID_VIEWS.includes(saved as View)) return saved as View;
-  } catch { /* ignore — SSR/private mode */ }
+    if (saved && LEGACY_REDIRECT[saved]) return LEGACY_REDIRECT[saved];
+  } catch { /* ignore */ }
   return "chat";
 }
 
@@ -55,9 +60,6 @@ const Index = () => {
     } catch { /* ignore */ }
   }, [currentView]);
 
-  // R1.1 + R1.6: redirect pos-cadastro pro wizard quando briefing nao foi iniciado,
-  // EXCETO se o usuario ja clicou "Pular por enquanto" (flag em localStorage).
-  // Sem essa guarda, "Pular" causa loop infinito de redirect.
   const hasSkipped = (() => {
     try { return !!localStorage.getItem('briefing:skipped-at'); } catch { return false; }
   })();
@@ -69,7 +71,6 @@ const Index = () => {
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <AppSidebar currentView={currentView} onViewChange={setCurrentView} />
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Ambient background glow */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
         <BriefingCompletenessBanner />
@@ -89,17 +90,13 @@ const Index = () => {
         <div className="flex-1 overflow-y-auto scrollbar-premium">
           <div className="fade-in h-full">
             {currentView === "chat" && <ChatView />}
-            {currentView === "dashboard" && <DashboardView />}
-            {currentView === "creatives" && <CreativesView />}
-            {currentView === "studio" && <StudioView />}
-            {currentView === "analysis" && <AnalysisView />}
-            {currentView === "compliance" && <ComplianceView />}
-            {currentView === "fury" && <FuryView />}
-            {currentView === "publisher" && <CampaignPublisherView />}
-            {currentView === "budget" && <BudgetSmartView />}
+            {currentView === "painel" && <PainelView />}
+            {currentView === "criativos" && <CriativosView />}
+            {currentView === "cerebro" && <CerebroFuryView />}
             {currentView === "approvals" && <ApprovalsView />}
             {currentView === "ai-health" && <AiHealthView />}
-            {currentView === "memory" && <MemoryView />}
+            {currentView === "compliance" && <ComplianceView />}
+            {currentView === "publisher" && <CampaignPublisherView />}
           </div>
         </div>
       </main>
