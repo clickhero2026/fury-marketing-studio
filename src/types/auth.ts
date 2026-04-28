@@ -68,7 +68,7 @@ export interface SignUpData {
   displayName: string;
   organizationName: string;
   slug: string;
-  plan: OrgPlan;
+  plan?: OrgPlan;
   avatarSeed: string;
 }
 

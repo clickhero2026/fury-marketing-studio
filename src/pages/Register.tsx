@@ -20,16 +20,10 @@ import {
   Lock,
   Building2,
   Link2,
-  Sparkles,
-  Crown,
-  Zap,
-  Rocket,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/shared/Logo';
 import { HexGrid } from '@/components/shared/HexGrid';
-
-type OrgPlan = 'free' | 'pro' | 'enterprise';
 
 const signupSchema = z
   .object({
@@ -43,7 +37,6 @@ const signupSchema = z
       .min(3, 'Minimo 3 caracteres')
       .max(50, 'Maximo 50 caracteres')
       .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/, 'Apenas minusculas, numeros e hifens'),
-    plan: z.enum(['free', 'pro', 'enterprise']),
     avatarSeed: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -98,42 +91,6 @@ function passwordStrength(pwd: string): { score: 0 | 1 | 2 | 3 | 4; label: strin
   return { score: clamped, ...map[clamped] };
 }
 
-const PLANS: Array<{
-  id: OrgPlan;
-  name: string;
-  price: string;
-  tagline: string;
-  icon: typeof Rocket;
-  features: string[];
-  highlight?: boolean;
-}> = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 'R$ 0',
-    tagline: 'Comece agora',
-    icon: Rocket,
-    features: ['Ate 3 campanhas', 'Dashboard basico', '1 conta Meta Ads'],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 'R$ 149',
-    tagline: 'Mais popular',
-    icon: Zap,
-    features: ['Campanhas ilimitadas', 'IA avancada', 'Multi-organizacao', 'Suporte prioritario'],
-    highlight: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 'Custom',
-    tagline: 'Escala total',
-    icon: Crown,
-    features: ['SLA dedicado', 'White-label', 'Onboarding 1:1', 'Integracoes custom'],
-  },
-];
-
 // ---- Main component ----
 
 const Register = () => {
@@ -154,7 +111,6 @@ const Register = () => {
       confirmPassword: '',
       organizationName: '',
       slug: '',
-      plan: 'free',
       avatarSeed: 'amber',
     },
   });
@@ -173,7 +129,7 @@ const Register = () => {
   const next = async () => {
     const fieldsByStep: Record<number, (keyof SignupFormValues)[]> = {
       1: ['displayName', 'email', 'password', 'confirmPassword'],
-      2: ['organizationName', 'slug', 'plan'],
+      2: ['organizationName', 'slug'],
     };
     const ok = await form.trigger(fieldsByStep[step]);
     if (!ok) return;
@@ -191,7 +147,6 @@ const Register = () => {
         displayName: v.displayName,
         organizationName: v.organizationName,
         slug: v.slug,
-        plan: v.plan,
         avatarSeed: v.avatarSeed,
       });
       if (error) {
@@ -217,7 +172,7 @@ const Register = () => {
   const inputClass =
     'h-11 bg-background/50 border-border rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all';
 
-  const maxWidth = step === 2 ? 'max-w-2xl' : 'max-w-md';
+  const maxWidth = 'max-w-md';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 relative overflow-hidden transition-colors duration-500">
@@ -411,7 +366,7 @@ const Register = () => {
                       Sua organizacao
                     </h1>
                     <p className="text-sm text-[#ecedef]/50 mt-1.5">
-                      Configure o espaco de trabalho e escolha um plano
+                      Configure o espaco de trabalho da sua empresa
                     </p>
                   </div>
 
@@ -465,71 +420,6 @@ const Register = () => {
                     )}
                   />
 
-                  {/* Plan cards */}
-                  <div>
-                    <p className="text-[13px] font-medium text-[#ecedef]/70 mb-2.5 flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5" /> Escolha seu plano
-                    </p>
-                    <FormField
-                      control={form.control}
-                      name="plan"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {PLANS.map((p) => {
-                                const selected = field.value === p.id;
-                                const Icon = p.icon;
-                                return (
-                                  <button
-                                    type="button"
-                                    key={p.id}
-                                    onClick={() => field.onChange(p.id)}
-                                    className={cn(
-                                      'relative text-left p-4 rounded-xl border transition-all duration-200',
-                                      'bg-white/[0.02] hover:bg-white/[0.04] hover:scale-[1.02]',
-                                      selected
-                                        ? 'border-primary/50 ring-2 ring-primary/30 bg-primary/5'
-                                        : 'border-white/[0.06]',
-                                    )}
-                                  >
-                                    {selected && (
-                                      <span className="absolute top-2 right-2 h-5 w-5 rounded-full brand-gradient flex items-center justify-center">
-                                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                                      </span>
-                                    )}
-                                    {p.highlight && !selected && (
-                                      <span className="absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md brand-gradient text-white">
-                                        POPULAR
-                                      </span>
-                                    )}
-                                    <Icon className="h-5 w-5 text-primary mb-2" />
-                                    <div className="text-[13px] font-semibold text-[#ecedef]">{p.name}</div>
-                                    <div className="text-[11px] text-[#ecedef]/40 mb-2">{p.tagline}</div>
-                                    <div className="text-lg font-bold text-[#ecedef] mb-2">
-                                      {p.price}
-                                      {p.id === 'pro' && (
-                                        <span className="text-[11px] font-normal text-[#ecedef]/40">/mes</span>
-                                      )}
-                                    </div>
-                                    <ul className="space-y-1">
-                                      {p.features.map((f) => (
-                                        <li key={f} className="text-[11px] text-[#ecedef]/60 flex items-start gap-1">
-                                          <Check className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />
-                                          <span>{f}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
               )}
 
@@ -606,11 +496,6 @@ const Register = () => {
                       icon={<Link2 className="h-3.5 w-3.5" />}
                       label="URL"
                       value={`clickhero.app/${values.slug}`}
-                    />
-                    <ReviewRow
-                      icon={<Sparkles className="h-3.5 w-3.5" />}
-                      label="Plano"
-                      value={PLANS.find((p) => p.id === values.plan)?.name ?? 'Free'}
                     />
                   </div>
                 </div>
